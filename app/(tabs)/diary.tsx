@@ -27,11 +27,13 @@ export default function DiaryScreen() {
           <TimeSlots textColor="#000" />
         </View>
         
-        <FloatingActionButton 
-          onPress={() => {
-            console.log('Aggiungi nuova attività');
-          }} 
-        />
+        <View style={styles.fabContainer}>
+          <FloatingActionButton 
+            onPress={() => {
+              console.log('Aggiungi nuova attività');
+            }} 
+          />
+        </View>
       </ThemedView>
     </SafeAreaView>
   );
@@ -39,6 +41,7 @@ export default function DiaryScreen() {
 
 const { width, height } = Dimensions.get('window');
 const STATUSBAR_HEIGHT = StatusBar.currentHeight || 0;
+const BOTTOM_TAB_HEIGHT = Platform.OS === 'ios' ? 100 : 80;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -70,5 +73,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     marginTop: height * 0.02,
+  },
+  fabContainer: {
+    position: 'absolute',
+    right: width * 0.05,
+    bottom: BOTTOM_TAB_HEIGHT + 5,
+    zIndex: 1,
   },
 });
