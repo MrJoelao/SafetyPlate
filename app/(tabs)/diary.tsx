@@ -56,7 +56,6 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? height * 0.06 : STATUSBAR_HEIGHT + height * 0.04,
     paddingBottom: height * 0.02,
     backgroundColor: '#fff',
-    marginBottom: height * 0.01,
   },
   title: {
     fontSize: Math.min(32, width * 0.08),
@@ -72,7 +71,6 @@ const styles = StyleSheet.create({
   timeSlotsWrapper: {
     flex: 1,
     backgroundColor: '#fff',
-    marginTop: height * 0.02,
   },
   fabContainer: {
     position: 'absolute',
