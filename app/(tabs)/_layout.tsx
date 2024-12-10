@@ -32,15 +32,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="Planner"
-        options={{
-          title: 'Planner',
-        }}
-      />
-      <Tabs.Screen
         name="index"
         options={{
           title: 'Saved',
+        }}
+      />
+      <Tabs.Screen
+        name="Planner"
+        options={{
+          title: 'Planner',
         }}
       />
     </Tabs>
