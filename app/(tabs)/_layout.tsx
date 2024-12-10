@@ -1,10 +1,9 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { CustomTabBar } from '@/components/ui/CustomTabBar';
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -14,17 +13,18 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          position: 'absolute',
+          backgroundColor: 'transparent',
+          borderTopWidth: 0,
+          elevation: 0,
+          height: Platform.OS === 'ios' ? 100 : 80,
+          paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+        }
+      }}
+      tabBar={(props) => <CustomTabBar {...props} />}>
       <Tabs.Screen
         name="diary"
         options={{
@@ -32,15 +32,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="Planner"
         options={{
-          title: 'Home',
+          title: 'Planner',
         }}
       />
       <Tabs.Screen
-        name="planner"
+        name="index"
         options={{
-          title: 'Planner',
+          title: 'Saved',
         }}
       />
     </Tabs>
