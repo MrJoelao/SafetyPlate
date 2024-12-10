@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 const { width } = Dimensions.get('window');
@@ -24,16 +25,16 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             }
           };
 
-          const getIcon = () => {
+          const renderIcon = () => {
             switch (route.name) {
+              case 'diary':
+                return <FontAwesome name="bookmark" size={24} color={isFocused ? '#000' : '#666'} />;
               case 'index':
-                return 'calendar-today';
-              case 'FoodPlanning':
-                return 'restaurant-menu';
-              case 'Dashboard':
-                return 'bookmark';
+                return <MaterialIcons name="dashboard" size={24} color={isFocused ? '#000' : '#666'} />;
+              case 'Planner':
+                return <MaterialIcons name="calendar-today" size={24} color={isFocused ? '#000' : '#666'} />;
               default:
-                return 'circle';
+                return <MaterialIcons name="circle" size={24} color={isFocused ? '#000' : '#666'} />;
             }
           };
 
@@ -42,11 +43,7 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               key={route.key}
               onPress={onPress}
               style={[styles.tab, isFocused && styles.activeTab]}>
-              <MaterialIcons
-                name={getIcon()}
-                size={24}
-                color={isFocused ? '#000' : '#666'}
-              />
+              {renderIcon()}
             </TouchableOpacity>
           );
         })}
