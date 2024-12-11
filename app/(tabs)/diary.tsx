@@ -1,10 +1,11 @@
-import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar } from 'react-native';
+import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar, TouchableOpacity } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { useState } from 'react';
 import { Calendar } from '@/components/ui/Calendar';
 import { TimeSlots } from '@/components/ui/TimeSlots';
 import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
 import { ThemedText } from '@/components/ThemedText';
+import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 
 export default function DiaryScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -13,7 +14,18 @@ export default function DiaryScreen() {
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
         <View style={styles.header}>
-          <ThemedText style={[styles.title, { color: '#000' }]}>Diary</ThemedText>
+          <View style={styles.titleContainer}>
+            <FontAwesome name="bookmark" size={24} color="#000" />
+            <ThemedText style={styles.title}>Diary</ThemedText>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.headerButton}>
+              <MaterialIcons name="search" size={24} color="#666" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerButton}>
+              <MaterialIcons name="more-vert" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         <View style={styles.stickyHeader}>
@@ -53,21 +65,49 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: width * 0.05,
-    paddingTop: Platform.OS === 'ios' ? height * 0.04 : STATUSBAR_HEIGHT + height * 0.02,
+    paddingTop: Platform.OS === 'ios' ? height * 0.05 : STATUSBAR_HEIGHT + height * 0.02,
     paddingBottom: height * 0.01,
     backgroundColor: '#fff',
     zIndex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: Platform.OS === 'ios' ? 80 : 70,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 2,
+    height: 36,
   },
   title: {
-    fontSize: Math.min(32, width * 0.08),
-    fontWeight: 'bold',
-    lineHeight: 36,
+    fontSize: Math.min(26, width * 0.065),
+    fontWeight: '600',
+    color: '#000',
+    letterSpacing: 0.5,
+    lineHeight: 30,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: '100%',
+  },
+  headerButton: {
+    padding: 8,
+    marginLeft: 8,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   stickyHeader: {
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
     zIndex: 1,
+    marginTop: -4,
   },
   scrollableContent: {
     flex: 1,
