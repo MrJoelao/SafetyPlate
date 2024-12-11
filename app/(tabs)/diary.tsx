@@ -16,14 +16,14 @@ export default function DiaryScreen() {
           <ThemedText style={[styles.title, { color: '#000' }]}>Diary</ThemedText>
         </View>
 
-        <View style={styles.calendarContainer}>
+        <View style={styles.stickyHeader}>
           <Calendar 
             selectedDate={selectedDate}
             onDateSelect={setSelectedDate}
           />
         </View>
         
-        <View style={styles.timeSlotsWrapper}>
+        <View style={styles.scrollableContent}>
           <TimeSlots textColor="#000" />
         </View>
         
@@ -49,26 +49,27 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   header: {
     paddingHorizontal: width * 0.05,
     paddingTop: Platform.OS === 'ios' ? height * 0.04 : STATUSBAR_HEIGHT + height * 0.02,
     paddingBottom: height * 0.01,
     backgroundColor: '#fff',
+    zIndex: 1,
   },
   title: {
     fontSize: Math.min(32, width * 0.08),
     fontWeight: 'bold',
     lineHeight: 36,
   },
-  calendarContainer: {
-    paddingHorizontal: width * 0.05,
-    paddingVertical: height * 0.01,
+  stickyHeader: {
     backgroundColor: '#fff',
-    maxHeight: height * 0.35,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    zIndex: 1,
   },
-  timeSlotsWrapper: {
+  scrollableContent: {
     flex: 1,
     backgroundColor: '#fff',
   },
@@ -76,6 +77,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: width * 0.05,
     bottom: BOTTOM_TAB_HEIGHT + 5,
-    zIndex: 1,
+    zIndex: 2,
   },
 });
