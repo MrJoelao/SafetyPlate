@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useCallback, useRef, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
-import { format } from 'date-fns';
+import { format, addMonths, subMonths } from 'date-fns';
 import { it } from 'date-fns/locale';
 
 interface CalendarProps {
@@ -11,134 +11,244 @@ interface CalendarProps {
 }
 
 const { width } = Dimensions.get('window');
-const DATE_ITEM_WIDTH = width * 0.11; // Ridotto da 0.15 a 0.13 per far entrare più date
-const HORIZONTAL_SPACING = 7; // Spazio tra le date
-const ARROW_BUTTON_SIZE = 40; // Dimensione del cerchio per i pulsanti
+const HORIZONTAL_PADDING = 2;
+const DATE_ITEM_WIDTH = Math.floor((width - HORIZONTAL_PADDING * 2) / 7);
+const ARROW_WIDTH = 40;
 
 export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect }) => {
-  // Genera un array di date per il mese corrente
-  const getDatesInMonth = () => {
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const getDatesInMonth = useCallback(() => {
     const dates = [];
     const currentDate = new Date(selectedDate);
-    currentDate.setDate(1); // Vai al primo del mese
+    currentDate.setDate(1);
     
-    // Aggiungi date fino alla fine del mese
     while (currentDate.getMonth() === selectedDate.getMonth()) {
       dates.push(new Date(currentDate));
       currentDate.setDate(currentDate.getDate() + 1);
     }
     return dates;
+  }, [selectedDate]);
+
+  // Scroll alla data selezionata quando cambia il mese
+  useEffect(() => {
+    const dates = getDatesInMonth();
+    const selectedIndex = dates.findIndex(
+      date => date.getDate() === selectedDate.getDate()
+    );
+    
+    if (selectedIndex !== -1 && scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({
+        x: selectedIndex * DATE_ITEM_WIDTH,
+        animated: true,
+      });
+    }
+  }, [selectedDate.getMonth()]);
+
+  const handleDatePress = (date: Date) => {
+    // Animazione di feedback
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 0.95,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    onDateSelect(date);
+  };
+
+  const handlePrevMonth = () => {
+    onDateSelect(subMonths(selectedDate, 1));
+  };
+
+  const handleNextMonth = () => {
+    onDateSelect(addMonths(selectedDate, 1));
   };
 
   return (
-    <View style={styles.calendarContainer}>
-      <View style={styles.monthSelector}>
-        <TouchableOpacity 
-          style={[styles.arrowButton, styles.arrowButtonCircle]}
-        >
-          <MaterialIcons name="chevron-left" size={24} color="#000" />
-        </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.monthContainer}>
+          <ThemedText style={styles.monthText}>
+            {format(selectedDate, 'MMMM yyyy', { locale: it })}
+          </ThemedText>
+        </View>
         
-        <ThemedText style={[styles.monthText, { color: '#000' }]}>
-          {format(selectedDate, 'MMMM yyyy', { locale: it })}
-        </ThemedText>
-        
-        <TouchableOpacity 
-          style={[styles.arrowButton, styles.arrowButtonCircle]}
-        >
-          <MaterialIcons name="chevron-right" size={24} color="#000" />
-        </TouchableOpacity>
+        <View style={styles.arrowsContainer}>
+          <TouchableOpacity 
+            onPress={handlePrevMonth}
+            style={[styles.iconButton, styles.leftArrow]}
+          >
+            <MaterialIcons name="chevron-left" size={24} color="#666" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            onPress={handleNextMonth}
+            style={[styles.iconButton, styles.rightArrow]}
+          >
+            <MaterialIcons name="chevron-right" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView 
+        ref={scrollViewRef}
         horizontal 
         showsHorizontalScrollIndicator={false} 
         style={styles.daysContainer}
-        contentContainerStyle={styles.daysContentContainer}
-        snapToInterval={DATE_ITEM_WIDTH + HORIZONTAL_SPACING} // Aggiunto snap per uno scrolling più fluido
+        contentContainerStyle={styles.scrollContent}
+        snapToInterval={DATE_ITEM_WIDTH}
         decelerationRate="fast"
+        snapToAlignment="center"
       >
-        {getDatesInMonth().map((date, index) => (
-          <TouchableOpacity
-            key={index}
-            onPress={() => onDateSelect(date)}
-            style={[
-              styles.dateContainer,
-              date.getDate() === selectedDate.getDate() && styles.selectedDate,
-            ]}>
-            <ThemedText style={[styles.dayName, { color: '#000' }]}>
-              {format(date, 'EEE', { locale: it })}
-            </ThemedText>
-            <ThemedText 
+        {getDatesInMonth().map((date, index) => {
+          const isSelected = date.getDate() === selectedDate.getDate();
+          const isToday = date.toDateString() === new Date().toDateString();
+          
+          return (
+            <Animated.View
+              key={index}
               style={[
-                styles.dateText,
-                { color: date.getDate() === selectedDate.getDate() ? '#fff' : '#000' }
-              ]}>
-              {date.getDate()}
-            </ThemedText>
-          </TouchableOpacity>
-        ))}
+                { transform: [{ scale: isSelected ? scaleAnim : 1 }] }
+              ]}
+            >
+              <TouchableOpacity
+                onPress={() => handleDatePress(date)}
+                style={[
+                  styles.dateItem,
+                  isToday && !isSelected && styles.todayDate,
+                  isSelected && styles.selectedDate,
+                ]}
+              >
+                <ThemedText style={styles.dayName}>
+                  {format(date, 'EEE', { locale: it }).toUpperCase()}
+                </ThemedText>
+                <View style={[
+                  styles.dateCircle,
+                  isToday && !isSelected && styles.todayCircle,
+                  isSelected && styles.selectedCircle,
+                ]}>
+                  <ThemedText style={[
+                    styles.dateNumber,
+                    isToday && !isSelected && styles.todayText,
+                    isSelected && styles.selectedText,
+                  ]}>
+                    {date.getDate()}
+                  </ThemedText>
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+          );
+        })}
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  calendarContainer: {
+  container: {
     backgroundColor: '#fff',
-    paddingVertical: 15,
-    borderRadius: 10,
+    paddingVertical: 4,
+    width: '100%',
   },
-  monthSelector: {
+  header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 0, // Ridotto il padding per avvicinare i pulsanti ai bordi
-    marginBottom: 15,
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+    position: 'relative',
+    width: '100%',
+    marginBottom: 4,
   },
-  arrowButton: {
-    width: ARROW_BUTTON_SIZE,
-    height: ARROW_BUTTON_SIZE,
+  monthContainer: {
+    paddingLeft: ARROW_WIDTH + 4,
+    flex: 1,
+    height: 32,
+    justifyContent: 'center',
+  },
+  monthText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    textTransform: 'capitalize',
+    lineHeight: 16,
+  },
+  arrowsContainer: {
+    flexDirection: 'row',
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    justifyContent: 'space-between',
+    zIndex: 1,
+    height: 32,
+  },
+  iconButton: {
+    width: ARROW_WIDTH,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  arrowButtonCircle: {
-    backgroundColor: '#f0f0f0',
-    borderRadius: ARROW_BUTTON_SIZE / 2,
+  leftArrow: {
+    paddingLeft: 4,
   },
-  monthText: {
-    fontSize: 18,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-    flex: 1, // Permette al testo di occupare lo spazio centrale
-    textAlign: 'center', // Centra il testo
+  rightArrow: {
+    paddingRight: 4,
   },
   daysContainer: {
     flexDirection: 'row',
+    width: '100%',
   },
-  daysContentContainer: {
-    paddingLeft: width * 0.05,
-    paddingRight: width * 0.05 - HORIZONTAL_SPACING, // Compensiamo il marginRight dell'ultimo elemento
+  scrollContent: {
+    paddingHorizontal: 0,
   },
-  dateContainer: {
+  dateItem: {
     width: DATE_ITEM_WIDTH,
-    height: DATE_ITEM_WIDTH * 1.2,
-    justifyContent: 'center',
     alignItems: 'center',
-    marginRight: HORIZONTAL_SPACING,
-    borderRadius: 12,
-  },
-  selectedDate: {
-    backgroundColor: '#4CAF50',
+    paddingHorizontal: 2,
+    height: 52,
   },
   dayName: {
-    fontSize: 13,
-    marginBottom: 4,
-    textTransform: 'uppercase',
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 2,
+    lineHeight: 12,
+  },
+  dateCircle: {
+    width: Math.min(32, DATE_ITEM_WIDTH - 8),
+    height: Math.min(32, DATE_ITEM_WIDTH - 8),
+    borderRadius: Math.min(16, (DATE_ITEM_WIDTH - 8) / 2),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dateNumber: {
+    fontSize: 14,
+    color: '#000',
     fontWeight: '500',
   },
-  dateText: {
-    fontSize: 20,
-    fontWeight: '600',
+  selectedDate: {
+    backgroundColor: 'transparent',
+  },
+  selectedCircle: {
+    backgroundColor: '#4CAF50',
+  },
+  selectedText: {
+    color: '#fff',
+  },
+  todayDate: {
+    backgroundColor: 'transparent',
+  },
+  todayCircle: {
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+  },
+  todayText: {
+    color: '#4CAF50',
   },
 }); 
