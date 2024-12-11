@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -18,6 +18,7 @@ const ARROW_WIDTH = 40;
 export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect }) => {
   const scrollViewRef = useRef<ScrollView>(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const [isScrolling, setIsScrolling] = useState(false);
 
   const getDatesInMonth = useCallback(() => {
     const dates = [];
@@ -31,23 +32,26 @@ export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect }
     return dates;
   }, [selectedDate]);
 
-  // Scroll alla data selezionata quando cambia il mese
+  // Scroll alla data selezionata solo quando cambia il mese
   useEffect(() => {
+    if (isScrolling) return; // Non scrollare se l'utente sta interagendo
+
     const dates = getDatesInMonth();
     const selectedIndex = dates.findIndex(
       date => date.getDate() === selectedDate.getDate()
     );
     
     if (selectedIndex !== -1 && scrollViewRef.current) {
-      scrollViewRef.current.scrollTo({
-        x: selectedIndex * DATE_ITEM_WIDTH,
-        animated: true,
-      });
+      setTimeout(() => {
+        scrollViewRef.current?.scrollTo({
+          x: selectedIndex * DATE_ITEM_WIDTH,
+          animated: true,
+        });
+      }, 100);
     }
   }, [selectedDate.getMonth()]);
 
   const handleDatePress = (date: Date) => {
-    // Animazione di feedback
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 0.95,
@@ -104,9 +108,11 @@ export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect }
         showsHorizontalScrollIndicator={false} 
         style={styles.daysContainer}
         contentContainerStyle={styles.scrollContent}
-        snapToInterval={DATE_ITEM_WIDTH}
-        decelerationRate="fast"
-        snapToAlignment="center"
+        onScrollBeginDrag={() => setIsScrolling(true)}
+        onScrollEndDrag={() => setIsScrolling(false)}
+        onMomentumScrollEnd={() => setIsScrolling(false)}
+        decelerationRate="normal"
+        scrollEventThrottle={16}
       >
         {getDatesInMonth().map((date, index) => {
           const isSelected = date.getDate() === selectedDate.getDate();
