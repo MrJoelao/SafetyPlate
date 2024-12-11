@@ -53,18 +53,18 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: width * 0.05,
-    paddingTop: Platform.OS === 'ios' ? height * 0.06 : STATUSBAR_HEIGHT + height * 0.04,
-    paddingBottom: height * 0.02,
+    paddingTop: Platform.OS === 'ios' ? height * 0.04 : STATUSBAR_HEIGHT + height * 0.02,
+    paddingBottom: height * 0.01,
     backgroundColor: '#fff',
   },
   title: {
     fontSize: Math.min(32, width * 0.08),
     fontWeight: 'bold',
-    lineHeight: 40,
+    lineHeight: 36,
   },
   calendarContainer: {
     paddingHorizontal: width * 0.05,
-    paddingVertical: height * 0.02,
+    paddingVertical: height * 0.01,
     backgroundColor: '#fff',
     maxHeight: height * 0.35,
   },
