@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Entypo, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
@@ -30,9 +30,9 @@ export function CustomTabBar({ state, navigation }: BottomTabBarProps) {
               case 'diary':
                 return <FontAwesome name="bookmark" size={24} color={isFocused ? '#000' : '#666'} />;
               case 'index':
-                return <MaterialIcons name="dashboard" size={24} color={isFocused ? '#000' : '#666'} />;
+                return <FontAwesome5 name="apple-alt" size={24} color={isFocused ? '#000' : '#666'} />;
               case 'Planner':
-                return <MaterialIcons name="calendar-today" size={24} color={isFocused ? '#000' : '#666'} />;
+                return <Entypo name="calendar" size={24} color={isFocused ? '#000' : '#666'} />;
               default:
                 return <MaterialIcons name="circle" size={24} color={isFocused ? '#000' : '#666'} />;
             }
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     borderRadius: 25,
     height: 50,
-    width: width - 40,
+    width: width - width/3.2,
     justifyContent: 'space-around',
     alignItems: 'center',
     paddingHorizontal: 10,
