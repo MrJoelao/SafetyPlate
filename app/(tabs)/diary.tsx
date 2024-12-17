@@ -6,10 +6,26 @@ import { TimeSlots } from '@/components/ui/TimeSlots';
 import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
 import { ThemedText } from '@/components/ThemedText';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { MealTypeMenu } from '@/components/ui/MealTypeMenu';
+import { MealEntryModal } from '@/components/ui/MealEntryModal';
 
 export default function DiaryScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState('');
+
+  const handleMealSelect = (mealType: string) => {
+    setSelectedMealType(mealType);
+    setIsMenuOpen(false);
+    setIsModalVisible(true);
+  };
+
+  const handleSaveMeal = (mealData: any) => {
+    console.log('Salvataggio pasto:', { type: selectedMealType, ...mealData });
+    // Qui implementeremo la logica per salvare il pasto
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
@@ -40,12 +56,23 @@ export default function DiaryScreen() {
         </View>
         
         <View style={styles.fabContainer}>
+          <MealTypeMenu 
+            visible={isMenuOpen}
+            onSelect={handleMealSelect}
+            onClose={() => setIsMenuOpen(false)}
+          />
           <FloatingActionButton 
-            onPress={() => {
-              console.log('Aggiungi nuova attività');
-            }} 
+            onPress={() => setIsMenuOpen(!isMenuOpen)}
+            isOpen={isMenuOpen}
           />
         </View>
+
+        <MealEntryModal
+          visible={isModalVisible}
+          mealType={selectedMealType}
+          onClose={() => setIsModalVisible(false)}
+          onSave={handleSaveMeal}
+        />
       </ThemedView>
     </SafeAreaView>
   );
@@ -116,7 +143,8 @@ const styles = StyleSheet.create({
   fabContainer: {
     position: 'absolute',
     right: width * 0.05,
-    bottom: BOTTOM_TAB_HEIGHT + 5,
+    bottom: BOTTOM_TAB_HEIGHT + 16,
     zIndex: 2,
+    alignItems: 'flex-end',
   },
 });
