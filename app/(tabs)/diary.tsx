@@ -9,6 +9,8 @@ import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { MealTypeMenu } from '@/components/ui/MealTypeMenu';
 import { MealEntryModal } from '@/components/ui/MealEntryModal';
 
+//Commit
+
 export default function DiaryScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
