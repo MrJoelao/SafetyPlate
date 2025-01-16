@@ -260,6 +260,10 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({
     }));
   };
 
+  const handleSaveMeal = (mealData: MealData) => {
+    console.log('Salvataggio pasto:', { type: selectedMealType, ...mealData });
+  };
+
   return (
     <Modal
       visible={visible}
