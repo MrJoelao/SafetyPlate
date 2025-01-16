@@ -1,21 +1,61 @@
+import React, { useState } from 'react';
+import { StyleSheet, View, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar } from 'react-native';
-
-const { width, height } = Dimensions.get('window');
-const STATUSBAR_HEIGHT = StatusBar.currentHeight || 0;
+import { PlannerCalendar } from '@/components/planner/PlannerCalendar';
+import { MealPlanSheet } from '@/components/planner/MealPlanSheet';
+import { PlannerHeader } from '@/components/planner/PlannerHeader';
+import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
+import { MealTypeMenu } from '@/components/ui/MealTypeMenu';
+import { MealEntryModal } from '@/components/ui/MealEntryModal';
+import { MealData } from '@/components/ui/MealEntryModal';
 
 export default function PlannerScreen() {
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState('');
+
+  const handleMealSelect = (mealType: string) => {
+    setSelectedMealType(mealType);
+    setIsMenuOpen(false);
+    setIsModalVisible(true);
+  };
+
+  const handleSaveMeal = (mealData: MealData) => {
+    console.log('Salvataggio pasto:', { type: selectedMealType, ...mealData });
+    // Qui implementeremo la logica per salvare il pasto
+  };
+  
   return (
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <ThemedText style={[styles.title, { color: '#000' }]}>Food Planning</ThemedText>
-        </View>
+        <PlannerHeader />
+        <PlannerCalendar 
+          selectedDate={selectedDate}
+          onDateSelect={setSelectedDate}
+        />
+        <MealPlanSheet 
+          date={selectedDate}
+        />
         
-        <View style={styles.content}>
-          <ThemedText style={{ color: '#000' }}>Working in progress...</ThemedText>
+        <View style={styles.fabContainer}>
+          <MealTypeMenu 
+            visible={isMenuOpen}
+            onSelect={handleMealSelect}
+            onClose={() => setIsMenuOpen(false)}
+          />
+          <FloatingActionButton 
+            onPress={() => setIsMenuOpen(!isMenuOpen)}
+            isOpen={isMenuOpen}
+          />
         </View>
+
+        <MealEntryModal
+          visible={isModalVisible}
+          mealType={selectedMealType}
+          onClose={() => setIsModalVisible(false)}
+          onSave={handleSaveMeal}
+        />
       </ThemedView>
     </SafeAreaView>
   );
@@ -27,23 +67,13 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  header: {
-    paddingHorizontal: width * 0.05,
-    paddingTop: Platform.OS === 'ios' ? height * 0.06 : STATUSBAR_HEIGHT + height * 0.04,
-    paddingBottom: height * 0.02,
     backgroundColor: '#fff',
-    marginBottom: height * 0.01,
   },
-  title: {
-    fontSize: Math.min(32, width * 0.08),
-    fontWeight: 'bold',
-    lineHeight: 40,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  fabContainer: {
+    position: 'absolute',
+    right: 20,
+    bottom: Platform.OS === 'ios' ? 100 : 80,
+    zIndex: 2,
+    alignItems: 'flex-end',
   },
 });
