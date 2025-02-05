@@ -1,50 +1,55 @@
-# Welcome to your Expo app 👋
+# SafetyPlate - Your Food Safety Companion 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+SafetyPlate is a mobile application designed to help individuals with specific dietary needs, such as allergies or intolerances, make informed and safe food choices. The app allows users to create personalized diets and quickly check if a particular dish contains allergens that could be harmful to their health.
 
-## Get started
+*This project was developed as part of a school assignment, demonstrating practical application of mobile development concepts.*
 
-1. Install dependencies
+## Key Features
+
+* **Intelligent Search**: 
+  - Search for dishes and get results ranked by compatibility with your allergies and intolerances
+  - Dishes are classified from most to least suitable based on your dietary profile
+
+* **Food Diary**:
+  - Track your daily meals
+  - Receive alerts if you consume too many unsuitable dishes in a short period
+
+* **Meal Planning**:
+  - Generate personalized meal plans based on your allergies, intolerances, and preferences
+  - Get suggestions for suitable dishes while considering your food diary history
+
+* **Categorization**:
+  - Browse products by allergens or nutritional categories (carbs, proteins, fruits, etc.)
+  - Easily find and add dishes to your food diary
+
+## Getting Started
+
+### Installation
+1. Install dependencies:
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. Start the development server:
 
    ```bash
-    npx expo start
+   npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+### Running the App
+You can run the app using:
+- [Expo Go](https://expo.dev/go) for quick testing
+- Android emulator or iOS simulator for full development
+- [Development build](https://docs.expo.dev/develop/development-builds/introduction/) for production-like environment
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Who Can Benefit?
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+SafetyPlate is designed for:
+- Individuals with food allergies
+- People with food intolerances
+- Parents managing their children's dietary needs
+- Nutritionists, dietitians, and allergologists
 
-## Get a fresh project
 
-When you're ready, run:
 
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
