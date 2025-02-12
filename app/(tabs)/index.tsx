@@ -10,7 +10,7 @@ const STATUSBAR_HEIGHT = StatusBar.currentHeight || 0;
 
 // Esempio di dati (da sostituire con dati reali)
 const DAILY_STATS = {
-  score: 75, // 0-100
+  score: 90, // 0-100
   calories: {
     current: 1850,
     target: 2000
@@ -28,13 +28,13 @@ const WEEKLY_STATS = [
   { day: 'Mar', score: 70 },
   { day: 'Mer', score: 85 },
   { day: 'Gio', score: 75 },
-  { day: 'Ven', score: 80 },
+  { day: 'Ven', score: 40 },
   { day: 'Sab', score: 90 },
   { day: 'Dom', score: 75 },
 ];
 
 const getScoreColor = (score: number) => {
-  if (score < 40) return '#F44336';
+  if (score <= 40) return '#F44336';
   if (score < 70) return '#FFC107';
   return '#4CAF50';
 };
@@ -48,7 +48,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
           <View style={styles.titleContainer}>
             <FontAwesome5 name="apple-alt" size={24} color="#000" />
-            <ThemedText style={styles.title}>Dashboard</ThemedText>
+            <ThemedText style={styles.title}>Home</ThemedText>
           </View>
         </View>
 
@@ -82,10 +82,20 @@ export default function HomeScreen() {
                 size={20} 
                 color={scoreColor} 
               />
-              <ThemedText style={[styles.insightText, { color: scoreColor }]}>
-                {DAILY_STATS.score >= 70 
-                  ? "Ottimo lavoro! Continua così!"
-                  : "C'è spazio per migliorare"}
+                <ThemedText style={[styles.insightText, { color: scoreColor }]}>
+                {(() => {
+                  switch (true) {
+                  case DAILY_STATS.score >= 70:
+                  return "Ottimo lavoro! Continua così!";
+                  case DAILY_STATS.score <= 40:
+                  return "Attenzione! Hai bisogno di migliorare!";
+                  case DAILY_STATS.score > 40 && DAILY_STATS.score < 70:
+                  return "Ci devi ancora lavorare, non mollare!";
+                  default:
+                  return "";
+                  }
+                })()}
+
               </ThemedText>
             </View>
           </View>
