@@ -21,6 +21,7 @@ const DAILY_STATS = {
     fats: { current: 55, target: 65 }
   }
 };
+// Aggiungiamo dati per il grafico settimanale
 
 // Aggiungiamo dati per il grafico settimanale
 const WEEKLY_STATS = [
@@ -51,6 +52,7 @@ export default function HomeScreen() {
             <ThemedText style={styles.title}>Home</ThemedText>
           </View>
         </View>
+          {/* Score Card */}
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Score Card */}
@@ -100,7 +102,7 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Macro Cards */}
+          {/* Macro Cards 
           <View style={styles.macroContainer}>
             <View style={styles.macroCard}>
               <MaterialIcons name="local-fire-department" size={24} color="#FF9800" />
@@ -126,6 +128,7 @@ export default function HomeScreen() {
               <ThemedText style={styles.macroLabel}>Carboidrati</ThemedText>
             </View>
           </View>
+          */}
 
           {/* Weekly Progress */}
           <View style={styles.weeklyCard}>
@@ -186,7 +189,7 @@ const styles = StyleSheet.create({
     paddingBottom: height * 0.01,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: '#FFF',
   },
   titleContainer: {
     flexDirection: 'row',
