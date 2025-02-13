@@ -233,7 +233,7 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({
     </View>
   );
 
-  const handleUpdateNutrition = (id: string, field: keyof DishItem['nutrition'], value: string) => {
+  const handleUpdateNutrition = (id: string, field: keyof NonNullable<DishItem['nutrition']>, value: string) => {
     setDishes(dishes.map(dish => {
       if (dish.id === id && dish.nutrition) {
         return {
@@ -261,7 +261,7 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({
   };
 
   const handleSaveMeal = (mealData: MealData) => {
-    console.log('Salvataggio pasto:', { type: selectedMealType, ...mealData });
+    console.log('Salvataggio pasto:', { type: mealType, ...mealData });
   };
 
   return (
@@ -352,7 +352,7 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({
                     })}
                   >
                     <View style={[styles.suggestedIconContainer, { backgroundColor: meal.color }]}>
-                      <MaterialIcons name={meal.icon} size={24} color="#fff" />
+                      <MaterialIcons name={meal.icon as keyof typeof MaterialIcons.glyphMap} size={24} color="#fff" />
                     </View>
                     <ThemedText style={styles.suggestedText}>{meal.name}</ThemedText>
                   </TouchableOpacity>
@@ -364,7 +364,6 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({
             <ScrollView 
               ref={scrollViewRef}
               style={styles.dishList}
-              showsVerticalScrollIndicator={false}
             >
               {dishes.map(renderDishItem)}
             </ScrollView>
@@ -518,7 +517,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     paddingBottom: 80,
-    bounces: false,
   },
   emptyState: {
     position: 'absolute',
