@@ -21,7 +21,6 @@ const DAILY_STATS = {
     fats: { current: 55, target: 65 }
   }
 };
-// Aggiungiamo dati per il grafico settimanale
 
 // Aggiungiamo dati per il grafico settimanale
 const WEEKLY_STATS = [
@@ -282,7 +281,7 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     paddingHorizontal: 4,
   },
-  macroCard: {
+  /*macroCard: {
     flex: 1,
     backgroundColor: '#fff',
     borderRadius: 16,
@@ -295,7 +294,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-  },
+  },*/
   macroValue: {
     fontSize: 20,
     fontWeight: '600',
