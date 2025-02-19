@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar, ScrollView } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { DiaryOptionsMenu } from '@/components/ui/DiaryOptionsMenu';
 import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
@@ -40,17 +42,32 @@ const getScoreColor = (score: number) => {
 };
 
 export default function HomeScreen() {
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const scoreColor = getScoreColor(DAILY_STATS.score);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.titleContainer}>
-            <FontAwesome5 name="apple-alt" size={24} color="#000" />
-            <ThemedText style={styles.title}>Home</ThemedText>
-          </View>
-        </View>
+        <ScreenHeader
+          title="Home"
+          icon={<FontAwesome5 name="apple-alt" size={24} color="#000" />}
+          showSearch={true}
+          showOptions={true}
+          onOptionsPress={() => setShowOptionsMenu(true)}
+        />
+
+        <DiaryOptionsMenu
+          visible={showOptionsMenu}
+          onClose={() => setShowOptionsMenu(false)}
+          onImportPress={() => {
+            // TODO: Implementare la logica per l'importazione
+            console.log('Importa');
+          }}
+          onSettingsPress={() => {
+            // TODO: Implementare la logica per le impostazioni
+            console.log('Apri impostazioni');
+          }}
+        />
           {/* Score Card */}
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -181,25 +198,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  header: {
-    paddingHorizontal: width * 0.05,
-    paddingTop: Platform.OS === 'ios' ? height * 0.05 : STATUSBAR_HEIGHT + height * 0.02,
-    paddingBottom: height * 0.01,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#FFF',
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    height: 36,
-  },
-  title: {
-    fontSize: Math.min(26, width * 0.065),
-    fontWeight: '600',
-    color: '#000',
   },
   content: {
     flex: 1,
@@ -415,4 +413,4 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#4CAF50',
   },
-}); 
+});

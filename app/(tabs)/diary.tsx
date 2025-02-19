@@ -1,11 +1,11 @@
-import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { useState } from 'react';
 import { Calendar } from '@/components/ui/Calendar';
 import { TimeSlots } from '@/components/ui/TimeSlots';
 import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
-import { ThemedText } from '@/components/ThemedText';
-import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { MealTypeMenu } from '@/components/ui/MealTypeMenu';
 import { MealEntryModal } from '@/components/ui/MealEntryModal';
 import { ImportFoodModal } from '@/components/ui/ImportFoodModal';
@@ -33,23 +33,11 @@ export default function DiaryScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
-        <View style={styles.header}>
-          <View style={styles.titleContainer}>
-            <FontAwesome name="bookmark" size={24} color="#000" />
-            <ThemedText style={styles.title}>Diary</ThemedText>
-          </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.headerButton}>
-              <MaterialIcons name="search" size={24} color="#666" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.headerButton}
-              onPress={() => setShowOptionsMenu(true)}
-            >
-              <MaterialIcons name="more-vert" size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <ScreenHeader
+          title="Diary"
+          icon={<FontAwesome name="bookmark" size={24} color="#000" />}
+          onOptionsPress={() => setShowOptionsMenu(true)}
+        />
 
         <View style={styles.stickyHeader}>
           <Calendar 
@@ -116,45 +104,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-  },
-  header: {
-    paddingHorizontal: width * 0.05,
-    paddingTop: Platform.OS === 'ios' ? height * 0.05 : STATUSBAR_HEIGHT + height * 0.02,
-    paddingBottom: height * 0.01,
-    backgroundColor: '#fff',
-    zIndex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: Platform.OS === 'ios' ? 80 : 70,
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingVertical: 2,
-    height: 36,
-  },
-  title: {
-    fontSize: Math.min(26, width * 0.065),
-    fontWeight: '600',
-    color: '#000',
-    letterSpacing: 0.5,
-    lineHeight: 30,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: '100%',
-  },
-  headerButton: {
-    padding: 8,
-    marginLeft: 8,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   stickyHeader: {
     backgroundColor: '#fff',
