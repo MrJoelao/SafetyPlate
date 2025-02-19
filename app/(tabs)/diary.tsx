@@ -8,14 +8,16 @@ import { ThemedText } from '@/components/ThemedText';
 import { FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import { MealTypeMenu } from '@/components/ui/MealTypeMenu';
 import { MealEntryModal } from '@/components/ui/MealEntryModal';
-
-//Commit
+import { ImportFoodModal } from '@/components/ui/ImportFoodModal';
+import { DiaryOptionsMenu } from '@/components/ui/DiaryOptionsMenu';
 
 export default function DiaryScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
 
   const handleMealSelect = (mealType: string) => {
     setSelectedMealType(mealType);
@@ -40,7 +42,10 @@ export default function DiaryScreen() {
             <TouchableOpacity style={styles.headerButton}>
               <MaterialIcons name="search" size={24} color="#666" />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerButton}>
+            <TouchableOpacity 
+              style={styles.headerButton}
+              onPress={() => setShowOptionsMenu(true)}
+            >
               <MaterialIcons name="more-vert" size={24} color="#666" />
             </TouchableOpacity>
           </View>
@@ -74,6 +79,26 @@ export default function DiaryScreen() {
           mealType={selectedMealType}
           onClose={() => setIsModalVisible(false)}
           onSave={handleSaveMeal}
+        />
+
+        <DiaryOptionsMenu
+          visible={showOptionsMenu}
+          onClose={() => setShowOptionsMenu(false)}
+          onImportPress={() => setShowImportModal(true)}
+          onSettingsPress={() => {
+            // TODO: Implementare la logica per le impostazioni
+            console.log('Apri impostazioni');
+          }}
+        />
+
+        <ImportFoodModal
+          visible={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          onImport={(content) => {
+            // TODO: Implementare la logica per parsare il contenuto e aggiungere gli alimenti
+            console.log('Contenuto importato:', content);
+            setShowImportModal(false);
+          }}
         />
       </ThemedView>
     </SafeAreaView>
