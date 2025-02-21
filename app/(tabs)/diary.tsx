@@ -82,11 +82,6 @@ export default function DiaryScreen() {
         <ImportFoodModal
           visible={showImportModal}
           onClose={() => setShowImportModal(false)}
-          onImport={(content) => {
-            // TODO: Implementare la logica per parsare il contenuto e aggiungere gli alimenti
-            console.log('Contenuto importato:', content);
-            setShowImportModal(false);
-          }}
         />
       </ThemedView>
     </SafeAreaView>
