@@ -3,7 +3,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useState, useRef } from 'react';
 import { BlurView } from 'expo-blur';
-import { FoodManagerView } from './FoodManagerView';
+import { InlineFoodManager } from './InlineFoodManager';
 import { FoodImportView } from './FoodImportView';
 import { FoodPasteView } from './FoodPasteView';
 
@@ -29,7 +29,6 @@ const tabs: TabItem[] = [
 
 export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('import');
-  const [isManagerVisible, setIsManagerVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const handleTabChange = (tab: Tab) => {
@@ -66,25 +65,7 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
       {activeTab === 'paste' && (
         <FoodPasteView onSuccess={onClose} />
       )}
-      {activeTab === 'manage' && (
-        <View style={styles.manageContainer}>
-          <ThemedText style={styles.manageTitle}>
-            Gestione degli alimenti
-          </ThemedText>
-          <ThemedText style={styles.manageDescription}>
-            Aggiungi, modifica o elimina gli alimenti manualmente
-          </ThemedText>
-          <TouchableOpacity
-            style={styles.manageButton}
-            onPress={() => setIsManagerVisible(true)}
-          >
-            <MaterialIcons name="settings" size={24} color="#fff" />
-            <ThemedText style={styles.buttonText}>
-              Apri Gestione
-            </ThemedText>
-          </TouchableOpacity>
-        </View>
-      )}
+      {activeTab === 'manage' && <InlineFoodManager />}
     </Animated.View>
   );
 
@@ -144,10 +125,6 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
         </View>
       </BlurView>
 
-      <FoodManagerView
-        visible={isManagerVisible}
-        onClose={() => setIsManagerVisible(false)}
-      />
     </Modal>
   );
 }
