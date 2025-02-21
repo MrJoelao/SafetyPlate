@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, View, StyleSheet, TouchableOpacity, TextInput, ScrollView, Dimensions, FlatList, Platform } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -31,43 +31,25 @@ interface MealData {
   datetime: Date;
 }
 
-// Dati di esempio per la ricerca rapida
-const QUICK_ADD_ITEMS = [
-  { 
-    id: '1', 
-    name: 'Pasta al Pomodoro', 
-    defaultUnit: 'g',
-    nutritionPer100g: {
-      calories: 158,
-      proteins: 5.9,
-      carbs: 31,
-      fats: 0.9
-    }
-  },
-  { 
-    id: '2', 
-    name: 'Insalata Mista', 
-    defaultUnit: 'porzione',
-    nutritionPerUnit: {
-      calories: 45,
-      proteins: 2.5,
-      carbs: 7,
-      fats: 0.3
-    }
-  },
-  { id: '3', name: 'Petto di Pollo', defaultUnit: 'g' },
-  { id: '4', name: 'Riso Basmati', defaultUnit: 'g' },
-  { id: '5', name: 'Yogurt Greco', defaultUnit: 'g' },
-];
+import { loadFoods } from '@/utils/foodStorage';
+import { Food } from '@/types/food';
+
+interface SuggestedMeal {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  score: number;
+}
 
 // Aggiungiamo una sezione per i piatti consigliati
-const SUGGESTED_MEALS = [
-  { id: '1', name: 'Pasta', icon: 'restaurant', color: '#FF9800' },
-  { id: '2', name: 'Insalata', icon: 'eco', color: '#4CAF50' },
-  { id: '3', name: 'Pollo', icon: 'set-meal', color: '#F44336' },
-  { id: '4', name: 'Yogurt', icon: 'breakfast-dining', color: '#2196F3' },
-  { id: '5', name: 'Frutta', icon: 'nutrition', color: '#9C27B0' },
-  { id: '6', name: 'Riso', icon: 'rice-bowl', color: '#FF5722' },
+const SUGGESTED_MEALS: SuggestedMeal[] = [
+  { id: '1', name: 'Pasta', icon: 'restaurant', color: '#FF9800', score: 70 },
+  { id: '2', name: 'Insalata', icon: 'eco', color: '#4CAF50', score: 90 },
+  { id: '3', name: 'Pollo', icon: 'set-meal', color: '#F44336', score: 85 },
+  { id: '4', name: 'Yogurt', icon: 'breakfast-dining', color: '#2196F3', score: 80 },
+  { id: '5', name: 'Frutta', icon: 'nutrition', color: '#9C27B0', score: 95 },
+  { id: '6', name: 'Riso', icon: 'rice-bowl', color: '#FF5722', score: 75 },
 ];
 
 export const MealEntryModal: React.FC<MealEntryModalProps> = ({
@@ -85,19 +67,19 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({
 
   const scrollViewRef = React.useRef<ScrollView>(null);
   
-  const handleAddDish = (item?: typeof QUICK_ADD_ITEMS[0]) => {
+  const handleAddDish = (item?: Food) => {
     const newDish: DishItem = {
       id: Date.now().toString(),
       name: item?.name || '',
       quantity: '',
       unit: item?.defaultUnit || 'g',
       isCustom: !item,
-      nutrition: !item ? {
+      nutrition: {
         calories: '',
         proteins: '',
         carbs: '',
         fats: ''
-      } : undefined
+      }
     };
     setDishes([newDish, ...dishes]);
     setShowQuickAdd(false);
@@ -127,7 +109,22 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({
     onClose();
   };
 
-  const filteredItems = QUICK_ADD_ITEMS.filter(item =>
+  const [availableFoods, setAvailableFoods] = useState<Food[]>([]);
+
+  useEffect(() => {
+    const fetchFoods = async () => {
+      const result = await loadFoods();
+      if (result.success) {
+        setAvailableFoods(result.foods || []);
+      } else {
+        console.error('Error loading foods:', result.error);
+        // TODO: Consider showing an error message to the user
+      }
+    };
+    fetchFoods();
+  }, [visible]); // Reload foods when modal becomes visible
+
+  const filteredItems = availableFoods.filter(item =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -348,7 +345,8 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({
                     onPress={() => handleAddDish({ 
                       id: meal.id, 
                       name: meal.name, 
-                      defaultUnit: 'g' 
+                      defaultUnit: 'g',
+                      score: meal.score
                     })}
                   >
                     <View style={[styles.suggestedIconContainer, { backgroundColor: meal.color }]}>
@@ -804,4 +802,4 @@ const getMealTypeLabel = (type: string) => {
     case 'snack': return 'Spuntino';
     default: return 'Pasto';
   }
-}; 
+};
