@@ -1,76 +1,92 @@
-import { Modal, StyleSheet, View, TouchableOpacity, TextInput, Dimensions, Platform, Alert, Text } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
+import { Modal, StyleSheet, View, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
-import { useState } from 'react';
-import * as FileSystem from 'expo-file-system';
+import { useState, useRef } from 'react';
 import { BlurView } from 'expo-blur';
-import { LinearGradient } from 'expo-linear-gradient';
-import { parseFoodFromText, saveFoods } from '@/utils/foodStorage';
-import { Food } from '@/types/food';
-import { ParseResult, StorageResult } from '@/types/storage';
 import { FoodManagerView } from './FoodManagerView';
+import { FoodImportView } from './FoodImportView';
+import { FoodPasteView } from './FoodPasteView';
 
 interface ImportFoodModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
+type Tab = 'import' | 'paste' | 'manage';
+
+interface TabItem {
+  key: Tab;
+  title: string;
+  icon: keyof typeof MaterialIcons.glyphMap;
+  color: string;
+}
+
+const tabs: TabItem[] = [
+  { key: 'import', title: 'File', icon: 'upload-file', color: '#006C51' },
+  { key: 'paste', title: 'Incolla', icon: 'content-paste', color: '#2196F3' },
+  { key: 'manage', title: 'Gestione', icon: 'edit', color: '#FF9800' }
+];
+
 export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('import');
   const [isManagerVisible, setIsManagerVisible] = useState(false);
+  const slideAnim = useRef(new Animated.Value(0)).current;
 
-  const showError = (message: string) => {
-    Alert.alert(
-      'Errore',
-      message,
-      [{ text: 'OK', style: 'default' }]
-    );
+  const handleTabChange = (tab: Tab) => {
+    if (tab === activeTab) return;
+
+    // Slide out current content
+    Animated.timing(slideAnim, {
+      toValue: -400,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setActiveTab(tab);
+      slideAnim.setValue(400);
+      
+      // Slide in new content
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        friction: 8,
+      }).start();
+    });
   };
 
-  const handleFilePick = async () => {
-    try {
-      const result = await DocumentPicker.getDocumentAsync();
-
-      if (!result.canceled) {
-        const file = result.assets[0];
-        setFileName(file.name);
-        
-        // Leggi il contenuto del file
-        const content = await FileSystem.readAsStringAsync(file.uri);
-        setFileContent(content);
-        
-        // Parse foods
-        const parseResult = parseFoodFromText(content);
-        if (!parseResult.success) {
-          showError(parseResult.error || 'Errore durante la lettura del file');
-          return;
-        }
-
-        // Save foods
-        const saveResult = await saveFoods(parseResult.foods!);
-        if (!saveResult.success) {
-          showError(saveResult.error || 'Errore durante il salvataggio degli alimenti');
-          return;
-        }
-
-        // Debug: mostra il JSON dei cibi importati
-        console.log('Foods imported:', parseResult.foods!.length);
-        console.log('Foods JSON:', JSON.stringify(parseResult.foods, null, 2));
-        
-        Alert.alert(
-          'Successo',
-          `Importati ${parseResult.foods!.length} alimenti con successo`,
-          [{ text: 'OK', style: 'default', onPress: onClose }]
-        );
-      }
-    } catch (error) {
-      console.error('Errore durante la selezione del file:', error);
-      showError('Errore durante la lettura del file');
-    }
-  };
+  const renderContent = () => (
+    <Animated.View
+      style={[
+        styles.contentContainer,
+        { transform: [{ translateX: slideAnim }] }
+      ]}
+    >
+      {activeTab === 'import' && (
+        <FoodImportView onSuccess={onClose} />
+      )}
+      {activeTab === 'paste' && (
+        <FoodPasteView onSuccess={onClose} />
+      )}
+      {activeTab === 'manage' && (
+        <View style={styles.manageContainer}>
+          <ThemedText style={styles.manageTitle}>
+            Gestione degli alimenti
+          </ThemedText>
+          <ThemedText style={styles.manageDescription}>
+            Aggiungi, modifica o elimina gli alimenti manualmente
+          </ThemedText>
+          <TouchableOpacity
+            style={styles.manageButton}
+            onPress={() => setIsManagerVisible(true)}
+          >
+            <MaterialIcons name="settings" size={24} color="#fff" />
+            <ThemedText style={styles.buttonText}>
+              Apri Gestione
+            </ThemedText>
+          </TouchableOpacity>
+        </View>
+      )}
+    </Animated.View>
+  );
 
   return (
     <Modal
@@ -93,66 +109,38 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
-            <View style={styles.importOptions}>
+          {/* Tabs */}
+          <View style={styles.tabs}>
+            {tabs.map(tab => (
               <TouchableOpacity
-                style={[styles.optionCard, styles.fileCard]}
-                onPress={handleFilePick}
-                activeOpacity={0.8}
+                key={tab.key}
+                style={[
+                  styles.tab,
+                  activeTab === tab.key && styles.activeTab,
+                  activeTab === tab.key && { borderBottomColor: tab.color }
+                ]}
+                onPress={() => handleTabChange(tab.key)}
               >
-                <View style={[styles.optionIcon, { backgroundColor: '#e8f5e9' }]}>
-                  <MaterialIcons name="upload-file" size={32} color="#4CAF50" />
-                </View>
-                <View style={styles.optionContent}>
-                  <ThemedText style={styles.optionTitle}>
-                    Inserisci File
-                  </ThemedText>
-                  <ThemedText style={styles.optionDescription}>
-                    Carica un file di testo con gli alimenti
-                  </ThemedText>
-                </View>
+                <MaterialIcons
+                  name={tab.icon}
+                  size={24}
+                  color={activeTab === tab.key ? tab.color : '#666'}
+                />
+                <ThemedText
+                  style={[
+                    styles.tabText,
+                    activeTab === tab.key && styles.activeTabText,
+                    activeTab === tab.key && { color: tab.color }
+                  ]}
+                >
+                  {tab.title}
+                </ThemedText>
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.optionCard, styles.pasteCard]}
-                onPress={() => {
-                  // TODO: Implementare l'incolla contenuto
-                  console.log('Incolla contenuto');
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.optionIcon, { backgroundColor: '#e3f2fd' }]}>
-                  <MaterialIcons name="content-paste" size={32} color="#2196F3" />
-                </View>
-                <View style={styles.optionContent}>
-                  <ThemedText style={styles.optionTitle}>
-                    Incolla Contenuto
-                  </ThemedText>
-                  <ThemedText style={styles.optionDescription}>
-                    Incolla il testo degli alimenti qui
-                  </ThemedText>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.optionCard, styles.manualCard]}
-                onPress={() => setIsManagerVisible(true)}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.optionIcon, { backgroundColor: '#fff3e0' }]}>
-                  <MaterialIcons name="edit" size={32} color="#FF9800" />
-                </View>
-                <View style={styles.optionContent}>
-                  <ThemedText style={styles.optionTitle}>
-                    Aggiunta Manuale
-                  </ThemedText>
-                  <ThemedText style={styles.optionDescription}>
-                    Inserisci gli alimenti uno alla volta
-                  </ThemedText>
-                </View>
-              </TouchableOpacity>
-            </View>
+            ))}
           </View>
+
+          {/* Content */}
+          {renderContent()}
         </View>
       </BlurView>
 
@@ -167,6 +155,71 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
 const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
+  contentContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  tabs: {
+    flexDirection: 'row',
+    width: '100%',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    gap: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomWidth: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  activeTabText: {
+    fontWeight: '600',
+  },
+  manageContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    gap: 16,
+  },
+  manageTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+  },
+  manageDescription: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  manageButton: {
+    backgroundColor: '#FF9800',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    gap: 12,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
