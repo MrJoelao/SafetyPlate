@@ -1,4 +1,4 @@
-import { Modal, StyleSheet, View, TouchableOpacity, TextInput, Dimensions, Platform, Alert } from 'react-native';
+import { Modal, StyleSheet, View, TouchableOpacity, TextInput, Dimensions, Platform, Alert, Text } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { parseFoodFromText, saveFoods } from '@/utils/foodStorage';
 import { Food } from '@/types/food';
 import { ParseResult, StorageResult } from '@/types/storage';
+import { FoodManagerView } from './FoodManagerView';
 
 interface ImportFoodModalProps {
   visible: boolean;
@@ -19,6 +20,7 @@ interface ImportFoodModalProps {
 export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
+  const [isManagerVisible, setIsManagerVisible] = useState(false);
 
   const showError = (message: string) => {
     Alert.alert(
@@ -134,10 +136,7 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
 
               <TouchableOpacity
                 style={[styles.optionCard, styles.manualCard]}
-                onPress={() => {
-                  // TODO: Implementare l'aggiunta manuale
-                  console.log('Aggiunta manuale');
-                }}
+                onPress={() => setIsManagerVisible(true)}
                 activeOpacity={0.8}
               >
                 <View style={[styles.optionIcon, { backgroundColor: '#fff3e0' }]}>
@@ -156,6 +155,11 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
           </View>
         </View>
       </BlurView>
+
+      <FoodManagerView
+        visible={isManagerVisible}
+        onClose={() => setIsManagerVisible(false)}
+      />
     </Modal>
   );
 }
