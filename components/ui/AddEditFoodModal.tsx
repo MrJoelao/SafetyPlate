@@ -1,29 +1,41 @@
-import { useEffect, useState } from 'react';
-import { Modal, StyleSheet, View, TouchableOpacity, TextInput, ScrollView, Alert, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  Modal,
+  StyleSheet,
+  View,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { Food } from '@/types/food';
+import { saveFoods } from '@/utils/foodStorage';
 
 interface AddEditFoodModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (food: Food) => Promise<void>;
   food?: Food;
+  onSave: (food: Food) => Promise<void>;
 }
 
-export function AddEditFoodModal({ visible, onClose, onSave, food }: AddEditFoodModalProps) {
+export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFoodModalProps) {
   const [name, setName] = useState('');
   const [score, setScore] = useState('');
-  const [defaultUnit, setDefaultUnit] = useState('g');
+  const [defaultUnit, setDefaultUnit] = useState('');
   const [calories, setCalories] = useState('');
   const [proteins, setProteins] = useState('');
   const [carbs, setCarbs] = useState('');
   const [fats, setFats] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (visible && food) {
+    if (food) {
       setName(food.name);
       setScore(food.score.toString());
       setDefaultUnit(food.defaultUnit);
@@ -33,106 +45,66 @@ export function AddEditFoodModal({ visible, onClose, onSave, food }: AddEditFood
         setCarbs(food.nutritionPer100g.carbs?.toString() || '');
         setFats(food.nutritionPer100g.fats?.toString() || '');
       }
+    } else {
+      resetForm();
     }
-  }, [visible, food]);
+  }, [food]);
 
   const resetForm = () => {
     setName('');
     setScore('');
-    setDefaultUnit('g');
+    setDefaultUnit('');
     setCalories('');
     setProteins('');
     setCarbs('');
     setFats('');
   };
 
-  const validateForm = (): boolean => {
+  const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert('Errore', 'Il nome è obbligatorio');
-      return false;
+      return;
     }
 
-    const scoreNum = parseInt(score);
-    if (isNaN(scoreNum) || scoreNum < 0) {
+    if (!score || isNaN(Number(score))) {
       Alert.alert('Errore', 'Lo score deve essere un numero valido');
-      return false;
+      return;
     }
 
     if (!defaultUnit.trim()) {
       Alert.alert('Errore', "L'unità di misura è obbligatoria");
-      return false;
+      return;
     }
-
-    // Validate optional nutrition fields if any are filled
-    if (calories || proteins || carbs || fats) {
-      const validateNumber = (value: string, fieldName: string): boolean => {
-        if (value && (isNaN(Number(value)) || Number(value) < 0)) {
-          Alert.alert('Errore', `${fieldName} deve essere un numero valido`);
-          return false;
-        }
-        return true;
-      };
-
-      if (!validateNumber(calories, 'Calorie') ||
-          !validateNumber(proteins, 'Proteine') ||
-          !validateNumber(carbs, 'Carboidrati') ||
-          !validateNumber(fats, 'Grassi')) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
-  const handleSave = async () => {
-    if (!validateForm()) return;
 
     try {
-      setIsSubmitting(true);
-
-      const newFood: Food = {
-        id: food?.id || Date.now() + Math.random().toString(36).substr(2, 9),
+      setIsLoading(true);
+      const foodData: Food = {
+        id: food?.id || `food-${Date.now()}`,
         name: name.trim(),
-        score: parseInt(score),
+        score: Number(score),
         defaultUnit: defaultUnit.trim(),
-        nutritionPer100g: (calories || proteins || carbs || fats) ? {
+        nutritionPer100g: {
           calories: calories ? Number(calories) : undefined,
           proteins: proteins ? Number(proteins) : undefined,
           carbs: carbs ? Number(carbs) : undefined,
           fats: fats ? Number(fats) : undefined,
-        } : undefined
+        },
       };
 
-      await onSave(newFood);
-      resetForm();
-      onClose();
+      const result = await saveFoods([foodData]);
+      if (result.success) {
+        await onSave(foodData);
+        resetForm();
+        onClose();
+      } else {
+        Alert.alert('Errore', result.error || 'Errore durante il salvataggio');
+      }
     } catch (error) {
-      Alert.alert('Errore', 'Errore durante il salvataggio dell\'alimento');
+      Alert.alert('Errore', 'Si è verificato un errore inatteso');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
-
-  const renderInput = (
-    label: string,
-    value: string,
-    onChangeText: (text: string) => void,
-    keyboardType: 'default' | 'numeric' = 'default',
-    optional: boolean = false
-  ) => (
-    <View style={styles.inputContainer}>
-      <ThemedText style={styles.label}>
-        {label}{!optional && <ThemedText style={styles.required}> *</ThemedText>}
-      </ThemedText>
-      <TextInput
-        style={styles.input}
-        value={value}
-        onChangeText={onChangeText}
-        keyboardType={keyboardType}
-        placeholderTextColor="#999"
-      />
-    </View>
-  );
 
   return (
     <Modal
@@ -143,20 +115,18 @@ export function AddEditFoodModal({ visible, onClose, onSave, food }: AddEditFood
       onRequestClose={onClose}
     >
       <BlurView intensity={20} style={styles.backdrop}>
-        <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.keyboardView}
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalHandle} />
-            
-            {/* Header */}
             <View style={styles.header}>
               <View style={styles.headerContent}>
-                <MaterialIcons 
-                  name={food ? "edit" : "add-circle"} 
-                  size={24} 
-                  color="#4CAF50" 
+                <MaterialIcons
+                  name={food ? 'edit' : 'add-circle'}
+                  size={24}
+                  color={food ? '#2196F3' : '#4CAF50'}
                 />
                 <ThemedText style={styles.title}>
                   {food ? 'Modifica Alimento' : 'Nuovo Alimento'}
@@ -168,36 +138,97 @@ export function AddEditFoodModal({ visible, onClose, onSave, food }: AddEditFood
             </View>
 
             <ScrollView style={styles.content}>
-              {/* Basic Info */}
-              {renderInput('Nome', name, setName)}
-              {renderInput('Score', score, setScore, 'numeric')}
-              {renderInput('Unità di Misura', defaultUnit, setDefaultUnit)}
-
-              {/* Nutrition Info */}
-              <View style={styles.sectionHeader}>
+              {/* Required Fields */}
+              <View style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>
-                  Valori Nutrizionali (per 100g)
+                  Informazioni base *
                 </ThemedText>
-                <ThemedText style={styles.optional}>Opzionale</ThemedText>
+                <View style={styles.inputGroup}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Nome alimento"
+                    value={name}
+                    onChangeText={setName}
+                    placeholderTextColor="#999"
+                  />
+                  <View style={styles.row}>
+                    <TextInput
+                      style={[styles.input, styles.halfInput]}
+                      placeholder="Score"
+                      value={score}
+                      onChangeText={setScore}
+                      keyboardType="numeric"
+                      placeholderTextColor="#999"
+                    />
+                    <TextInput
+                      style={[styles.input, styles.halfInput]}
+                      placeholder="Unità di misura"
+                      value={defaultUnit}
+                      onChangeText={setDefaultUnit}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
               </View>
 
-              {renderInput('Calorie', calories, setCalories, 'numeric', true)}
-              {renderInput('Proteine', proteins, setProteins, 'numeric', true)}
-              {renderInput('Carboidrati', carbs, setCarbs, 'numeric', true)}
-              {renderInput('Grassi', fats, setFats, 'numeric', true)}
+              {/* Optional Fields */}
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>
+                  Valori nutrizionali per 100g
+                </ThemedText>
+                <View style={styles.inputGroup}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Calorie (kcal)"
+                    value={calories}
+                    onChangeText={setCalories}
+                    keyboardType="numeric"
+                    placeholderTextColor="#999"
+                  />
+                  <View style={styles.row}>
+                    <TextInput
+                      style={[styles.input, styles.thirdInput]}
+                      placeholder="Proteine (g)"
+                      value={proteins}
+                      onChangeText={setProteins}
+                      keyboardType="numeric"
+                      placeholderTextColor="#999"
+                    />
+                    <TextInput
+                      style={[styles.input, styles.thirdInput]}
+                      placeholder="Carboidrati (g)"
+                      value={carbs}
+                      onChangeText={setCarbs}
+                      keyboardType="numeric"
+                      placeholderTextColor="#999"
+                    />
+                    <TextInput
+                      style={[styles.input, styles.thirdInput]}
+                      placeholder="Grassi (g)"
+                      value={fats}
+                      onChangeText={setFats}
+                      keyboardType="numeric"
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
+              </View>
             </ScrollView>
 
-            {/* Save Button */}
             <View style={styles.footer}>
-              <TouchableOpacity 
-                style={[styles.saveButton, isSubmitting && styles.saveButtonDisabled]}
+              <TouchableOpacity
+                style={[styles.saveButton, isLoading && styles.buttonDisabled]}
                 onPress={handleSave}
-                disabled={isSubmitting}
+                disabled={isLoading}
               >
-                <MaterialIcons name="check" size={24} color="#fff" />
-                <ThemedText style={styles.saveButtonText}>
-                  {isSubmitting ? 'Salvataggio...' : 'Salva'}
-                </ThemedText>
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <MaterialIcons name="save" size={24} color="#fff" />
+                    <ThemedText style={styles.buttonText}>Salva</ThemedText>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -206,8 +237,6 @@ export function AddEditFoodModal({ visible, onClose, onSave, food }: AddEditFood
     </Modal>
   );
 }
-
-const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   backdrop: {
@@ -219,21 +248,18 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    width: width,
-    height: height * 0.9,
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    elevation: 24,
-    overflow: 'hidden',
+    maxHeight: '90%',
   },
   modalHandle: {
     width: 36,
     height: 4,
     backgroundColor: '#e0e0e0',
     borderRadius: 2,
-    marginTop: 12,
     alignSelf: 'center',
+    marginTop: 12,
   },
   header: {
     flexDirection: 'row',
@@ -258,62 +284,56 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   content: {
-    flex: 1,
-    padding: 20,
+    paddingHorizontal: 20,
   },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 14,
-    marginBottom: 8,
-    color: '#666',
-  },
-  required: {
-    color: '#F44336',
-  },
-  input: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    padding: 12,
-    fontSize: 16,
-    color: '#333',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    marginBottom: 16,
+  section: {
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#666',
+    marginBottom: 12,
+  },
+  inputGroup: {
+    gap: 12,
+  },
+  input: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
     color: '#333',
   },
-  optional: {
-    fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
+  row: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  halfInput: {
+    flex: 1,
+  },
+  thirdInput: {
+    flex: 1,
   },
   footer: {
     padding: 20,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#eee',
   },
   saveButton: {
     backgroundColor: '#4CAF50',
-    borderRadius: 12,
-    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
     gap: 8,
   },
-  saveButtonDisabled: {
+  buttonDisabled: {
     opacity: 0.6,
   },
-  saveButtonText: {
+  buttonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
