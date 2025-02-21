@@ -95,6 +95,73 @@ export const saveFoods = async (foods: Food[]): Promise<StorageResult> => {
   }
 };
 
+export const addFood = async (food: Food): Promise<StorageResult> => {
+  try {
+    const result = await loadFoods();
+    if (!result.success) {
+      return result;
+    }
+
+    const foods = result.foods || [];
+    const updatedFoods = [...foods, food];
+    return saveFoods(updatedFoods);
+  } catch (error) {
+    console.error('Error adding food:', error);
+    return {
+      success: false,
+      error: "Errore durante l'aggiunta dell'alimento"
+    };
+  }
+};
+
+export const updateFood = async (updatedFood: Food): Promise<StorageResult> => {
+  try {
+    const result = await loadFoods();
+    if (!result.success) {
+      return result;
+    }
+
+    const foods = result.foods || [];
+    const foodIndex = foods.findIndex(f => f.id === updatedFood.id);
+    
+    if (foodIndex === -1) {
+      return {
+        success: false,
+        error: 'Alimento non trovato'
+      };
+    }
+
+    const updatedFoods = [...foods];
+    updatedFoods[foodIndex] = updatedFood;
+    return saveFoods(updatedFoods);
+  } catch (error) {
+    console.error('Error updating food:', error);
+    return {
+      success: false,
+      error: "Errore durante l'aggiornamento dell'alimento"
+    };
+  }
+};
+
+export const deleteFood = async (foodId: string): Promise<StorageResult> => {
+  try {
+    const result = await loadFoods();
+    if (!result.success) {
+      return result;
+    }
+
+    const foods = result.foods || [];
+    const updatedFoods = foods.filter(f => f.id !== foodId);
+    return saveFoods(updatedFoods);
+  } catch (error) {
+    console.error('Error deleting food:', error);
+    return {
+      success: false,
+      error: "Errore durante l'eliminazione dell'alimento"
+    };
+  }
+};
+
 export const loadFoods = async (): Promise<StorageResult> => {
   try {
     console.log('Loading foods from AsyncStorage');
