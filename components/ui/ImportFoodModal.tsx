@@ -1,4 +1,4 @@
-import { Modal, StyleSheet, View, TouchableOpacity, TextInput, Dimensions, Platform } from 'react-native';
+import { Modal, StyleSheet, View, TouchableOpacity, TextInput, Dimensions, Platform, Alert } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -7,16 +7,26 @@ import { useState } from 'react';
 import * as FileSystem from 'expo-file-system';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
+import { parseFoodFromText, saveFoods } from '@/utils/foodStorage';
+import { Food } from '@/types/food';
+import { ParseResult, StorageResult } from '@/types/storage';
 
 interface ImportFoodModalProps {
   visible: boolean;
   onClose: () => void;
-  onImport: (content: string) => void;
 }
 
-export function ImportFoodModal({ visible, onClose, onImport }: ImportFoodModalProps) {
+export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);
+
+  const showError = (message: string) => {
+    Alert.alert(
+      'Errore',
+      message,
+      [{ text: 'OK', style: 'default' }]
+    );
+  };
 
   const handleFilePick = async () => {
     try {
@@ -30,19 +40,33 @@ export function ImportFoodModal({ visible, onClose, onImport }: ImportFoodModalP
         const content = await FileSystem.readAsStringAsync(file.uri);
         setFileContent(content);
         
-        console.log('Contenuto del file:', content);
+        // Parse foods
+        const parseResult = parseFoodFromText(content);
+        if (!parseResult.success) {
+          showError(parseResult.error || 'Errore durante la lettura del file');
+          return;
+        }
+
+        // Save foods
+        const saveResult = await saveFoods(parseResult.foods!);
+        if (!saveResult.success) {
+          showError(saveResult.error || 'Errore durante il salvataggio degli alimenti');
+          return;
+        }
+
+        // Debug: mostra il JSON dei cibi importati
+        console.log('Foods imported:', parseResult.foods!.length);
+        console.log('Foods JSON:', JSON.stringify(parseResult.foods, null, 2));
+        
+        Alert.alert(
+          'Successo',
+          `Importati ${parseResult.foods!.length} alimenti con successo`,
+          [{ text: 'OK', style: 'default', onPress: onClose }]
+        );
       }
     } catch (error) {
       console.error('Errore durante la selezione del file:', error);
-    }
-  };
-
-  const handleImport = () => {
-    if (fileContent) {
-      onImport(fileContent);
-      setFileName(null);
-      setFileContent(null);
-      onClose();
+      showError('Errore durante la lettura del file');
     }
   };
 
