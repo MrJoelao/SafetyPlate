@@ -245,13 +245,13 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
-    justifyContent: 'flex-end',
+    marginTop: '5%',
   },
   modalContainer: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '90%',
+    borderRadius: 24,
+    maxHeight: '95%',
+    marginHorizontal: 10,
   },
   modalHandle: {
     width: 36,
