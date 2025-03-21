@@ -9,6 +9,8 @@ import {
   FlatList,
   PanResponder,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -23,6 +25,7 @@ interface SwipeableRow {
 
 export function InlineFoodManager() {
   const isMounted = useRef(true);
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     loadFoodData();
@@ -125,7 +128,7 @@ export function InlineFoodManager() {
     },
   });
 
-  const renderFoodItem = ({ item }: { item: Food }) => {
+  const renderFoodItem = ({ item, index }: { item: Food; index: number }) => {
     const swipeAnim = getSwipeAnimation(item.id);
     const panResponder = createPanResponder(item.id);
 
@@ -154,7 +157,10 @@ export function InlineFoodManager() {
         {/* Content */}
         <View style={styles.foodContent}>
           <View style={styles.foodInfo}>
-            <ThemedText style={styles.foodName}>{item.name}</ThemedText>
+            <View style={styles.foodHeader}>
+              <ThemedText style={styles.foodName}>{item.name}</ThemedText>
+              <ThemedText style={styles.foodIndex}>{index + 1}</ThemedText>
+            </View>
             <ThemedText style={styles.foodDetails}>
               Score: {item.score} • Unità: {item.defaultUnit}
             </ThemedText>
@@ -183,7 +189,10 @@ export function InlineFoodManager() {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <MaterialIcons name="search" size={24} color="#666" style={styles.searchIcon} />
@@ -193,15 +202,26 @@ export function InlineFoodManager() {
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#999"
+          returnKeyType="search"
         />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setSearchQuery('')}
+            style={styles.clearButton}
+          >
+            <MaterialIcons name="close" size={20} color="#999" />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Food List */}
       <FlatList
+        ref={flatListRef}
         data={filteredFoods}
         renderItem={renderFoodItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
+        keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <MaterialIcons name="no-meals" size={48} color="#ccc" />
@@ -209,6 +229,13 @@ export function InlineFoodManager() {
               {isLoading ? 'Caricamento...' : 'Nessun alimento trovato'}
             </ThemedText>
           </View>
+        }
+        ListHeaderComponent={
+          filteredFoods.length > 0 ? (
+            <ThemedText style={styles.listHeader}>
+              {filteredFoods.length} {filteredFoods.length === 1 ? 'alimento' : 'alimenti'}
+            </ThemedText>
+          ) : null
         }
       />
 
@@ -233,7 +260,7 @@ export function InlineFoodManager() {
           setIsAddEditModalVisible(false);
         }}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -248,14 +275,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingVertical: 12,
     backgroundColor: '#f5f5f5',
     marginHorizontal: 20,
     marginVertical: 12,
     borderRadius: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: 12,
   },
   searchInput: {
     flex: 1,
@@ -263,9 +295,18 @@ const styles = StyleSheet.create({
     color: '#333',
     padding: 8,
   },
+  clearButton: {
+    padding: 8,
+  },
+  listHeader: {
+    fontSize: 14,
+    color: '#666',
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
   listContent: {
     padding: 20,
-    paddingTop: 0,
+    paddingTop: 8,
   },
   foodItem: {
     marginBottom: 12,
@@ -312,6 +353,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 16,
   },
+  foodHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   foodInfo: {
     flex: 1,
   },
@@ -319,6 +365,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    flex: 1,
+  },
+  foodIndex: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 8,
   },
   foodDetails: {
     fontSize: 14,
