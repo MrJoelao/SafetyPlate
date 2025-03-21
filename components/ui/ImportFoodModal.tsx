@@ -1,7 +1,7 @@
-import { Modal, StyleSheet, View, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { Modal, StyleSheet, View, TouchableOpacity, Dimensions, Animated, ScrollView, Pressable } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { BlurView } from 'expo-blur';
 import { InlineFoodManager } from './InlineFoodManager';
 import { FoodImportView } from './FoodImportView';
@@ -12,7 +12,7 @@ interface ImportFoodModalProps {
   onClose: () => void;
 }
 
-type Tab = 'import' | 'paste' | 'manage';
+type Tab = 'manage' | 'import';
 
 interface TabItem {
   key: Tab;
@@ -22,50 +22,115 @@ interface TabItem {
 }
 
 const tabs: TabItem[] = [
-  { key: 'import', title: 'File', icon: 'upload-file', color: '#006C51' },
-  { key: 'paste', title: 'Incolla', icon: 'content-paste', color: '#2196F3' },
-  { key: 'manage', title: 'Gestione', icon: 'edit', color: '#FF9800' }
+  { key: 'manage', title: 'Lista Alimenti', icon: 'restaurant-menu', color: '#006C51' },
+  { key: 'import', title: 'Importa', icon: 'upload-file', color: '#2196F3' }
 ];
 
+const { width, height } = Dimensions.get('window');
+
 export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('import');
+  const [activeTab, setActiveTab] = useState<Tab>('manage');
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const indicatorAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(indicatorAnim, {
+        toValue: activeTab === 'manage' ? 0 : 1,
+        useNativeDriver: true,
+        friction: 28,
+        tension: 220,
+        velocity: 3,
+      }),
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 0.98,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 18,
+          tension: 180,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
+  }, [activeTab]);
 
   const handleTabChange = (tab: Tab) => {
     if (tab === activeTab) return;
 
-    // Slide out current content
     Animated.timing(slideAnim, {
-      toValue: -400,
-      duration: 200,
+      toValue: tab === 'manage' ? 400 : -400,
+      duration: 250,
       useNativeDriver: true,
     }).start(() => {
       setActiveTab(tab);
-      slideAnim.setValue(400);
+      slideAnim.setValue(tab === 'manage' ? -400 : 400);
       
-      // Slide in new content
       Animated.spring(slideAnim, {
         toValue: 0,
         useNativeDriver: true,
-        friction: 8,
+        friction: 24,
+        tension: 180,
       }).start();
+
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     });
   };
+
+  const indicatorTranslate = indicatorAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [2, width * 0.425 - 2]
+  });
 
   const renderContent = () => (
     <Animated.View
       style={[
         styles.contentContainer,
-        { transform: [{ translateX: slideAnim }] }
+        { transform: [{ translateX: slideAnim }, { scale: scaleAnim }] }
       ]}
     >
-      {activeTab === 'import' && (
-        <FoodImportView onSuccess={onClose} />
+      {activeTab === 'import' ? (
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.importScrollView}
+          contentContainerStyle={styles.importScrollContent}
+          showsVerticalScrollIndicator={false}
+          bounces={true}
+        >
+          <View style={styles.importContainer}>
+            <View style={styles.importSections}>
+              <View style={styles.importSection}>
+                <View style={styles.sectionHeader}>
+                  <MaterialIcons name="upload-file" size={24} color="#006C51" />
+                  <ThemedText style={styles.sectionTitle}>Importa da File</ThemedText>
+                </View>
+                <View style={styles.sectionContent}>
+                  <FoodImportView onSuccess={onClose} />
+                </View>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.importSection}>
+                <View style={styles.sectionHeader}>
+                  <MaterialIcons name="content-paste" size={24} color="#2196F3" />
+                  <ThemedText style={styles.sectionTitle}>Importa da Testo</ThemedText>
+                </View>
+                <View style={styles.sectionContent}>
+                  <FoodPasteView onSuccess={onClose} />
+                </View>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      ) : (
+        <InlineFoodManager />
       )}
-      {activeTab === 'paste' && (
-        <FoodPasteView onSuccess={onClose} />
-      )}
-      {activeTab === 'manage' && <InlineFoodManager />}
     </Animated.View>
   );
 
@@ -80,122 +145,109 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
       <BlurView intensity={20} style={styles.backdrop}>
         <View style={styles.modalContainer}>
           <View style={styles.modalHandle} />
+          
           <View style={styles.header}>
-            <View style={styles.headerContent}>
-              <MaterialIcons name="add-circle" size={24} color="#4CAF50" />
-              <ThemedText style={styles.title}>Aggiungi Alimenti</ThemedText>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <TouchableOpacity 
+              onPress={onClose} 
+              style={styles.closeButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
               <MaterialIcons name="close" size={24} color="#666" />
             </TouchableOpacity>
           </View>
 
-          {/* Tabs */}
-          <View style={styles.tabs}>
-            {tabs.map(tab => (
-              <TouchableOpacity
-                key={tab.key}
+          {/* Segment Control */}
+          <View style={styles.segmentContainer}>
+            <Animated.View style={[styles.segmentControl, { transform: [{ scale: scaleAnim }] }]}>
+              <Animated.View 
                 style={[
-                  styles.tab,
-                  activeTab === tab.key && styles.activeTab,
-                  activeTab === tab.key && { borderBottomColor: tab.color }
-                ]}
-                onPress={() => handleTabChange(tab.key)}
-              >
-                <MaterialIcons
-                  name={tab.icon}
-                  size={24}
-                  color={activeTab === tab.key ? tab.color : '#666'}
-                />
-                <ThemedText
-                  style={[
-                    styles.tabText,
-                    activeTab === tab.key && styles.activeTabText,
-                    activeTab === tab.key && { color: tab.color }
+                  styles.segmentIndicator,
+                  { transform: [{ translateX: indicatorTranslate }] }
+                ]} 
+              />
+              {tabs.map(tab => (
+                <Pressable
+                  key={tab.key}
+                  style={({ pressed }) => [
+                    styles.segment,
+                    pressed && styles.segmentPressed,
+                    activeTab === tab.key && styles.activeSegment
                   ]}
+                  onPress={() => handleTabChange(tab.key)}
                 >
-                  {tab.title}
-                </ThemedText>
-              </TouchableOpacity>
-            ))}
+                  <MaterialIcons
+                    name={tab.icon}
+                    size={20}
+                    color={activeTab === tab.key ? tab.color : '#666'}
+                    style={[styles.segmentIcon, activeTab === tab.key && styles.activeIcon]}
+                  />
+                  <ThemedText
+                    style={[
+                      styles.segmentText,
+                      activeTab === tab.key && { color: tab.color }
+                    ]}
+                  >
+                    {tab.title}
+                  </ThemedText>
+                </Pressable>
+              ))}
+            </Animated.View>
           </View>
 
           {/* Content */}
           {renderContent()}
         </View>
       </BlurView>
-
     </Modal>
   );
 }
-
-const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     width: '100%',
+    marginTop: 4,
   },
-  tabs: {
+  importScrollView: {
+    flex: 1,
+  },
+  importScrollContent: {
+    flexGrow: 1,
+  },
+  importContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 32,
+  },
+  importSections: {
+    flex: 1,
+    gap: 32,
+  },
+  importSection: {
+    flex: 1,
+    gap: 16,
+  },
+  sectionHeader: {
     flexDirection: 'row',
-    width: '100%',
-    backgroundColor: '#fff',
+    alignItems: 'center',
+    gap: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  tab: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f1f1f',
+  },
+  sectionContent: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    gap: 8,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
   },
-  activeTab: {
-    borderBottomWidth: 2,
-  },
-  tabText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  activeTabText: {
-    fontWeight: '600',
-  },
-  manageContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    gap: 16,
-  },
-  manageTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#333',
-    textAlign: 'center',
-  },
-  manageDescription: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  manageButton: {
-    backgroundColor: '#FF9800',
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    gap: 12,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  divider: {
+    height: 1,
+    backgroundColor: '#eee',
+    marginVertical: 16,
   },
   backdrop: {
     flex: 1,
@@ -203,7 +255,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     width: width,
-    height: height * 0.7,
+    height: height,
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -211,92 +263,94 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     position: 'absolute',
     bottom: 0,
-    alignItems: 'center',
   },
   modalHandle: {
-    width: 36,
+    width: 32,
     height: 4,
     backgroundColor: '#e0e0e0',
     borderRadius: 2,
-    marginTop: 12,
+    marginTop: 8,
+    alignSelf: 'center',
   },
   header: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginTop: 4,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1f1f1f',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 12,
   },
   closeButton: {
     padding: 8,
     borderRadius: 20,
+    backgroundColor: '#f5f5f5',
   },
-  content: {
-    flex: 1,
-    width: '100%',
+  segmentContainer: {
+    paddingBottom: 12,
+    alignItems: 'center',
   },
-  importOptions: {
-    flex: 1,
-    padding: 20,
-    gap: 16,
+  segmentControl: {
+    flexDirection: 'row',
+    backgroundColor: '#F5F7FA',
+    borderRadius: 16,
+    padding: 2,
+    position: 'relative',
+    height: 48,
+    width: width * 0.85,
+    borderWidth: 1,
+    borderColor: '#E4E7EB',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  optionCard: {
+  segmentIndicator: {
+    position: 'absolute',
+    width: '49.5%',
+    height: 44,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  segment: {
     flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-  },
-  fileCard: {
-    borderColor: '#4CAF50',
-    borderWidth: 1,
-  },
-  pasteCard: {
-    borderColor: '#2196F3',
-    borderWidth: 1,
-  },
-  manualCard: {
-    borderColor: '#FF9800',
-    borderWidth: 1,
-  },
-  optionIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
     justifyContent: 'center',
-    alignItems: 'center',
+    gap: 8,
+    zIndex: 1,
+    height: '100%',
   },
-  optionContent: {
-    flex: 1,
-    gap: 6,
+  segmentPressed: {
+    opacity: 0.7,
   },
-  optionTitle: {
-    fontSize: 18,
+  activeSegment: {
+    backgroundColor: 'transparent',
+  },
+  segmentIcon: {
+    opacity: 0.8,
+    marginTop: -1,
+  },
+  activeIcon: {
+    opacity: 1,
+    transform: [{ scale: 1.1 }],
+  },
+  segmentText: {
+    fontSize: 15,
     fontWeight: '600',
-    color: '#1f1f1f',
-  },
-  optionDescription: {
-    fontSize: 14,
     color: '#666',
-    lineHeight: 20,
+    marginTop: -1,
   },
 });
