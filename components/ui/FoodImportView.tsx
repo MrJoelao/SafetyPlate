@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { useState, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Animated } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { MaterialIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
@@ -15,6 +15,32 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
   const [fileName, setFileName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [previewFoods, setPreviewFoods] = useState<Food[]>([]);
+  const shakeAnimation = useRef(new Animated.Value(0)).current;
+
+  const shakeUploadArea = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: -10,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 10,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(shakeAnimation, {
+        toValue: 0,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
 
   const handleFilePick = async () => {
     try {
@@ -33,6 +59,14 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
         if (!parseResult.success) {
           Alert.alert('Errore', parseResult.error || 'Errore durante la lettura del file');
           setFileName(null);
+          shakeUploadArea();
+          return;
+        }
+
+        if (parseResult.foods && parseResult.foods.length === 0) {
+          Alert.alert('Attenzione', 'Nessun alimento trovato nel file');
+          setFileName(null);
+          shakeUploadArea();
           return;
         }
 
@@ -41,6 +75,7 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
     } catch (error) {
       Alert.alert('Errore', 'Errore durante la lettura del file');
       console.error('Error picking file:', error);
+      shakeUploadArea();
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +93,7 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
       if (result.success) {
         Alert.alert(
           'Successo',
-          `Salvati ${previewFoods.length} alimenti`,
+          `Importati ${previewFoods.length} alimenti`,
           [{ text: 'OK', onPress: onSuccess }]
         );
         setFileName(null);
@@ -74,40 +109,48 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
   return (
     <View style={styles.container}>
       {!fileName ? (
-        <TouchableOpacity
-          style={styles.uploadArea}
-          onPress={handleFilePick}
-          disabled={isLoading}
+        <Animated.View
+          style={[
+            styles.uploadArea,
+            { transform: [{ translateX: shakeAnimation }] }
+          ]}
         >
-          <View style={styles.uploadContent}>
+          <TouchableOpacity
+            style={styles.uploadContent}
+            onPress={handleFilePick}
+            disabled={isLoading}
+          >
             <View style={styles.uploadIcon}>
-              <MaterialIcons name="upload-file" size={40} color="#006C51" />
+              <MaterialIcons name="cloud-upload" size={40} color="#006C51" />
             </View>
             <ThemedText style={styles.uploadTitle}>
               Seleziona un file
             </ThemedText>
-            <ThemedText style={styles.uploadDescription}>
-              Supporta file TXT e JSON
-            </ThemedText>
-            <TouchableOpacity
-              style={styles.browseButton}
-              onPress={handleFilePick}
-              disabled={isLoading}
-            >
-              <MaterialIcons name="folder-open" size={24} color="#fff" />
-              <ThemedText style={styles.buttonText}>Sfoglia</ThemedText>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+            <View style={styles.supportedFormats}>
+              <View style={styles.formatBadge}>
+                <MaterialIcons name="description" size={16} color="#666" />
+                <ThemedText style={styles.formatText}>.txt</ThemedText>
+              </View>
+              <View style={styles.formatBadge}>
+                <MaterialIcons name="code" size={16} color="#666" />
+                <ThemedText style={styles.formatText}>.json</ThemedText>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
       ) : (
         <View style={styles.previewContainer}>
           <View style={styles.fileInfo}>
             <View style={styles.fileDetails}>
-              <MaterialIcons name="description" size={24} color="#006C51" />
-              <View>
-                <ThemedText style={styles.fileName}>{fileName}</ThemedText>
+              <View style={styles.fileIconContainer}>
+                <MaterialIcons name="description" size={24} color="#006C51" />
+              </View>
+              <View style={styles.fileData}>
+                <ThemedText style={styles.fileName} numberOfLines={1}>
+                  {fileName}
+                </ThemedText>
                 <ThemedText style={styles.foodCount}>
-                  {previewFoods.length} alimenti trovati
+                  {previewFoods.length} {previewFoods.length === 1 ? 'alimento trovato' : 'alimenti trovati'}
                 </ThemedText>
               </View>
             </View>
@@ -119,16 +162,33 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
               }}
             >
               <MaterialIcons name="change-circle" size={24} color="#2196F3" />
+              <ThemedText style={styles.changeText}>Cambia</ThemedText>
             </TouchableOpacity>
           </View>
 
           <View style={styles.previewList}>
+            <View style={styles.previewHeader}>
+              <ThemedText style={styles.previewTitle}>Anteprima</ThemedText>
+              <ThemedText style={styles.previewSubtitle}>
+                {previewFoods.length > 3 ? 'Prime 3 voci' : 'Tutte le voci'}
+              </ThemedText>
+            </View>
             {previewFoods.slice(0, 3).map((food, index) => (
               <View key={food.id} style={styles.previewItem}>
-                <ThemedText style={styles.foodName}>{food.name}</ThemedText>
-                <ThemedText style={styles.foodScore}>
-                  Score: {food.score}
-                </ThemedText>
+                <View style={styles.previewItemLeft}>
+                  <ThemedText style={styles.previewIndex}>{index + 1}</ThemedText>
+                  <View>
+                    <ThemedText style={styles.foodName}>{food.name}</ThemedText>
+                    <ThemedText style={styles.foodDetails}>
+                      Score: {food.score} • Unità: {food.defaultUnit}
+                    </ThemedText>
+                  </View>
+                </View>
+                {food.nutritionPer100g && (
+                  <ThemedText style={styles.nutritionInfo}>
+                    {food.nutritionPer100g.calories}kcal
+                  </ThemedText>
+                )}
               </View>
             ))}
             {previewFoods.length > 3 && (
@@ -136,24 +196,24 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
                 ...e altri {previewFoods.length - 3} alimenti
               </ThemedText>
             )}
-          </View>
 
-          <TouchableOpacity
-            style={[styles.saveButton, isLoading && styles.buttonDisabled]}
-            onPress={handleSave}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <MaterialIcons name="save" size={24} color="#fff" />
-                <ThemedText style={styles.buttonText}>
-                  Importa Alimenti
-                </ThemedText>
-              </>
-            )}
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.saveButton, isLoading && styles.buttonDisabled]}
+              onPress={handleSave}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <MaterialIcons name="save" size={24} color="#fff" />
+                  <ThemedText style={styles.buttonText}>
+                    Importa {previewFoods.length} {previewFoods.length === 1 ? 'Alimento' : 'Alimenti'}
+                  </ThemedText>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -163,20 +223,20 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
   },
   uploadArea: {
     flex: 1,
+    minHeight: 200,
     borderWidth: 2,
     borderColor: '#E0E0E0',
     borderStyle: 'dashed',
     borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
   },
   uploadContent: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 12,
     padding: 24,
   },
@@ -190,29 +250,29 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   uploadTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
     color: '#333',
   },
-  uploadDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+  supportedFormats: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 16,
   },
-  browseButton: {
-    backgroundColor: '#006C51',
+  formatBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    gap: 8,
-    marginTop: 8,
+    backgroundColor: '#fff',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  formatText: {
+    fontSize: 14,
+    color: '#666',
   },
   previewContainer: {
     flex: 1,
@@ -222,14 +282,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F9FA',
     padding: 16,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   fileDetails: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
+  },
+  fileIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E8F5E9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fileData: {
+    gap: 4,
+    flex: 1,
   },
   fileName: {
     fontSize: 16,
@@ -241,11 +316,30 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   changeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     padding: 8,
+  },
+  changeText: {
+    fontSize: 14,
+    color: '#2196F3',
   },
   previewList: {
     flex: 1,
-    gap: 8,
+    gap: 12,
+  },
+  previewHeader: {
+    gap: 4,
+  },
+  previewTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  previewSubtitle: {
+    fontSize: 14,
+    color: '#666',
   },
   previewItem: {
     backgroundColor: '#fff',
@@ -254,26 +348,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  previewItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  previewIndex: {
+    fontSize: 14,
+    color: '#666',
+    width: 24,
+    textAlign: 'center',
   },
   foodName: {
     fontSize: 16,
     color: '#333',
+    fontWeight: '500',
   },
-  foodScore: {
+  foodDetails: {
     fontSize: 14,
     color: '#666',
+    marginTop: 2,
+  },
+  nutritionInfo: {
+    fontSize: 14,
+    color: '#006C51',
+    fontWeight: '500',
   },
   moreItems: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
     fontStyle: 'italic',
-    marginTop: 8,
   },
   saveButton: {
     backgroundColor: '#006C51',
@@ -283,6 +392,12 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     gap: 8,
+    marginTop: 8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   buttonDisabled: {
     opacity: 0.6,
