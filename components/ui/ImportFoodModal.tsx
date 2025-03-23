@@ -30,6 +30,7 @@ const { width, height } = Dimensions.get('window');
 
 export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>('manage');
+  const [importMethod, setImportMethod] = useState<'file' | 'text'>('file');
   const slideAnim = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const indicatorAnim = useRef(new Animated.Value(0)).current;
@@ -95,39 +96,58 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
       ]}
     >
       {activeTab === 'import' ? (
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.importScrollView}
-          contentContainerStyle={styles.importScrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces={true}
-        >
-          <View style={styles.importContainer}>
-            <View style={styles.importSections}>
-              <View style={styles.importSection}>
-                <View style={styles.sectionHeader}>
-                  <MaterialIcons name="upload-file" size={24} color="#006C51" />
-                  <ThemedText style={styles.sectionTitle}>Importa da File</ThemedText>
-                </View>
-                <View style={styles.sectionContent}>
-                  <FoodImportView onSuccess={onClose} />
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.importSection}>
-                <View style={styles.sectionHeader}>
-                  <MaterialIcons name="content-paste" size={24} color="#2196F3" />
-                  <ThemedText style={styles.sectionTitle}>Importa da Testo</ThemedText>
-                </View>
-                <View style={styles.sectionContent}>
-                  <FoodPasteView onSuccess={onClose} />
-                </View>
-              </View>
-            </View>
+        <View style={styles.importContainer}>
+          {/* Tabs interni per i metodi di importazione */}
+          <View style={styles.importMethodsContainer}>
+            <Pressable
+              style={[
+                styles.importMethodTab, 
+                importMethod === 'file' && styles.activeImportMethodTab
+              ]}
+              onPress={() => setImportMethod('file')}
+            >
+              <MaterialIcons 
+                name="upload-file" 
+                size={20} 
+                color={importMethod === 'file' ? "#006C51" : "#666"} 
+              />
+              <ThemedText style={[
+                styles.importMethodText,
+                importMethod === 'file' && {color: "#006C51"}
+              ]}>
+                Da File
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.importMethodTab, 
+                importMethod === 'text' && styles.activeImportMethodTab
+              ]}
+              onPress={() => setImportMethod('text')}
+            >
+              <MaterialIcons 
+                name="content-paste" 
+                size={20} 
+                color={importMethod === 'text' ? "#2196F3" : "#666"} 
+              />
+              <ThemedText style={[
+                styles.importMethodText,
+                importMethod === 'text' && {color: "#2196F3"}
+              ]}>
+                Da Testo
+              </ThemedText>
+            </Pressable>
           </View>
-        </ScrollView>
+          
+          {/* Contenuto condizionale basato sul metodo selezionato */}
+          <View style={styles.importMethodContent}>
+            {importMethod === 'file' ? (
+              <FoodImportView onSuccess={onClose} />
+            ) : (
+              <FoodPasteView onSuccess={onClose} />
+            )}
+          </View>
+        </View>
       ) : (
         <InlineFoodManager />
       )}
@@ -146,7 +166,45 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
         <View style={styles.modalContainer}>
           <View style={styles.modalHandle} />
           
-          <View style={styles.header}>
+          {/* Header riorganizzato */}
+          <View style={styles.headerContainer}>
+            <View style={styles.segmentContainer}>
+              <Animated.View style={[styles.segmentControl, { transform: [{ scale: scaleAnim }] }]}>
+                <Animated.View 
+                  style={[
+                    styles.segmentIndicator,
+                    { transform: [{ translateX: indicatorTranslate }] }
+                  ]} 
+                />
+                {tabs.map(tab => (
+                  <Pressable
+                    key={tab.key}
+                    style={({ pressed }) => [
+                      styles.segment,
+                      pressed && styles.segmentPressed,
+                      activeTab === tab.key && styles.activeSegment
+                    ]}
+                    onPress={() => handleTabChange(tab.key)}
+                  >
+                    <MaterialIcons
+                      name={tab.icon}
+                      size={20}
+                      color={activeTab === tab.key ? tab.color : '#666'}
+                      style={[styles.segmentIcon, activeTab === tab.key && styles.activeIcon]}
+                    />
+                    <ThemedText
+                      style={[
+                        styles.segmentText,
+                        activeTab === tab.key && { color: tab.color }
+                      ]}
+                    >
+                      {tab.title}
+                    </ThemedText>
+                  </Pressable>
+                ))}
+              </Animated.View>
+            </View>
+            
             <TouchableOpacity 
               onPress={onClose} 
               style={styles.closeButton}
@@ -154,44 +212,6 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
             >
               <MaterialIcons name="close" size={24} color="#666" />
             </TouchableOpacity>
-          </View>
-
-          {/* Segment Control */}
-          <View style={styles.segmentContainer}>
-            <Animated.View style={[styles.segmentControl, { transform: [{ scale: scaleAnim }] }]}>
-              <Animated.View 
-                style={[
-                  styles.segmentIndicator,
-                  { transform: [{ translateX: indicatorTranslate }] }
-                ]} 
-              />
-              {tabs.map(tab => (
-                <Pressable
-                  key={tab.key}
-                  style={({ pressed }) => [
-                    styles.segment,
-                    pressed && styles.segmentPressed,
-                    activeTab === tab.key && styles.activeSegment
-                  ]}
-                  onPress={() => handleTabChange(tab.key)}
-                >
-                  <MaterialIcons
-                    name={tab.icon}
-                    size={20}
-                    color={activeTab === tab.key ? tab.color : '#666'}
-                    style={[styles.segmentIcon, activeTab === tab.key && styles.activeIcon]}
-                  />
-                  <ThemedText
-                    style={[
-                      styles.segmentText,
-                      activeTab === tab.key && { color: tab.color }
-                    ]}
-                  >
-                    {tab.title}
-                  </ThemedText>
-                </Pressable>
-              ))}
-            </Animated.View>
           </View>
 
           {/* Content */}
@@ -216,9 +236,43 @@ const styles = StyleSheet.create({
   },
   importContainer: {
     flex: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 8,
-    paddingBottom: 32,
+  },
+  importMethodsContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    borderRadius: 12,
+    backgroundColor: '#f0f0f0',
+    padding: 4,
+  },
+  importMethodTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+    borderRadius: 10,
+  },
+  activeImportMethodTab: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  importMethodText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#666',
+  },
+  importMethodContent: {
+    flex: 1,
   },
   importSections: {
     flex: 1,
@@ -272,23 +326,17 @@ const styles = StyleSheet.create({
     marginTop: 8,
     alignSelf: 'center',
   },
-  header: {
-    width: '100%',
+  headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 4,
-    paddingBottom: 12,
-  },
-  closeButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#f5f5f5',
+    paddingTop: 8,
+    paddingBottom: 8,
+    width: '100%',
   },
   segmentContainer: {
-    paddingBottom: 12,
-    alignItems: 'center',
+    flex: 1,
   },
   segmentControl: {
     flexDirection: 'row',
@@ -297,7 +345,7 @@ const styles = StyleSheet.create({
     padding: 2,
     position: 'relative',
     height: 48,
-    width: width * 0.85,
+    maxWidth: '92%',
     borderWidth: 1,
     borderColor: '#E4E7EB',
     shadowColor: '#000',
@@ -352,5 +400,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#666',
     marginTop: -1,
+  },
+  closeButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#f5f5f5',
+    marginLeft: 8,
   },
 });
