@@ -54,7 +54,7 @@ export function InlineFoodManager() {
     if (result.success) {
       setFoods(result.foods || [])
     } else {
-      Alert.alert("Errore", result.error || "Errore nel caricamento degli alimenti")
+      Alert.alert("Error", result.error || "Error loading foods")
     }
     setIsLoading(false)
   }
@@ -65,17 +65,17 @@ export function InlineFoodManager() {
   }
 
   const handleDelete = useCallback((foodId: string) => {
-    Alert.alert("Conferma", "Sei sicuro di voler eliminare questo alimento?", [
-      { text: "Annulla", style: "cancel" },
+    Alert.alert("Confirm", "Are you sure you want to delete this food?", [
+      { text: "Cancel", style: "cancel" },
       {
-        text: "Elimina",
+        text: "Delete",
         style: "destructive",
         onPress: async () => {
           const result = await deleteFood(foodId)
           if (result.success) {
             loadFoodData()
           } else {
-            Alert.alert("Errore", result.error || "Errore durante l'eliminazione")
+            Alert.alert("Error", result.error || "Error deleting food")
           }
         },
       },
@@ -210,7 +210,7 @@ export function InlineFoodManager() {
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <MaterialIcons name="no-meals" size={48} color="#ccc" />
-            <ThemedText style={styles.emptyText}>{isLoading ? "Caricamento..." : "Nessun alimento trovato"}</ThemedText>
+            <ThemedText style={styles.emptyText}>{isLoading ? "Loading..." : "No foods found"}</ThemedText>
           </View>
         }
       />

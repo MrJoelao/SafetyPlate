@@ -1,9 +1,18 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { View, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Animated, TextInput } from "react-native"
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  Animated,
+  Clipboard,
+  Platform,
+} from "react-native"
 import { ThemedText } from "@/components/ThemedText"
-import { Feather } from "@expo/vector-icons"
+import { MaterialIcons, Feather } from "@expo/vector-icons"
 import * as DocumentPicker from "expo-document-picker"
 import * as FileSystem from "expo-file-system"
 import { parseFoodFromText, saveFoods } from "@/utils/foodStorage"
@@ -16,11 +25,11 @@ interface FoodImportViewProps {
 export function FoodImportView({ onSuccess }: FoodImportViewProps) {
   const [fileName, setFileName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isPasting, setIsPasting] = useState(false)
   const [previewFoods, setPreviewFoods] = useState<Food[]>([])
-  const [pasteContent, setPasteContent] = useState("")
   const shakeAnimation = useRef(new Animated.Value(0)).current
 
-  const shakeUploadArea = () => {
+  const shakeElement = () => {
     Animated.sequence([
       Animated.timing(shakeAnimation, {
         toValue: 10,
@@ -57,63 +66,67 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
         setFileName(file.name)
 
         const content = await FileSystem.readAsStringAsync(file.uri)
-        const parseResult = parseFoodFromText(content)
-
-        if (!parseResult.success) {
-          Alert.alert("Errore", parseResult.error || "Errore durante la lettura del file")
-          setFileName(null)
-          shakeUploadArea()
-          return
-        }
-
-        if (parseResult.foods && parseResult.foods.length === 0) {
-          Alert.alert("Attenzione", "Nessun alimento trovato nel file")
-          setFileName(null)
-          shakeUploadArea()
-          return
-        }
-
-        setPreviewFoods(parseResult.foods || [])
+        processContent(content)
       }
     } catch (error) {
-      Alert.alert("Errore", "Errore durante la lettura del file")
+      Alert.alert("Error", "Error reading file")
       console.error("Error picking file:", error)
-      shakeUploadArea()
+      shakeElement()
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handlePasteContent = () => {
-    if (!pasteContent.trim()) {
-      Alert.alert("Errore", "Incolla del testo prima di procedere")
-      return
-    }
+  const handlePasteFromClipboard = async () => {
+    try {
+      setIsPasting(true)
 
-    setIsLoading(true)
-    const parseResult = parseFoodFromText(pasteContent)
+      // Get clipboard content
+      let content = ""
+      if (Platform.OS === "web") {
+        content = await navigator.clipboard.readText()
+      } else {
+        content = await Clipboard.getString()
+      }
+
+      if (!content.trim()) {
+        Alert.alert("Error", "Clipboard is empty")
+        return
+      }
+
+      processContent(content)
+    } catch (error) {
+      Alert.alert("Error", "Could not read from clipboard")
+      console.error("Error pasting from clipboard:", error)
+      shakeElement()
+    } finally {
+      setIsPasting(false)
+    }
+  }
+
+  const processContent = (content: string) => {
+    const parseResult = parseFoodFromText(content)
 
     if (!parseResult.success) {
-      Alert.alert("Errore", parseResult.error || "Errore durante la lettura del testo")
-      shakeUploadArea()
-      setIsLoading(false)
+      Alert.alert("Error", parseResult.error || "Error parsing content")
+      setFileName(null)
+      shakeElement()
       return
     }
 
     if (parseResult.foods && parseResult.foods.length === 0) {
-      Alert.alert("Attenzione", "Nessun alimento trovato nel testo")
-      shakeUploadArea()
-      setIsLoading(false)
+      Alert.alert("Warning", "No foods found in content")
+      setFileName(null)
+      shakeElement()
       return
     }
 
     setPreviewFoods(parseResult.foods || [])
-    setIsLoading(false)
   }
 
   const handleSave = async () => {
     if (previewFoods.length === 0) {
-      Alert.alert("Errore", "Nessun alimento da salvare")
+      Alert.alert("Error", "No foods to save")
       return
     }
 
@@ -121,12 +134,11 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
       setIsLoading(true)
       const result = await saveFoods(previewFoods)
       if (result.success) {
-        Alert.alert("Successo", `Importati ${previewFoods.length} alimenti`, [{ text: "OK", onPress: onSuccess }])
+        Alert.alert("Success", `Imported ${previewFoods.length} foods`, [{ text: "OK", onPress: onSuccess }])
         setFileName(null)
         setPreviewFoods([])
-        setPasteContent("")
       } else {
-        Alert.alert("Errore", result.error || "Errore durante il salvataggio")
+        Alert.alert("Error", result.error || "Error saving foods")
       }
     } finally {
       setIsLoading(false)
@@ -135,48 +147,52 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.uploadArea, { transform: [{ translateX: shakeAnimation }] }]}>
-        <TouchableOpacity style={styles.uploadContent} onPress={handleFilePick} disabled={isLoading}>
-          <View style={styles.uploadIcon}>
-            <Feather name="upload" size={32} color="#888" />
-          </View>
-          <ThemedText style={styles.uploadTitle}>Select a file</ThemedText>
+      <View style={styles.importOptions}>
+        <TouchableOpacity style={styles.importButton} onPress={handleFilePick} disabled={isLoading || isPasting}>
+          <Feather name="file" size={24} color="#000" />
+          <ThemedText style={styles.importButtonText}>Select File</ThemedText>
         </TouchableOpacity>
-      </Animated.View>
 
-      <View style={styles.divider}>
-        <View style={styles.dividerLine} />
-        <ThemedText style={styles.dividerText}>or</ThemedText>
-        <View style={styles.dividerLine} />
-      </View>
+        <View style={styles.divider}>
+          <View style={styles.dividerLine} />
+          <ThemedText style={styles.dividerText}>or</ThemedText>
+          <View style={styles.dividerLine} />
+        </View>
 
-      <View style={styles.pasteContainer}>
-        <TextInput
-          style={styles.pasteInput}
-          placeholder="Paste your food data here..."
-          multiline
-          value={pasteContent}
-          onChangeText={setPasteContent}
-          placeholderTextColor="#888"
-        />
         <TouchableOpacity
-          style={styles.pasteButton}
-          onPress={handlePasteContent}
-          disabled={isLoading || !pasteContent.trim()}
+          style={styles.importButton}
+          onPress={handlePasteFromClipboard}
+          disabled={isLoading || isPasting}
         >
-          <ThemedText style={styles.pasteButtonText}>Import from text</ThemedText>
+          <Feather name="clipboard" size={24} color="#000" />
+          <ThemedText style={styles.importButtonText}>Paste from Clipboard</ThemedText>
         </TouchableOpacity>
       </View>
+
+      {(isLoading || isPasting) && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4CAF50" />
+          <ThemedText style={styles.loadingText}>
+            {isPasting ? "Processing clipboard content..." : "Processing file..."}
+          </ThemedText>
+        </View>
+      )}
 
       {previewFoods.length > 0 && (
         <View style={styles.previewContainer}>
-          <ThemedText style={styles.previewTitle}>{previewFoods.length} foods found</ThemedText>
+          <View style={styles.previewHeader}>
+            <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
+            <ThemedText style={styles.previewTitle}>{previewFoods.length} foods found</ThemedText>
+          </View>
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={isLoading}>
             {isLoading ? (
               <ActivityIndicator color="#fff" size="small" />
             ) : (
-              <ThemedText style={styles.saveButtonText}>Save foods</ThemedText>
+              <>
+                <Feather name="save" size={20} color="#fff" />
+                <ThemedText style={styles.saveButtonText}>Save Foods</ThemedText>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -188,32 +204,29 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: 20,
+    justifyContent: "center",
   },
-  uploadArea: {
-    height: 150,
-    borderRadius: 24,
+  importOptions: {
+    gap: 20,
+  },
+  importButton: {
     backgroundColor: "#e0e0e0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  uploadContent: {
+    borderRadius: 24,
+    padding: 20,
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
     gap: 12,
   },
-  uploadIcon: {
-    marginBottom: 8,
-  },
-  uploadTitle: {
+  importButtonText: {
     fontSize: 16,
+    fontWeight: "500",
     color: "#000",
   },
   divider: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 24,
   },
   dividerLine: {
     flex: 1,
@@ -224,49 +237,44 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     color: "#888",
   },
-  pasteContainer: {
-    marginBottom: 24,
-  },
-  pasteInput: {
-    height: 150,
-    borderRadius: 24,
-    backgroundColor: "#e0e0e0",
-    padding: 16,
-    marginBottom: 16,
-    textAlignVertical: "top",
-    color: "#000",
-  },
-  pasteButton: {
-    backgroundColor: "#e0e0e0",
-    borderRadius: 24,
-    padding: 16,
+  loadingContainer: {
+    marginTop: 30,
     alignItems: "center",
   },
-  pasteButtonText: {
-    color: "#000",
-    fontWeight: "500",
+  loadingText: {
+    marginTop: 12,
+    color: "#666",
   },
   previewContainer: {
-    marginTop: 16,
-    padding: 16,
+    marginTop: 30,
     backgroundColor: "#e0e0e0",
     borderRadius: 24,
+    padding: 20,
+  },
+  previewHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 20,
   },
   previewTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "500",
-    marginBottom: 16,
-    textAlign: "center",
+    color: "#000",
   },
   saveButton: {
     backgroundColor: "#4CAF50",
     borderRadius: 24,
     padding: 16,
     alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
   },
   saveButtonText: {
     color: "#fff",
     fontWeight: "500",
+    fontSize: 16,
   },
 })
 

@@ -5,7 +5,6 @@ import { Modal, StyleSheet, View, TouchableOpacity, Dimensions, Animated, type S
 import { MaterialIcons } from "@expo/vector-icons"
 import { BlurView } from "expo-blur"
 import { FoodImportView } from "./FoodImportView"
-import { FoodPasteView } from "./FoodPasteView"
 import { InlineFoodManager } from "./InlineFoodManager"
 
 interface ImportFoodModalProps {
@@ -18,7 +17,6 @@ const { width, height } = Dimensions.get("window")
 export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
   // State for active tab: 'manage' for food list, 'import' for import screen
   const [activeTab, setActiveTab] = useState<"manage" | "import">("manage")
-  const [importMethod, setImportMethod] = useState<"file" | "text">("file")
   const slideAnim = useRef(new Animated.Value(0)).current
   const scrollViewRef = useRef<ScrollView>(null)
 
@@ -53,20 +51,7 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
 
           {/* Content */}
           <Animated.View style={[styles.contentContainer, { transform: [{ translateX: slideAnim }] }]}>
-            {activeTab === "import" ? (
-              <View style={styles.importContainer}>
-                {/* Import methods content */}
-                <View style={styles.importMethodContent}>
-                  {importMethod === "file" ? (
-                    <FoodImportView onSuccess={onClose} />
-                  ) : (
-                    <FoodPasteView onSuccess={onClose} />
-                  )}
-                </View>
-              </View>
-            ) : (
-              <InlineFoodManager />
-            )}
+            {activeTab === "import" ? <FoodImportView onSuccess={onClose} /> : <InlineFoodManager />}
           </Animated.View>
 
           {/* Bottom Navigation Bar */}
@@ -120,14 +105,6 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 4,
     paddingBottom: 80, // Space for bottom navigation
-  },
-  importContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-  },
-  importMethodContent: {
-    flex: 1,
   },
   bottomNavContainer: {
     position: "absolute",
