@@ -194,15 +194,13 @@ export function InlineFoodManager() {
         >
           <View style={styles.foodContent}>
             <View style={styles.foodIconContainer}>
-              <MaterialIcons name="fastfood" size={18} color="#333" />
+              <MaterialIcons name="fastfood" size={22} color="#333" />
             </View>
             
             <View style={styles.foodTextContainer}>
               <View style={styles.nameScoreContainer}>
                 <ThemedText style={styles.foodName}>{item.name}</ThemedText>
-                <View style={styles.scoreBadge}>
-                  <ThemedText style={styles.scoreText}>Score: {item.score}</ThemedText>
-                </View>
+                <ThemedText style={styles.scoreText}> • Score: {item.score}</ThemedText>
               </View>
               
               {item.nutritionPer100g?.calories && (
@@ -309,7 +307,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingVertical: 12, // Ridotto da 16 a 12
     gap: 12,
   },
   searchInputContainer: {
@@ -319,7 +317,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#e0e0e0",
     borderRadius: 28,
     paddingHorizontal: 16,
-    height: 48,
+    height: 42, // Ridotto da 48 a 42
     borderWidth: 1,
     borderColor: "#d0d0d0",
   },
@@ -333,8 +331,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   addButton: {
-    width: 48,
-    height: 48,
+    width: 42, // Ridotto da 48 a 42
+    height: 42, // Ridotto da 48 a 42
     borderRadius: 28,
     backgroundColor: "#e0e0e0",
     justifyContent: "center",
@@ -395,9 +393,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   foodIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 20,
+    width: 38, // Aumentato da 32 a 38
+    height: 38, // Aumentato da 32 a 38
+    borderRadius: 22, // Aumentato proporzionalmente
     backgroundColor: "#d5d5d5",
     justifyContent: "center",
     alignItems: "center",
