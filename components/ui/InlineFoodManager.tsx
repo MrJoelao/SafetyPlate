@@ -15,7 +15,7 @@ import {
   Platform,
 } from "react-native"
 import { ThemedText } from "@/components/ThemedText"
-import { MaterialIcons, Feather } from "@expo/vector-icons"
+import { MaterialIcons } from "@expo/vector-icons"
 import type { Food } from "@/types/food"
 import { loadFoods, deleteFood } from "@/utils/foodStorage"
 import { AddEditFoodModal } from "./AddEditFoodModal"
@@ -54,7 +54,7 @@ export function InlineFoodManager() {
     if (result.success) {
       setFoods(result.foods || [])
     } else {
-      Alert.alert("Error", result.error || "Error loading foods")
+      Alert.alert("Error", "Error loading foods")
     }
     setIsLoading(false)
   }
@@ -95,21 +95,23 @@ export function InlineFoodManager() {
       onMoveShouldSetPanResponder: () => true,
       onPanResponderMove: (_, { dx }) => {
         const swipeAnim = getSwipeAnimation(id)
-        swipeAnim.setValue(dx)
+        // Limite lo swipe tra -100 e 100
+        const newValue = Math.max(-100, Math.min(100, dx))
+        swipeAnim.setValue(newValue)
       },
       onPanResponderRelease: (_, { dx }) => {
         const swipeAnim = getSwipeAnimation(id)
-        if (dx < -100) {
+        if (dx < -80) {
           // Swipe left to delete
           Animated.timing(swipeAnim, {
-            toValue: -200,
+            toValue: -100,
             duration: 200,
             useNativeDriver: true,
           }).start(() => handleDelete(id))
-        } else if (dx > 100) {
+        } else if (dx > 80) {
           // Swipe right to edit
           Animated.timing(swipeAnim, {
-            toValue: 200,
+            toValue: 100,
             duration: 200,
             useNativeDriver: true,
           }).start(() => {
@@ -131,42 +133,104 @@ export function InlineFoodManager() {
     const swipeAnim = getSwipeAnimation(item.id)
     const panResponder = createPanResponder(item.id)
 
+    // Calcola l'opacità delle azioni basata sulla posizione dello swipe
+    const leftActionOpacity = swipeAnim.interpolate({
+      inputRange: [0, 100],
+      outputRange: [0, 1],
+      extrapolate: 'clamp'
+    })
+    
+    const rightActionOpacity = swipeAnim.interpolate({
+      inputRange: [-100, 0],
+      outputRange: [1, 0],
+      extrapolate: 'clamp'
+    })
+
+    // Calcola la scala degli elementi per un feedback tattile
+    const contentScale = swipeAnim.interpolate({
+      inputRange: [-100, 0, 100],
+      outputRange: [0.97, 1, 0.97],
+      extrapolate: 'clamp'
+    })
+
     return (
-      <Animated.View
-        style={[
-          styles.foodItem,
-          {
-            transform: [{ translateX: swipeAnim }],
-          },
-        ]}
-        {...panResponder.panHandlers}
-      >
-        {/* Background actions */}
-        <View style={styles.foodItemBackground}>
-          <View style={styles.actionLeft}>
-            <Feather name="edit-2" size={20} color="#fff" />
-          </View>
-          <View style={styles.actionRight}>
-            <Feather name="x" size={20} color="#fff" />
-          </View>
+      <View style={styles.foodItemContainer}>
+        {/* Indicatori di azione swipe */}
+        <View style={styles.swipeIndicatorsContainer}>
+          <Animated.View 
+            style={[
+              styles.swipeIndicator, 
+              styles.editIndicator, 
+              { opacity: leftActionOpacity }
+            ]}
+          >
+            <MaterialIcons name="edit" size={18} color="#fff" />
+            <ThemedText style={styles.swipeIndicatorText}>Modifica</ThemedText>
+          </Animated.View>
+          
+          <Animated.View 
+            style={[
+              styles.swipeIndicator, 
+              styles.deleteIndicator,
+              { opacity: rightActionOpacity }
+            ]}
+          >
+            <MaterialIcons name="delete-outline" size={18} color="#fff" />
+            <ThemedText style={styles.swipeIndicatorText}>Elimina</ThemedText>
+          </Animated.View>
         </View>
 
-        {/* Content */}
-        <View style={styles.foodContent}>
-          <View style={styles.foodIconContainer}>
-            <MaterialIcons name="eco" size={20} color="#000" />
+        <Animated.View
+          style={[
+            styles.foodItem,
+            {
+              transform: [
+                { translateX: swipeAnim },
+                { scale: contentScale }
+              ],
+            },
+          ]}
+          {...panResponder.panHandlers}
+        >
+          <View style={styles.foodContent}>
+            <View style={styles.foodIconContainer}>
+              <MaterialIcons name="fastfood" size={18} color="#333" />
+            </View>
+            
+            <View style={styles.foodTextContainer}>
+              <View style={styles.nameScoreContainer}>
+                <ThemedText style={styles.foodName}>{item.name}</ThemedText>
+                <View style={styles.scoreBadge}>
+                  <ThemedText style={styles.scoreText}>Score: {item.score}</ThemedText>
+                </View>
+              </View>
+              
+              {item.nutritionPer100g?.calories && (
+                <ThemedText style={styles.caloriesText}>
+                  {item.nutritionPer100g.calories} kcal/100g
+                </ThemedText>
+              )}
+            </View>
+            
+            <View style={styles.foodActions}>
+              <TouchableOpacity 
+                style={styles.actionButton} 
+                onPress={() => handleEdit(item)}
+                hitSlop={{top: 10, right: 10, bottom: 10, left: 10}}
+              >
+                <MaterialIcons name="edit" size={20} color="#666" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.actionButton} 
+                onPress={() => handleDelete(item.id)}
+                hitSlop={{top: 10, right: 10, bottom: 10, left: 10}}
+              >
+                <MaterialIcons name="delete-outline" size={20} color="#666" />
+              </TouchableOpacity>
+            </View>
           </View>
-          <ThemedText style={styles.foodName}>{item.name}</ThemedText>
-          <View style={styles.foodActions}>
-            <TouchableOpacity style={styles.actionButton} onPress={() => handleEdit(item)}>
-              <Feather name="edit-2" size={18} color="#000" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item.id)}>
-              <Feather name="x" size={18} color="#000" />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Animated.View>
+        </Animated.View>
+      </View>
     )
   }
 
@@ -176,17 +240,22 @@ export function InlineFoodManager() {
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      {/* Search Bar - Redesigned to match mockup */}
+      {/* Search Bar - Redesigned */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Feather name="search" size={20} color="#888" style={styles.searchIcon} />
+          <MaterialIcons name="search" size={22} color="#666" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search for foods..."
+            placeholder="Cerca alimenti..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#888"
           />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <MaterialIcons name="cancel" size={20} color="#888" />
+            </TouchableOpacity>
+          )}
         </View>
         <TouchableOpacity
           style={styles.addButton}
@@ -195,7 +264,7 @@ export function InlineFoodManager() {
             setIsAddEditModalVisible(true)
           }}
         >
-          <Feather name="plus" size={24} color="#000" />
+          <MaterialIcons name="add" size={24} color="#333" />
         </TouchableOpacity>
       </View>
 
@@ -209,8 +278,8 @@ export function InlineFoodManager() {
         keyboardShouldPersistTaps="handled"
         ListEmptyComponent={
           <View style={styles.emptyState}>
-            <MaterialIcons name="no-meals" size={48} color="#ccc" />
-            <ThemedText style={styles.emptyText}>{isLoading ? "Loading..." : "No foods found"}</ThemedText>
+            <MaterialIcons name="food-bank" size={48} color="#bbb" />
+            <ThemedText style={styles.emptyText}>{isLoading ? "Caricamento..." : "Nessun alimento trovato"}</ThemedText>
           </View>
         }
       />
@@ -248,9 +317,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#e0e0e0",
-    borderRadius: 24,
+    borderRadius: 28,
     paddingHorizontal: 16,
     height: 48,
+    borderWidth: 1,
+    borderColor: "#d0d0d0",
   },
   searchIcon: {
     marginRight: 8,
@@ -258,71 +329,126 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: "#000",
+    color: "#333",
+    paddingVertical: 8,
   },
   addButton: {
     width: 48,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 28,
     backgroundColor: "#e0e0e0",
     justifyContent: "center",
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#d0d0d0",
   },
   listContent: {
     padding: 16,
     paddingTop: 8,
   },
+  foodItemContainer: {
+    position: 'relative',
+    marginBottom: 10,
+    height: 60,  // Ridotta da 80 a 60
+  },
+  swipeIndicatorsContainer: {
+    position: 'absolute', 
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    height: '100%',
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  swipeIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,  // Ridotto da 16 a 12
+    paddingVertical: 6,     // Ridotto da 8 a 6
+    borderRadius: 20,       // Ridotto da 20 a 16
+    gap: 6,
+  },
+  swipeIndicatorText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 13,  // Ridotto da 14 a 13
+  },
+  editIndicator: {
+    backgroundColor: '#4CAF50',
+  },
+  deleteIndicator: {
+    backgroundColor: '#E53935',
+  },
   foodItem: {
-    marginBottom: 12,
+    height: '100%',
     borderRadius: 24,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#e0e0e0",  // Stesso grigio della barra di ricerca
     overflow: "hidden",
-  },
-  foodItemBackground: {
-    ...StyleSheet.absoluteFillObject,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    borderRadius: 24,
-    overflow: "hidden",
-  },
-  actionLeft: {
-    backgroundColor: "#4CAF50",
-    width: width * 0.3,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  actionRight: {
-    backgroundColor: "#F44336",
-    width: width * 0.3,
-    justifyContent: "center",
-    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#d0d0d0",
   },
   foodContent: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#e0e0e0",
-    borderRadius: 24,
+    height: '100%',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   foodIconContainer: {
-    marginRight: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 20,
+    backgroundColor: "#d5d5d5",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+  },
+  foodTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  nameScoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
   foodName: {
     fontSize: 16,
+    fontWeight: '600',
     color: "#000",
-    flex: 1,
+  },
+  caloriesText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  scoreText: {
+    fontSize: 14,
+    color: '#4CAF50',
+    fontWeight: '500',
   },
   foodActions: {
     flexDirection: "row",
-    gap: 8,
+    gap: 12,
+    paddingLeft: 6,
+  },
+  scoreBadge: {
+    backgroundColor: "#cce6cd",
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    marginLeft: 8,
   },
   actionButton: {
-    padding: 4,
+    padding: 6,
   },
   emptyState: {
     alignItems: "center",
     justifyContent: "center",
     padding: 40,
+    opacity: 0.8,
   },
   emptyText: {
     marginTop: 12,
