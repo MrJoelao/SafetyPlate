@@ -10,6 +10,7 @@ import {
   Animated,
   Clipboard,
   Platform,
+  Image,
 } from "react-native"
 import { ThemedText } from "@/components/ThemedText"
 import { MaterialIcons, Feather } from "@expo/vector-icons"
@@ -69,8 +70,8 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
         processContent(content)
       }
     } catch (error) {
-      Alert.alert("Error", "Error reading file")
-      console.error("Error picking file:", error)
+      Alert.alert("Errore", "Errore durante la lettura del file")
+      console.error("Errore nella selezione del file:", error)
       shakeElement()
     } finally {
       setIsLoading(false)
@@ -90,14 +91,14 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
       }
 
       if (!content.trim()) {
-        Alert.alert("Error", "Clipboard is empty")
+        Alert.alert("Errore", "Appunti vuoti")
         return
       }
 
       processContent(content)
     } catch (error) {
-      Alert.alert("Error", "Could not read from clipboard")
-      console.error("Error pasting from clipboard:", error)
+      Alert.alert("Errore", "Impossibile leggere dagli appunti")
+      console.error("Errore nell'incollare dagli appunti:", error)
       shakeElement()
     } finally {
       setIsPasting(false)
@@ -108,14 +109,14 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
     const parseResult = parseFoodFromText(content)
 
     if (!parseResult.success) {
-      Alert.alert("Error", parseResult.error || "Error parsing content")
+      Alert.alert("Errore", parseResult.error || "Errore nell'analisi del contenuto")
       setFileName(null)
       shakeElement()
       return
     }
 
     if (parseResult.foods && parseResult.foods.length === 0) {
-      Alert.alert("Warning", "No foods found in content")
+      Alert.alert("Attenzione", "Nessun alimento trovato nel contenuto")
       setFileName(null)
       shakeElement()
       return
@@ -126,7 +127,7 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
 
   const handleSave = async () => {
     if (previewFoods.length === 0) {
-      Alert.alert("Error", "No foods to save")
+      Alert.alert("Errore", "Nessun alimento da salvare")
       return
     }
 
@@ -134,11 +135,11 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
       setIsLoading(true)
       const result = await saveFoods(previewFoods)
       if (result.success) {
-        Alert.alert("Success", `Imported ${previewFoods.length} foods`, [{ text: "OK", onPress: onSuccess }])
+        Alert.alert("Operazione completata", `Importati ${previewFoods.length} alimenti`, [{ text: "OK", onPress: onSuccess }])
         setFileName(null)
         setPreviewFoods([])
       } else {
-        Alert.alert("Error", result.error || "Error saving foods")
+        Alert.alert("Errore", result.error || "Errore nel salvare gli alimenti")
       }
     } finally {
       setIsLoading(false)
@@ -147,15 +148,25 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.headerContainer}>
+        <ThemedText style={styles.headerTitle}>Importa Alimenti</ThemedText>
+      </View>
+      
       <View style={styles.importOptions}>
         <TouchableOpacity style={styles.importButton} onPress={handleFilePick} disabled={isLoading || isPasting}>
-          <Feather name="file" size={24} color="#000" />
-          <ThemedText style={styles.importButtonText}>Select File</ThemedText>
+          <View style={styles.importButtonIcon}>
+            <Feather name="file-text" size={24} color="#4CAF50" />
+          </View>
+          <View style={styles.importButtonTextContainer}>
+            <ThemedText style={styles.importButtonText}>Seleziona File</ThemedText>
+            <ThemedText style={styles.importButtonSubtext}>Formato .txt o .json</ThemedText>
+          </View>
+          <Feather name="chevron-right" size={20} color="#999" />
         </TouchableOpacity>
 
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <ThemedText style={styles.dividerText}>or</ThemedText>
+          <ThemedText style={styles.dividerText}>oppure</ThemedText>
           <View style={styles.dividerLine} />
         </View>
 
@@ -164,8 +175,14 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
           onPress={handlePasteFromClipboard}
           disabled={isLoading || isPasting}
         >
-          <Feather name="clipboard" size={24} color="#000" />
-          <ThemedText style={styles.importButtonText}>Paste from Clipboard</ThemedText>
+          <View style={styles.importButtonIcon}>
+            <Feather name="clipboard" size={24} color="#2196F3" />
+          </View>
+          <View style={styles.importButtonTextContainer}>
+            <ThemedText style={styles.importButtonText}>Incolla dagli Appunti</ThemedText>
+            <ThemedText style={styles.importButtonSubtext}>Testo copiato dalla clipboard</ThemedText>
+          </View>
+          <Feather name="chevron-right" size={20} color="#999" />
         </TouchableOpacity>
       </View>
 
@@ -173,16 +190,36 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4CAF50" />
           <ThemedText style={styles.loadingText}>
-            {isPasting ? "Processing clipboard content..." : "Processing file..."}
+            {isPasting ? "Elaborazione contenuto appunti..." : "Elaborazione file..."}
           </ThemedText>
         </View>
       )}
 
       {previewFoods.length > 0 && (
-        <View style={styles.previewContainer}>
+        <Animated.View 
+          style={[
+            styles.previewContainer, 
+            {transform: [{translateX: shakeAnimation}]}
+          ]}
+        >
           <View style={styles.previewHeader}>
             <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
-            <ThemedText style={styles.previewTitle}>{previewFoods.length} foods found</ThemedText>
+            <View>
+              <ThemedText style={styles.previewTitle}>
+                {previewFoods.length} alimenti trovati
+              </ThemedText>
+              {fileName && (
+                <ThemedText style={styles.previewSubtitle}>
+                  da {fileName}
+                </ThemedText>
+              )}
+            </View>
+          </View>
+
+          <View style={styles.previewContent}>
+            <ThemedText style={styles.previewText}>
+              Premendo "Salva" verranno importati tutti gli alimenti trovati. Gli alimenti duplicati verranno aggiornati.
+            </ThemedText>
           </View>
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={isLoading}>
@@ -191,10 +228,24 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
             ) : (
               <>
                 <Feather name="save" size={20} color="#fff" />
-                <ThemedText style={styles.saveButtonText}>Save Foods</ThemedText>
+                <ThemedText style={styles.saveButtonText}>Salva Alimenti</ThemedText>
               </>
             )}
           </TouchableOpacity>
+        </Animated.View>
+      )}
+
+      {!isLoading && !isPasting && previewFoods.length === 0 && (
+        <View style={styles.emptyStateContainer}>
+          <View style={styles.emptyStateImageContainer}>
+            <MaterialIcons name="cloud-upload" size={64} color="#e0e0e0" />
+          </View>
+          <ThemedText style={styles.emptyStateTitle}>
+            Nessun alimento importato
+          </ThemedText>
+          <ThemedText style={styles.emptyStateText}>
+            Seleziona un file o incolla dagli appunti per iniziare
+          </ThemedText>
         </View>
       )}
     </View>
@@ -205,24 +256,60 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: "center",
+    justifyContent: "flex-start",
+  },
+  headerContainer: {
+    marginBottom: 24,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#000",
+    marginBottom: 8,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: "#666",
   },
   importOptions: {
     gap: 20,
   },
   importButton: {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#f5f5f5",
     borderRadius: 24,
-    padding: 20,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexDirection: "row",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  importButtonIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#fff",
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
-    gap: 12,
+    marginRight: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  importButtonTextContainer: {
+    flex: 1,
   },
   importButtonText: {
     fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
     color: "#000",
+  },
+  importButtonSubtext: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 4,
   },
   divider: {
     flexDirection: "row",
@@ -231,11 +318,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#ccc",
+    backgroundColor: "#e0e0e0",
   },
   dividerText: {
     paddingHorizontal: 16,
     color: "#888",
+    fontSize: 14,
   },
   loadingContainer: {
     marginTop: 30,
@@ -247,20 +335,37 @@ const styles = StyleSheet.create({
   },
   previewContainer: {
     marginTop: 30,
-    backgroundColor: "#e0e0e0",
+    backgroundColor: "#f5f5f5",
     borderRadius: 24,
     padding: 20,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   previewHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   previewTitle: {
     fontSize: 18,
-    fontWeight: "500",
+    fontWeight: "600",
     color: "#000",
+  },
+  previewSubtitle: {
+    fontSize: 14,
+    color: "#666",
+  },
+  previewContent: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  previewText: {
+    fontSize: 14,
+    color: "#666",
+    lineHeight: 20,
   },
   saveButton: {
     backgroundColor: "#4CAF50",
@@ -273,8 +378,29 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: "#fff",
-    fontWeight: "500",
+    fontWeight: "600",
     fontSize: 16,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 40,
+  },
+  emptyStateImageContainer: {
+    marginBottom: 16,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#000",
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    maxWidth: 240,
   },
 })
 
