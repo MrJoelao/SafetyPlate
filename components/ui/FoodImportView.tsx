@@ -10,7 +10,7 @@ import {
   Animated,
   Clipboard,
   Platform,
-  Image,
+  ScrollView,
 } from "react-native"
 import { ThemedText } from "@/components/ThemedText"
 import { MaterialIcons, Feather } from "@expo/vector-icons"
@@ -28,6 +28,8 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isPasting, setIsPasting] = useState(false)
   const [previewFoods, setPreviewFoods] = useState<Food[]>([])
+  const [importedFoods, setImportedFoods] = useState<Food[]>([])
+  const [importComplete, setImportComplete] = useState(false)
   const shakeAnimation = useRef(new Animated.Value(0)).current
 
   const shakeElement = () => {
@@ -82,7 +84,6 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
     try {
       setIsPasting(true)
 
-      // Get clipboard content
       let content = ""
       if (Platform.OS === "web") {
         content = await navigator.clipboard.readText()
@@ -135,8 +136,8 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
       setIsLoading(true)
       const result = await saveFoods(previewFoods)
       if (result.success) {
-        Alert.alert("Operazione completata", `Importati ${previewFoods.length} alimenti`, [{ text: "OK", onPress: onSuccess }])
-        setFileName(null)
+        setImportedFoods(previewFoods)
+        setImportComplete(true)
         setPreviewFoods([])
       } else {
         Alert.alert("Errore", result.error || "Errore nel salvare gli alimenti")
@@ -146,197 +147,290 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
     }
   }
 
+  const handleDeleteData = () => {
+    Alert.alert(
+      "Conferma eliminazione",
+      "Sei sicuro di voler eliminare questi dati importati?",
+      [
+        { text: "Annulla", style: "cancel" },
+        { 
+          text: "Elimina", 
+          style: "destructive", 
+          onPress: () => {
+            setImportedFoods([])
+            setImportComplete(false)
+            setFileName(null)
+          }
+        }
+      ]
+    )
+  }
+
+  const handleClose = () => {
+    onSuccess()
+  }
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.headerContainer}>
         <ThemedText style={styles.headerTitle}>Importa Alimenti</ThemedText>
       </View>
       
-      <View style={styles.importOptions}>
-        <TouchableOpacity style={styles.importButton} onPress={handleFilePick} disabled={isLoading || isPasting}>
-          <View style={styles.importButtonIcon}>
-            <Feather name="file-text" size={24} color="#4CAF50" />
-          </View>
-          <View style={styles.importButtonTextContainer}>
-            <ThemedText style={styles.importButtonText}>Seleziona File</ThemedText>
-            <ThemedText style={styles.importButtonSubtext}>Formato .txt o .json</ThemedText>
-          </View>
-          <Feather name="chevron-right" size={20} color="#999" />
-        </TouchableOpacity>
+      {!importComplete ? (
+        <>
+          {previewFoods.length === 0 ? (
+            <View style={styles.optionsContainer}>
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>Seleziona una fonte</ThemedText>
+                
+                <TouchableOpacity 
+                  style={styles.importCard} 
+                  onPress={handleFilePick} 
+                  disabled={isLoading || isPasting}
+                >
+                  <View style={styles.importCardIcon}>
+                    <Feather name="file-text" size={24} color="#4CAF50" />
+                  </View>
+                  <View style={styles.importCardContent}>
+                    <ThemedText style={styles.importCardTitle}>Seleziona File</ThemedText>
+                    <ThemedText style={styles.importCardSubtext}>Importa da un file .txt o .json</ThemedText>
+                  </View>
+                  <Feather name="chevron-right" size={20} color="#999" />
+                </TouchableOpacity>
 
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <ThemedText style={styles.dividerText}>oppure</ThemedText>
-          <View style={styles.dividerLine} />
-        </View>
+                <TouchableOpacity
+                  style={styles.importCard}
+                  onPress={handlePasteFromClipboard}
+                  disabled={isLoading || isPasting}
+                >
+                  <View style={styles.importCardIcon}>
+                    <Feather name="clipboard" size={24} color="#2196F3" />
+                  </View>
+                  <View style={styles.importCardContent}>
+                    <ThemedText style={styles.importCardTitle}>Incolla dagli Appunti</ThemedText>
+                    <ThemedText style={styles.importCardSubtext}>Usa testo copiato dalla clipboard</ThemedText>
+                  </View>
+                  <Feather name="chevron-right" size={20} color="#999" />
+                </TouchableOpacity>
+              </View>
 
-        <TouchableOpacity
-          style={styles.importButton}
-          onPress={handlePasteFromClipboard}
-          disabled={isLoading || isPasting}
-        >
-          <View style={styles.importButtonIcon}>
-            <Feather name="clipboard" size={24} color="#2196F3" />
-          </View>
-          <View style={styles.importButtonTextContainer}>
-            <ThemedText style={styles.importButtonText}>Incolla dagli Appunti</ThemedText>
-            <ThemedText style={styles.importButtonSubtext}>Testo copiato dalla clipboard</ThemedText>
-          </View>
-          <Feather name="chevron-right" size={20} color="#999" />
-        </TouchableOpacity>
-      </View>
+              <View style={styles.infoSection}>
+                <ThemedText style={styles.infoTitle}>Informazioni</ThemedText>
+                <View style={styles.infoCard}>
+                  <MaterialIcons name="info-outline" size={22} color="#666" style={styles.infoIcon} />
+                  <ThemedText style={styles.infoText}>
+                    Puoi importare alimenti da un file di testo o dagli appunti. Il formato deve essere JSON valido con gli attributi richiesti.
+                  </ThemedText>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <Animated.View 
+              style={[
+                styles.previewContainer, 
+                {transform: [{translateX: shakeAnimation}]}
+              ]}
+            >
+              <View style={styles.section}>
+                <ThemedText style={styles.sectionTitle}>Anteprima Importazione</ThemedText>
+                
+                <View style={styles.previewCard}>
+                  <View style={styles.previewHeader}>
+                    <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
+                    <View>
+                      <ThemedText style={styles.previewTitle}>
+                        {previewFoods.length} alimenti trovati
+                      </ThemedText>
+                      {fileName && (
+                        <ThemedText style={styles.previewSubtitle}>
+                          da {fileName}
+                        </ThemedText>
+                      )}
+                    </View>
+                  </View>
 
-      {(isLoading || isPasting) && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-          <ThemedText style={styles.loadingText}>
-            {isPasting ? "Elaborazione contenuto appunti..." : "Elaborazione file..."}
-          </ThemedText>
-        </View>
-      )}
+                  <View style={styles.previewContent}>
+                    <ThemedText style={styles.previewText}>
+                      Gli alimenti verranno aggiunti al tuo database personale. Quelli con nomi identici verranno aggiornati.
+                    </ThemedText>
+                  </View>
 
-      {previewFoods.length > 0 && (
-        <Animated.View 
-          style={[
-            styles.previewContainer, 
-            {transform: [{translateX: shakeAnimation}]}
-          ]}
-        >
-          <View style={styles.previewHeader}>
-            <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
-            <View>
-              <ThemedText style={styles.previewTitle}>
-                {previewFoods.length} alimenti trovati
+                  <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={isLoading}>
+                    {isLoading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <Feather name="save" size={20} color="#fff" />
+                        <ThemedText style={styles.saveButtonText}>Salva Alimenti</ThemedText>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Animated.View>
+          )}
+
+          {(isLoading || isPasting) && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#4CAF50" />
+              <ThemedText style={styles.loadingText}>
+                {isPasting ? "Elaborazione contenuto appunti..." : "Elaborazione file..."}
               </ThemedText>
-              {fileName && (
-                <ThemedText style={styles.previewSubtitle}>
-                  da {fileName}
-                </ThemedText>
-              )}
+            </View>
+          )}
+        </>
+      ) : (
+        <View style={styles.successContainer}>
+          <View style={styles.successCard}>
+            <View style={styles.successIconContainer}>
+              <MaterialIcons name="check-circle" size={64} color="#4CAF50" />
+            </View>
+            
+            <ThemedText style={styles.successTitle}>
+              Importazione completata!
+            </ThemedText>
+            
+            <ThemedText style={styles.successText}>
+              {importedFoods.length} alimenti sono stati importati con successo
+            </ThemedText>
+            
+            <View style={styles.buttonGroup}>
+              <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+                <Feather name="check" size={20} color="#fff" />
+                <ThemedText style={styles.closeButtonText}>Chiudi</ThemedText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteData}>
+                <Feather name="trash-2" size={20} color="#fff" />
+                <ThemedText style={styles.deleteButtonText}>Elimina dati</ThemedText>
+              </TouchableOpacity>
             </View>
           </View>
-
-          <View style={styles.previewContent}>
-            <ThemedText style={styles.previewText}>
-              Premendo "Salva" verranno importati tutti gli alimenti trovati. Gli alimenti duplicati verranno aggiornati.
-            </ThemedText>
-          </View>
-
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={isLoading}>
-            {isLoading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <Feather name="save" size={20} color="#fff" />
-                <ThemedText style={styles.saveButtonText}>Salva Alimenti</ThemedText>
-              </>
-            )}
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-
-      {!isLoading && !isPasting && previewFoods.length === 0 && (
-        <View style={styles.emptyStateContainer}>
-          <View style={styles.emptyStateImageContainer}>
-            <MaterialIcons name="cloud-upload" size={64} color="#e0e0e0" />
-          </View>
-          <ThemedText style={styles.emptyStateTitle}>
-            Nessun alimento importato
-          </ThemedText>
-          <ThemedText style={styles.emptyStateText}>
-            Seleziona un file o incolla dagli appunti per iniziare
-          </ThemedText>
         </View>
       )}
-    </View>
+    </ScrollView>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    justifyContent: "flex-start",
+    backgroundColor: "#f5f5f5",
+  },
+  contentContainer: {
+    padding: 16,
+    paddingBottom: 40,
   },
   headerContainer: {
-    marginBottom: 24,
+    alignItems: "center",
+    marginVertical: 16,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: "700",
     color: "#000",
-    marginBottom: 8,
   },
-  headerSubtitle: {
+  optionsContainer: {
+    gap: 24,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
     fontSize: 16,
+    fontWeight: "600",
     color: "#666",
+    marginBottom: 16,
+    marginLeft: 4,
   },
-  importOptions: {
-    gap: 20,
-  },
-  importButton: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 24,
+  importCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
     padding: 16,
     alignItems: "center",
     justifyContent: "space-between",
     flexDirection: "row",
     borderWidth: 1,
     borderColor: "#e0e0e0",
+    marginBottom: 12,
   },
-  importButtonIcon: {
+  importCardIcon: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 14,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
   },
-  importButtonTextContainer: {
+  importCardContent: {
     flex: 1,
+    marginLeft: 14,
   },
-  importButtonText: {
+  importCardTitle: {
     fontSize: 16,
     fontWeight: "600",
     color: "#000",
   },
-  importButtonSubtext: {
+  importCardSubtext: {
     fontSize: 14,
     color: "#666",
     marginTop: 4,
   },
-  divider: {
+  infoSection: {
+    marginTop: 16,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  infoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#e0e0e0",
+  infoIcon: {
+    marginRight: 12,
+    marginTop: 2,
   },
-  dividerText: {
-    paddingHorizontal: 16,
-    color: "#888",
+  infoText: {
     fontSize: 14,
+    color: "#666",
+    flex: 1,
+    lineHeight: 20,
   },
   loadingContainer: {
-    marginTop: 30,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.9)",
+    zIndex: 10,
   },
   loadingText: {
-    marginTop: 12,
+    marginTop: 16,
     color: "#666",
   },
   previewContainer: {
-    marginTop: 30,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 24,
+    paddingTop: 8,
+  },
+  previewCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
     padding: 20,
     borderWidth: 1,
     borderColor: "#e0e0e0",
@@ -357,9 +451,9 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   previewContent: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 12,
+    padding: 14,
     marginBottom: 16,
   },
   previewText: {
@@ -369,7 +463,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: "#4CAF50",
-    borderRadius: 24,
+    borderRadius: 12,
     padding: 16,
     alignItems: "center",
     justifyContent: "center",
@@ -381,26 +475,65 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     fontSize: 16,
   },
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginTop: 40,
+  successContainer: {
+    paddingVertical: 24,
+    paddingHorizontal: 16,
   },
-  emptyStateImageContainer: {
+  successCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  successIconContainer: {
     marginBottom: 16,
   },
-  emptyStateTitle: {
-    fontSize: 18,
-    fontWeight: "600",
+  successTitle: {
+    fontSize: 22,
+    fontWeight: "700",
     color: "#000",
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  emptyStateText: {
-    fontSize: 14,
+  successText: {
+    fontSize: 16,
     color: "#666",
     textAlign: "center",
-    maxWidth: 240,
+    marginBottom: 32,
+  },
+  buttonGroup: {
+    flexDirection: "column",
+    gap: 12,
+    width: "100%",
+  },
+  closeButton: {
+    backgroundColor: "#4CAF50",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
+  closeButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  deleteButton: {
+    backgroundColor: "#E53935",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
+  deleteButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 16,
   },
 })
 
