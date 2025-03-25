@@ -12,22 +12,37 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  TextInput,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native"
 import { ThemedText } from "@/components/common/ThemedText"
-import { MaterialIcons } from "@expo/vector-icons"
+import { MaterialIcons, Feather } from "@expo/vector-icons"
 import type { Food } from "@/types/food"
-import { loadFoods, deleteFood } from "@/utils/foodStorage"
-import { AddEditFoodModal } from "@/components/ui/modals/AddEditFoodModal"
+import { loadFoods, deleteFood, addFood, updateFood } from "@/utils/foodStorage"
 import { SearchBar } from "@/components/ui/forms/SearchBar"
 
-interface SwipeableRow {
-  rowRef: React.RefObject<View>
-  rowMap: Map<string, Animated.Value>
+// Funzione per determinare il colore in base al punteggio
+const getScoreColor = (score: number) => {
+  if (score <= 40) return "#F44336"  // rosso per punteggi bassi
+  if (score < 70) return "#FFC107"   // giallo per punteggi medi
+  return "#4CAF50"                   // verde per punteggi alti
 }
 
-export function InlineFoodManager() {
+// Aggiungi le props per gestire gli eventi di inizio e fine modifica
+interface InlineFoodManagerProps {
+  onEditStart?: () => void
+  onEditEnd?: () => void
+}
+
+export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerProps) {
   const isMounted = useRef(true)
   const flatListRef = useRef<FlatList>(null)
+  const scrollViewRef = useRef<ScrollView>(null)
+
+  // View mode: 'list' or 'edit'
+  const [viewMode, setViewMode] = useState<"list" | "edit">("list")
+  const slideAnim = useRef(new Animated.Value(0)).current
 
   useEffect(() => {
     loadFoodData()
@@ -40,13 +55,27 @@ export function InlineFoodManager() {
   const [searchQuery, setSearchQuery] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [editingFood, setEditingFood] = useState<Food | undefined>()
-  const [isAddEditModalVisible, setIsAddEditModalVisible] = useState(false)
 
+  // Form state for editing
+  const [name, setName] = useState("")
+  const [score, setScore] = useState("")
+  const [defaultUnit, setDefaultUnit] = useState("")
+  const [calories, setCalories] = useState("")
+  const [proteins, setProteins] = useState("")
+  const [carbs, setCarbs] = useState("")
+  const [fats, setFats] = useState("")
+
+  // Define the SwipeableRow interface
+  interface SwipeableRow {
+    rowRef: React.RefObject<View>;
+    rowMap: Map<string, Animated.Value>;
+  }
+  
   // Animation refs
-  const swipeableRow = useRef<SwipeableRow>({
-    rowRef: React.createRef<View>(),
-    rowMap: new Map(),
-  }).current
+    const swipeableRow = useRef<SwipeableRow>({
+      rowRef: React.createRef<View>(),
+      rowMap: new Map(),
+    }).current
 
   const loadFoodData = async () => {
     setIsLoading(true)
@@ -61,7 +90,129 @@ export function InlineFoodManager() {
 
   const handleEdit = (food: Food) => {
     setEditingFood(food)
-    setIsAddEditModalVisible(true)
+    setName(food.name)
+    setScore(food.score.toString())
+    setDefaultUnit(food.defaultUnit)
+    if (food.nutritionPer100g) {
+      setCalories(food.nutritionPer100g.calories?.toString() || "")
+      setProteins(food.nutritionPer100g.proteins?.toString() || "")
+      setCarbs(food.nutritionPer100g.carbs?.toString() || "")
+      setFats(food.nutritionPer100g.fats?.toString() || "")
+    } else {
+      setCalories("")
+      setProteins("")
+      setCarbs("")
+      setFats("")
+    }
+
+    // Notifica l'inizio della modifica
+    onEditStart?.()
+
+    // Animate to edit view
+    Animated.timing(slideAnim, {
+      toValue: -Dimensions.get("window").width,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setViewMode("edit")
+      slideAnim.setValue(0)
+    })
+  }
+
+  const handleAdd = () => {
+    setEditingFood(undefined)
+    setName("")
+    setScore("")
+    setDefaultUnit("g")
+    setCalories("")
+    setProteins("")
+    setCarbs("")
+    setFats("")
+
+    // Notifica l'inizio della modifica
+    onEditStart?.()
+
+    // Animate to edit view
+    Animated.timing(slideAnim, {
+      toValue: -Dimensions.get("window").width,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setViewMode("edit")
+      slideAnim.setValue(0)
+    })
+  }
+
+  const handleCancel = () => {
+    // Animate back to list view
+    Animated.timing(slideAnim, {
+      toValue: Dimensions.get("window").width,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setViewMode("list")
+      slideAnim.setValue(0)
+
+      // Notifica la fine della modifica
+      onEditEnd?.()
+    })
+  }
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      Alert.alert("Error", "Name is required")
+      return
+    }
+
+    if (!score || isNaN(Number(score))) {
+      Alert.alert("Error", "Score must be a valid number")
+      return
+    }
+
+    if (!defaultUnit.trim()) {
+      Alert.alert("Error", "Unit is required")
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      const foodData: Food = {
+        id: editingFood?.id || `food-${Date.now()}`,
+        name: name.trim(),
+        score: Number(score),
+        defaultUnit: defaultUnit.trim(),
+        nutritionPer100g: {
+          calories: calories ? Number(calories) : undefined,
+          proteins: proteins ? Number(proteins) : undefined,
+          carbs: carbs ? Number(carbs) : undefined,
+          fats: fats ? Number(fats) : undefined,
+        },
+      }
+
+      const result = await (editingFood ? updateFood(foodData) : addFood(foodData))
+      if (result.success) {
+        await loadFoodData()
+
+        // Animate back to list view
+        Animated.timing(slideAnim, {
+          toValue: Dimensions.get("window").width,
+          duration: 300,
+          useNativeDriver: true,
+        }).start(() => {
+          setViewMode("list")
+          slideAnim.setValue(0)
+
+          // Notifica la fine della modifica
+          onEditEnd?.()
+        })
+      } else {
+        Alert.alert("Error", result.error || "Error saving food")
+      }
+    } catch (error) {
+      Alert.alert("Error", "An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleDelete = useCallback((foodId: string) => {
@@ -153,6 +304,9 @@ export function InlineFoodManager() {
       extrapolate: "clamp",
     })
 
+    // Determina il colore del punteggio
+    const scoreColor = getScoreColor(item.score)
+
     return (
       <View style={styles.foodItemContainer}>
         {/* Indicatori di azione swipe */}
@@ -185,8 +339,8 @@ export function InlineFoodManager() {
             <View style={styles.foodTextContainer}>
               <View style={styles.nameScoreContainer}>
                 <ThemedText style={styles.foodName}>{item.name}</ThemedText>
-                <View style={styles.scoreBadge}>
-                  <ThemedText style={styles.scoreText}>Score: {item.score}</ThemedText>
+                <View style={[styles.scoreBadge, { backgroundColor: `${scoreColor}20` }]}>
+                  <ThemedText style={[styles.scoreText, { color: scoreColor }]}>Score: {item.score}</ThemedText>
                 </View>
               </View>
 
@@ -221,8 +375,135 @@ export function InlineFoodManager() {
     .filter((food) => food.name.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name))
 
-  return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+  // Render the edit view
+  const renderEditView = () => (
+    <Animated.View style={[styles.editContainer, { transform: [{ translateX: slideAnim }] }]}>
+      <View style={styles.editHeader}>
+        <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
+          <Feather name="arrow-left" size={24} color="#666" />
+        </TouchableOpacity>
+
+        <View style={styles.editHeaderContent}>
+          <ThemedText style={styles.editTitle}>{editingFood ? "Modifica Alimento" : "Nuovo Alimento"}</ThemedText>
+        </View>
+      </View>
+
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.editContent}
+        contentContainerStyle={styles.editContentInner}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Basic Information */}
+        <View style={styles.editSection}>
+          <View style={styles.formGroup}>
+            <ThemedText style={styles.formLabel}>Nome Alimento *</ThemedText>
+            <TextInput
+              style={styles.formInput}
+              placeholder="Nome alimento"
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor="#999"
+            />
+          </View>
+
+          <View style={styles.formRow}>
+            <View style={[styles.formGroup, styles.formGroupHalf]}>
+              <ThemedText style={styles.formLabel}>Punteggio *</ThemedText>
+              <TextInput
+                style={styles.formInput}
+                placeholder="0-100"
+                value={score}
+                onChangeText={setScore}
+                keyboardType="numeric"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={[styles.formGroup, styles.formGroupHalf]}>
+              <ThemedText style={styles.formLabel}>Unità *</ThemedText>
+              <TextInput
+                style={styles.formInput}
+                placeholder="g"
+                value={defaultUnit}
+                onChangeText={setDefaultUnit}
+                placeholderTextColor="#999"
+              />
+            </View>
+          </View>
+        </View>
+
+        {/* Nutrition Information */}
+        <View style={styles.editSection}>
+          <ThemedText style={styles.sectionTitle}>Valori Nutrizionali (per 100g)</ThemedText>
+
+          <View style={styles.nutritionGrid}>
+            <View style={styles.nutritionItem}>
+              <ThemedText style={styles.nutritionLabel}>Calorie</ThemedText>
+              <TextInput
+                style={styles.nutritionInput}
+                value={calories}
+                onChangeText={setCalories}
+                placeholder="0"
+                keyboardType="numeric"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.nutritionItem}>
+              <ThemedText style={styles.nutritionLabel}>Proteine</ThemedText>
+              <TextInput
+                style={styles.nutritionInput}
+                value={proteins}
+                onChangeText={setProteins}
+                placeholder="0"
+                keyboardType="numeric"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.nutritionItem}>
+              <ThemedText style={styles.nutritionLabel}>Carboidrati</ThemedText>
+              <TextInput
+                style={styles.nutritionInput}
+                value={carbs}
+                onChangeText={setCarbs}
+                placeholder="0"
+                keyboardType="numeric"
+                placeholderTextColor="#999"
+              />
+            </View>
+
+            <View style={styles.nutritionItem}>
+              <ThemedText style={styles.nutritionLabel}>Grassi</ThemedText>
+              <TextInput
+                style={styles.nutritionInput}
+                value={fats}
+                onChangeText={setFats}
+                placeholder="0"
+                keyboardType="numeric"
+                placeholderTextColor="#999"
+              />
+            </View>
+          </View>
+        </View>
+      </ScrollView>
+
+      <View style={styles.editFooter}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={isLoading}>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <ThemedText style={styles.saveButtonText}>Salva</ThemedText>
+          )}
+        </TouchableOpacity>
+      </View>
+    </Animated.View>
+  )
+
+  // Render the list view
+  const renderListView = () => (
+    <Animated.View style={[styles.listContainer, { transform: [{ translateX: slideAnim }] }]}>
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
@@ -233,13 +514,7 @@ export function InlineFoodManager() {
             onClear={() => setSearchQuery("")}
           />
         </View>
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => {
-            setEditingFood(undefined)
-            setIsAddEditModalVisible(true)
-          }}
-        >
+        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
           <MaterialIcons name="add" size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -259,17 +534,12 @@ export function InlineFoodManager() {
           </View>
         }
       />
+    </Animated.View>
+  )
 
-      {/* Add/Edit Modal */}
-      <AddEditFoodModal
-        visible={isAddEditModalVisible}
-        onClose={() => setIsAddEditModalVisible(false)}
-        food={editingFood}
-        onSave={async (food: Food) => {
-          await loadFoodData()
-          setIsAddEditModalVisible(false)
-        }}
-      />
+  return (
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      {viewMode === "list" ? renderListView() : renderEditView()}
     </KeyboardAvoidingView>
   )
 }
@@ -278,6 +548,13 @@ const { width } = Dimensions.get("window")
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+  },
+  listContainer: {
+    flex: 1,
+  },
+  editContainer: {
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
@@ -385,7 +662,7 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     fontSize: 14,
-    color: "#4CAF50",
+    // Il colore ora sarà impostato dinamicamente
     fontWeight: "500",
   },
   foodActions: {
@@ -394,7 +671,7 @@ const styles = StyleSheet.create({
     paddingLeft: 6,
   },
   scoreBadge: {
-    backgroundColor: "#cce6cd",
+    backgroundColor: "#cce6cd", // Questo sfondo sarà sovrascritto dinamicamente
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 10,
@@ -413,6 +690,126 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 16,
     color: "#999",
+  },
+  // Edit view styles - Migliorati per un'interfaccia più compatta
+  editHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+    backgroundColor: "#fff",
+    position: "relative",
+  },
+  editHeaderContent: {
+    alignItems: "center",
+  },
+  editTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#1f1f1f",
+    textAlign: "center",
+  },
+  backButton: {
+    position: "absolute",
+    left: 12,
+    padding: 6,
+    borderRadius: 20,
+  },
+  editContent: {
+    flex: 1,
+  },
+  editContentInner: {
+    padding: 12,
+    paddingBottom: 80,
+  },
+  editSection: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#666",
+    marginBottom: 10,
+  },
+  formGroup: {
+    marginBottom: 10,
+  },
+  formRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  formGroupHalf: {
+    flex: 1,
+  },
+  formLabel: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 4,
+  },
+  formInput: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 15,
+    color: "#333",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  // Nuovi stili per il layout a griglia dei valori nutrizionali
+  nutritionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginHorizontal: -5,
+  },
+  nutritionItem: {
+    width: "50%",
+    paddingHorizontal: 5,
+    marginBottom: 10,
+  },
+  nutritionLabel: {
+    fontSize: 13,
+    color: "#666",
+    marginBottom: 4,
+  },
+  nutritionInput: {
+    backgroundColor: "#f5f5f5",
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 15,
+    color: "#333",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    textAlign: "center",
+  },
+  editFooter: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 12,
+    paddingBottom: Platform.OS === "ios" ? 24 : 12,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+  },
+  saveButton: {
+    padding: 12,
+    borderRadius: 10,
+    backgroundColor: "#4CAF50",
+    alignItems: "center",
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
   },
 })
 
