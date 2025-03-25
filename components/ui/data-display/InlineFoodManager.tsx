@@ -25,6 +25,13 @@ interface SwipeableRow {
   rowMap: Map<string, Animated.Value>
 }
 
+// Funzione per determinare il colore in base al punteggio
+const getScoreColor = (score: number) => {
+  if (score <= 40) return "#F44336"  // rosso per punteggi bassi
+  if (score < 70) return "#FFC107"   // giallo per punteggi medi
+  return "#4CAF50"                   // verde per punteggi alti
+}
+
 export function InlineFoodManager() {
   const isMounted = useRef(true)
   const flatListRef = useRef<FlatList>(null)
@@ -152,6 +159,9 @@ export function InlineFoodManager() {
       outputRange: [0.97, 1, 0.97],
       extrapolate: "clamp",
     })
+    
+    // Determina il colore del punteggio
+    const scoreColor = getScoreColor(item.score)
 
     return (
       <View style={styles.foodItemContainer}>
@@ -185,8 +195,8 @@ export function InlineFoodManager() {
             <View style={styles.foodTextContainer}>
               <View style={styles.nameScoreContainer}>
                 <ThemedText style={styles.foodName}>{item.name}</ThemedText>
-                <View style={styles.scoreBadge}>
-                  <ThemedText style={styles.scoreText}>Score: {item.score}</ThemedText>
+                <View style={[styles.scoreBadge, { backgroundColor: `${scoreColor}20` }]}>
+                  <ThemedText style={[styles.scoreText, { color: scoreColor }]}>Score: {item.score}</ThemedText>
                 </View>
               </View>
 
@@ -409,7 +419,6 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     fontSize: 14,
-    color: "#4CAF50",
     fontWeight: "500",
   },
   foodActions: {
@@ -418,7 +427,7 @@ const styles = StyleSheet.create({
     paddingLeft: 6,
   },
   scoreBadge: {
-    backgroundColor: "#cce6cd",
+    backgroundColor: "#cce6cd", // sovrascritto dinamicamente
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 10,
