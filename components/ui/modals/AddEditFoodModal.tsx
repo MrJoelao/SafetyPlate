@@ -104,8 +104,12 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
     }
   }
 
+  const handleBackPress = () => {
+    onClose()
+  }
+
   return (
-    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={handleBackPress}>
       <BlurView intensity={20} style={styles.backdrop}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.keyboardView}>
           <View style={styles.modalContainer}>
@@ -115,7 +119,7 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
                 <Feather name={food ? "edit" : "plus-circle"} size={24} color={food ? "#2196F3" : "#4CAF50"} />
                 <ThemedText style={styles.title}>{food ? "Edit Food" : "New Food"}</ThemedText>
               </View>
-              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <TouchableOpacity onPress={handleBackPress} style={styles.closeButton}>
                 <Feather name="x" size={24} color="#666" />
               </TouchableOpacity>
             </View>
