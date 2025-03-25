@@ -7,6 +7,7 @@ import { BlurView } from 'expo-blur';
 import { Food } from '@/types/food';
 import { loadFoods, deleteFood, addFood, updateFood } from '@/utils/foodStorage';
 import { AddEditFoodModal } from './AddEditFoodModal';
+import { ScoreBadge } from './ScoreBadge';
 
 interface FoodManagerViewProps {
   visible: boolean;
@@ -85,9 +86,12 @@ export function FoodManagerView({ visible, onClose }: FoodManagerViewProps) {
   const renderFoodItem = ({ item }: { item: Food }) => (
     <View style={styles.foodItem}>
       <View style={styles.foodInfo}>
-        <ThemedText style={styles.foodName}>{item.name}</ThemedText>
+        <View style={styles.foodNameContainer}>
+          <ThemedText style={styles.foodName}>{item.name}</ThemedText>
+          <ScoreBadge score={item.score} size="small" />
+        </View>
         <ThemedText style={styles.foodDetails}>
-          Score: {item.score} • Unità: {item.defaultUnit}
+          Unità: {item.defaultUnit}
         </ThemedText>
         {item.nutritionPer100g && (
           <ThemedText style={styles.nutritionInfo}>
@@ -270,6 +274,12 @@ const styles = StyleSheet.create({
   },
   foodInfo: {
     flex: 1,
+  },
+  foodNameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   foodName: {
     fontSize: 16,

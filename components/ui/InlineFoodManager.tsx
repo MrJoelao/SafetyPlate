@@ -19,6 +19,7 @@ import { MaterialIcons } from "@expo/vector-icons"
 import type { Food } from "@/types/food"
 import { loadFoods, deleteFood } from "@/utils/foodStorage"
 import { AddEditFoodModal } from "./AddEditFoodModal"
+import { ScoreBadge } from "./ScoreBadge"
 
 interface SwipeableRow {
   rowRef: React.RefObject<View>
@@ -200,7 +201,7 @@ export function InlineFoodManager() {
             <View style={styles.foodTextContainer}>
               <View style={styles.nameScoreContainer}>
                 <ThemedText style={styles.foodName}>{item.name}</ThemedText>
-                <ThemedText style={styles.scoreText}> • Score: {item.score}</ThemedText>
+                <ScoreBadge score={item.score} size="small" />
               </View>
               
               {item.nutritionPer100g?.calories && (
@@ -373,17 +374,24 @@ const styles = StyleSheet.create({
   },
   editIndicator: {
     backgroundColor: '#4CAF50',
+    borderRadius: 8,
   },
   deleteIndicator: {
     backgroundColor: '#E53935',
+    borderRadius: 8,
   },
   foodItem: {
     height: '100%',
     borderRadius: 24,
-    backgroundColor: "#e0e0e0",  // Stesso grigio della barra di ricerca
+    backgroundColor: "#f8f8f8",  // Leggermente più chiaro per un look più moderno
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#d0d0d0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   foodContent: {
     flexDirection: "row",
@@ -431,13 +439,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     paddingLeft: 6,
-  },
-  scoreBadge: {
-    backgroundColor: "#cce6cd",
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 10,
-    marginLeft: 8,
   },
   actionButton: {
     padding: 6,
