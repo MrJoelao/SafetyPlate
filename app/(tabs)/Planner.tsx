@@ -1,34 +1,35 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, SafeAreaView, Platform, StatusBar } from 'react-native';
-import { ThemedView } from '@/components/ThemedView';
-import { PlannerCalendar } from '@/components/planner/PlannerCalendar';
-import { MealPlanSheet } from '@/components/planner/MealPlanSheet';
-import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
-import { Entypo } from '@expo/vector-icons';
-import { MealTypeMenu } from '@/components/ui/MealTypeMenu';
-import { MealEntryModal } from '@/components/ui/MealEntryModal';
-import { MealData } from '@/components/ui/MealEntryModal';
-import { DiaryOptionsMenu } from '@/components/ui/DiaryOptionsMenu';
+"use client"
+
+import { useState } from "react"
+import { StyleSheet, View, SafeAreaView, Platform } from "react-native"
+import { ThemedView } from "@/components/common/ThemedView"
+import { PlannerCalendar } from "@/components/planner/PlannerCalendar"
+import { MealPlanSheet } from "@/components/planner/MealPlanSheet"
+import { FloatingActionButton } from "@/components/ui/buttons/FloatingActionButton"
+import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
+import { Entypo } from "@expo/vector-icons"
+import { MealTypeMenu } from "@/components/ui/modals/MealTypeMenu"
+import { MealEntryModal } from "@/components/ui/modals/MealEntryModal"
+import { DiaryOptionsMenu } from "@/components/ui/modals/DiaryOptionsMenu"
 
 export default function PlannerScreen() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedMealType, setSelectedMealType] = useState('');
-  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date())
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [selectedMealType, setSelectedMealType] = useState("")
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false)
 
   const handleMealSelect = (mealType: string) => {
-    setSelectedMealType(mealType);
-    setIsMenuOpen(false);
-    setIsModalVisible(true);
-  };
+    setSelectedMealType(mealType)
+    setIsMenuOpen(false)
+    setIsModalVisible(true)
+  }
 
-  const handleSaveMeal = (mealData: MealData) => {
-    console.log('Salvataggio pasto:', { type: selectedMealType, ...mealData });
+  const handleSaveMeal = (mealData: any) => {
+    console.log("Salvataggio pasto:", { type: selectedMealType, ...mealData })
     // Qui implementeremo la logica per salvare il pasto
-  };
-  
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
@@ -45,31 +46,19 @@ export default function PlannerScreen() {
           onClose={() => setShowOptionsMenu(false)}
           onImportPress={() => {
             // TODO: Implementare la logica per l'importazione
-            console.log('Importa');
+            console.log("Importa")
           }}
           onSettingsPress={() => {
             // TODO: Implementare la logica per le impostazioni
-            console.log('Apri impostazioni');
+            console.log("Apri impostazioni")
           }}
         />
-        <PlannerCalendar 
-          selectedDate={selectedDate}
-          onDateSelect={setSelectedDate}
-        />
-        <MealPlanSheet 
-          date={selectedDate}
-        />
-        
+        <PlannerCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+        <MealPlanSheet date={selectedDate} onAddMeal={handleMealSelect} />
+
         <View style={styles.fabContainer}>
-          <MealTypeMenu 
-            visible={isMenuOpen}
-            onSelect={handleMealSelect}
-            onClose={() => setIsMenuOpen(false)}
-          />
-          <FloatingActionButton 
-            onPress={() => setIsMenuOpen(!isMenuOpen)}
-            isOpen={isMenuOpen}
-          />
+          <MealTypeMenu visible={isMenuOpen} onSelect={handleMealSelect} onClose={() => setIsMenuOpen(false)} />
+          <FloatingActionButton onPress={() => setIsMenuOpen(!isMenuOpen)} isOpen={isMenuOpen} />
         </View>
 
         <MealEntryModal
@@ -80,7 +69,7 @@ export default function PlannerScreen() {
         />
       </ThemedView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -89,13 +78,14 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   fabContainer: {
-    position: 'absolute',
+    position: "absolute",
     right: 20,
-    bottom: Platform.OS === 'ios' ? 100 : 80,
+    bottom: Platform.OS === "ios" ? 100 : 80,
     zIndex: 2,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
-});
+})
+
