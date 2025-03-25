@@ -14,11 +14,15 @@ interface ImportFoodModalProps {
 
 const { width, height } = Dimensions.get("window")
 
+// Modifica per nascondere la barra di navigazione quando si è in modalità di modifica
 export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
   // State for active tab: 'manage' for food list, 'import' for import screen
   const [activeTab, setActiveTab] = useState<"manage" | "import">("manage")
   const slideAnim = useRef(new Animated.Value(0)).current
   const scrollViewRef = useRef<ScrollView>(null)
+
+  // Nuovo stato per tracciare se siamo in modalità di modifica
+  const [isEditing, setIsEditing] = useState(false)
 
   // Handle tab change with animation
   const handleTabChange = (tab: "manage" | "import") => {
@@ -51,26 +55,32 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
 
           {/* Content */}
           <Animated.View style={[styles.contentContainer, { transform: [{ translateX: slideAnim }] }]}>
-            {activeTab === "import" ? <FoodImportView onSuccess={onClose} /> : <InlineFoodManager />}
+            {activeTab === "import" ? (
+              <FoodImportView onSuccess={onClose} />
+            ) : (
+              <InlineFoodManager onEditStart={() => setIsEditing(true)} onEditEnd={() => setIsEditing(false)} />
+            )}
           </Animated.View>
 
-          {/* Bottom Navigation Bar */}
-          <View style={styles.bottomNavContainer}>
-            <View style={styles.bottomNavPill}>
-              <TouchableOpacity
-                style={[styles.navButton, activeTab === "manage" && styles.activeNavButton]}
-                onPress={() => handleTabChange("manage")}
-              >
-                <MaterialIcons name="restaurant" size={24} color={activeTab === "manage" ? "#000" : "#888"} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.navButton, activeTab === "import" && styles.activeNavButton]}
-                onPress={() => handleTabChange("import")}
-              >
-                <MaterialIcons name="file-download" size={24} color={activeTab === "import" ? "#000" : "#888"} />
-              </TouchableOpacity>
+          {/* Bottom Navigation Bar - Nascosta durante la modifica */}
+          {!isEditing && (
+            <View style={styles.bottomNavContainer}>
+              <View style={styles.bottomNavPill}>
+                <TouchableOpacity
+                  style={[styles.navButton, activeTab === "manage" && styles.activeNavButton]}
+                  onPress={() => handleTabChange("manage")}
+                >
+                  <MaterialIcons name="restaurant" size={24} color={activeTab === "manage" ? "#000" : "#888"} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.navButton, activeTab === "import" && styles.activeNavButton]}
+                  onPress={() => handleTabChange("import")}
+                >
+                  <MaterialIcons name="file-download" size={24} color={activeTab === "import" ? "#000" : "#888"} />
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
+          )}
         </View>
       </BlurView>
     </Modal>
