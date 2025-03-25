@@ -79,31 +79,31 @@ export const NutritionInput: React.FC<NutritionInputProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    gap: 6, 
   },
   row: {
     flexDirection: "row",
-    gap: 8,
+    gap: 6,
   },
   field: {
     flex: 1,
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
-    padding: 8,
+    padding: 6, 
     borderWidth: 1,
     borderColor: "#e0e0e0",
   },
   label: {
-    fontSize: 12,
+    fontSize: 11, 
     color: "#666",
-    marginBottom: 4,
+    marginBottom: 2, 
     textAlign: "center",
   },
   input: {
-    fontSize: 15,
+    fontSize: 14, 
     color: "#1f1f1f",
     textAlign: "center",
-    padding: 6,
+    padding: 4, 
   },
 })
 
