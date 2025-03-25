@@ -137,44 +137,32 @@ export function InlineFoodManager() {
     const leftActionOpacity = swipeAnim.interpolate({
       inputRange: [0, 100],
       outputRange: [0, 1],
-      extrapolate: 'clamp'
+      extrapolate: "clamp",
     })
-    
+
     const rightActionOpacity = swipeAnim.interpolate({
       inputRange: [-100, 0],
       outputRange: [1, 0],
-      extrapolate: 'clamp'
+      extrapolate: "clamp",
     })
 
     // Calcola la scala degli elementi per un feedback tattile
     const contentScale = swipeAnim.interpolate({
       inputRange: [-100, 0, 100],
       outputRange: [0.97, 1, 0.97],
-      extrapolate: 'clamp'
+      extrapolate: "clamp",
     })
 
     return (
       <View style={styles.foodItemContainer}>
         {/* Indicatori di azione swipe */}
         <View style={styles.swipeIndicatorsContainer}>
-          <Animated.View 
-            style={[
-              styles.swipeIndicator, 
-              styles.editIndicator, 
-              { opacity: leftActionOpacity }
-            ]}
-          >
+          <Animated.View style={[styles.swipeIndicator, styles.editIndicator, { opacity: leftActionOpacity }]}>
             <MaterialIcons name="edit" size={18} color="#fff" />
             <ThemedText style={styles.swipeIndicatorText}>Modifica</ThemedText>
           </Animated.View>
-          
-          <Animated.View 
-            style={[
-              styles.swipeIndicator, 
-              styles.deleteIndicator,
-              { opacity: rightActionOpacity }
-            ]}
-          >
+
+          <Animated.View style={[styles.swipeIndicator, styles.deleteIndicator, { opacity: rightActionOpacity }]}>
             <MaterialIcons name="delete-outline" size={18} color="#fff" />
             <ThemedText style={styles.swipeIndicatorText}>Elimina</ThemedText>
           </Animated.View>
@@ -184,10 +172,7 @@ export function InlineFoodManager() {
           style={[
             styles.foodItem,
             {
-              transform: [
-                { translateX: swipeAnim },
-                { scale: contentScale }
-              ],
+              transform: [{ translateX: swipeAnim }, { scale: contentScale }],
             },
           ]}
           {...panResponder.panHandlers}
@@ -196,7 +181,7 @@ export function InlineFoodManager() {
             <View style={styles.foodIconContainer}>
               <MaterialIcons name="fastfood" size={18} color="#333" />
             </View>
-            
+
             <View style={styles.foodTextContainer}>
               <View style={styles.nameScoreContainer}>
                 <ThemedText style={styles.foodName}>{item.name}</ThemedText>
@@ -204,26 +189,24 @@ export function InlineFoodManager() {
                   <ThemedText style={styles.scoreText}>Score: {item.score}</ThemedText>
                 </View>
               </View>
-              
+
               {item.nutritionPer100g?.calories && (
-                <ThemedText style={styles.caloriesText}>
-                  {item.nutritionPer100g.calories} kcal/100g
-                </ThemedText>
+                <ThemedText style={styles.caloriesText}>{item.nutritionPer100g.calories} kcal/100g</ThemedText>
               )}
             </View>
-            
+
             <View style={styles.foodActions}>
-              <TouchableOpacity 
-                style={styles.actionButton} 
+              <TouchableOpacity
+                style={styles.actionButton}
                 onPress={() => handleEdit(item)}
-                hitSlop={{top: 10, right: 10, bottom: 10, left: 10}}
+                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
               >
                 <MaterialIcons name="edit" size={20} color="#666" />
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.actionButton} 
+              <TouchableOpacity
+                style={styles.actionButton}
                 onPress={() => handleDelete(item.id)}
-                hitSlop={{top: 10, right: 10, bottom: 10, left: 10}}
+                hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
               >
                 <MaterialIcons name="delete-outline" size={20} color="#666" />
               </TouchableOpacity>
@@ -252,7 +235,7 @@ export function InlineFoodManager() {
             placeholderTextColor="#888"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
               <MaterialIcons name="cancel" size={20} color="#888" />
             </TouchableOpacity>
           )}
@@ -347,42 +330,42 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   foodItemContainer: {
-    position: 'relative',
+    position: "relative",
     marginBottom: 10,
-    height: 60,  // Ridotta da 80 a 60
+    height: 60, // Ridotta da 80 a 60
   },
   swipeIndicatorsContainer: {
-    position: 'absolute', 
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    height: '100%',
+    position: "absolute",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    height: "100%",
     paddingHorizontal: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   swipeIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,  // Ridotto da 16 a 12
-    paddingVertical: 6,     // Ridotto da 8 a 6
-    borderRadius: 20,       // Ridotto da 20 a 16
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12, // Ridotto da 16 a 12
+    paddingVertical: 6, // Ridotto da 8 a 6
+    borderRadius: 20, // Ridotto da 20 a 16
     gap: 6,
   },
   swipeIndicatorText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 13,  // Ridotto da 14 a 13
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 13, // Ridotto da 14 a 13
   },
   editIndicator: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: "#4CAF50",
   },
   deleteIndicator: {
-    backgroundColor: '#E53935',
+    backgroundColor: "#E53935",
   },
   foodItem: {
-    height: '100%',
+    height: "100%",
     borderRadius: 24,
-    backgroundColor: "#e0e0e0",  // Stesso grigio della barra di ricerca
+    backgroundColor: "#e0e0e0", // Stesso grigio della barra di ricerca
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "#d0d0d0",
@@ -390,7 +373,7 @@ const styles = StyleSheet.create({
   foodContent: {
     flexDirection: "row",
     alignItems: "center",
-    height: '100%',
+    height: "100%",
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
@@ -407,27 +390,27 @@ const styles = StyleSheet.create({
   },
   foodTextContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   nameScoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
   },
   foodName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: "#000",
   },
   caloriesText: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     marginTop: 2,
   },
   scoreText: {
     fontSize: 14,
-    color: '#4CAF50',
-    fontWeight: '500',
+    color: "#4CAF50",
+    fontWeight: "500",
   },
   foodActions: {
     flexDirection: "row",
