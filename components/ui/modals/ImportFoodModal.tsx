@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
-import { Modal, StyleSheet, View, TouchableOpacity, Dimensions, Animated, type ScrollView } from "react-native"
+import { Modal, StyleSheet, View, TouchableOpacity, Dimensions, type ScrollView } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
 import { BlurView } from "expo-blur"
 import { FoodImportView } from "@/components/ui/data-display/FoodImportView"
@@ -14,37 +14,19 @@ interface ImportFoodModalProps {
 
 const { width, height } = Dimensions.get("window")
 
-// Modifica per nascondere la barra di navigazione quando si è in modalità di modifica
 export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
   // State for active tab: 'manage' for food list, 'import' for import screen
   const [activeTab, setActiveTab] = useState<"manage" | "import">("manage")
-  const slideAnim = useRef(new Animated.Value(0)).current
   const scrollViewRef = useRef<ScrollView>(null)
 
   // Nuovo stato per tracciare se siamo in modalità di modifica
   const [isEditing, setIsEditing] = useState(false)
 
-  // Handle tab change with animation
+  // Simplified tab change without animation
   const handleTabChange = (tab: "manage" | "import") => {
     if (tab === activeTab) return
-
-    Animated.timing(slideAnim, {
-      toValue: tab === "manage" ? 400 : -400,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => {
-      setActiveTab(tab)
-      slideAnim.setValue(tab === "manage" ? -400 : 400)
-
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        friction: 24,
-        tension: 180,
-      }).start()
-
-      scrollViewRef.current?.scrollTo({ y: 0, animated: false })
-    })
+    setActiveTab(tab)
+    scrollViewRef.current?.scrollTo({ y: 0, animated: false })
   }
 
   return (
@@ -54,13 +36,13 @@ export function ImportFoodModal({ visible, onClose }: ImportFoodModalProps) {
           <View style={styles.modalHandle} />
 
           {/* Content */}
-          <Animated.View style={[styles.contentContainer, { transform: [{ translateX: slideAnim }] }]}>
+          <View style={styles.contentContainer}>
             {activeTab === "import" ? (
               <FoodImportView onSuccess={onClose} />
             ) : (
               <InlineFoodManager onEditStart={() => setIsEditing(true)} onEditEnd={() => setIsEditing(false)} />
             )}
-          </Animated.View>
+          </View>
 
           {/* Bottom Navigation Bar - Nascosta durante la modifica */}
           {!isEditing && (
@@ -143,4 +125,3 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
 })
-

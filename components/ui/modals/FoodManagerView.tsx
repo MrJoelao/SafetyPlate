@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     backgroundColor: "#f5f5f5",
     marginHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 16,
   },
   searchIcon: {
