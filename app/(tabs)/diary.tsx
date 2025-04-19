@@ -11,7 +11,7 @@ import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
 import { MealTypeMenu } from "@/components/ui/modals/MealTypeMenu"
 import { MealEntryModal } from "@/components/ui/modals/MealEntryModal"
 import { ImportFoodModal } from "@/components/ui/modals/ImportFoodModal"
-import { DiaryOptionsMenu } from "@/components/ui/modals/DiaryOptionsMenu"
+import { OptionsMenu } from "@/components/ui/modals/OptionsMenu"
 
 export default function DiaryScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date())
@@ -61,7 +61,7 @@ export default function DiaryScreen() {
           onSave={handleSaveMeal}
         />
 
-        <DiaryOptionsMenu
+        <OptionsMenu
           visible={showOptionsMenu}
           onClose={() => setShowOptionsMenu(false)}
           onImportPress={() => setShowImportModal(true)}
@@ -108,4 +108,3 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
 })
-

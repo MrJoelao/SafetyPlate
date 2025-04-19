@@ -5,14 +5,14 @@ import { View, StyleSheet, Dimensions, Animated, Pressable } from "react-native"
 import { ThemedText } from "@/components/common/ThemedText"
 import { MaterialIcons } from "@expo/vector-icons"
 
-interface DiaryOptionsMenuProps {
+interface OptionsMenuProps {
   visible: boolean
   onClose: () => void
   onImportPress: () => void
   onSettingsPress: () => void
 }
 
-export function DiaryOptionsMenu({ visible, onClose, onImportPress, onSettingsPress }: DiaryOptionsMenuProps) {
+export function OptionsMenu({ visible, onClose, onImportPress, onSettingsPress }: OptionsMenuProps) {
   const scale = new Animated.Value(visible ? 1 : 0.95)
   const opacity = new Animated.Value(visible ? 1 : 0)
 
@@ -155,4 +155,3 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
 })
-

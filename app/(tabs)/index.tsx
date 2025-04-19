@@ -6,7 +6,8 @@ import { ThemedView } from "@/components/common/ThemedView"
 import { ThemedText } from "@/components/common/ThemedText"
 import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
-import { DiaryOptionsMenu } from "@/components/ui/modals/DiaryOptionsMenu"
+import { OptionsMenu } from "@/components/ui/modals/OptionsMenu"
+import { ImportFoodModal } from "@/components/ui/modals/ImportFoodModal"
 
 const { width, height } = Dimensions.get("window")
 const STATUSBAR_HEIGHT = StatusBar.currentHeight || 0
@@ -44,6 +45,7 @@ const getScoreColor = (score: number) => {
 
 export default function HomeScreen() {
   const [showOptionsMenu, setShowOptionsMenu] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const scoreColor = getScoreColor(DAILY_STATS.score)
 
   return (
@@ -57,13 +59,10 @@ export default function HomeScreen() {
           onOptionsPress={() => setShowOptionsMenu(true)}
         />
 
-        <DiaryOptionsMenu
+        <OptionsMenu
           visible={showOptionsMenu}
           onClose={() => setShowOptionsMenu(false)}
-          onImportPress={() => {
-            // TODO: Implementare la logica per l'importazione
-            console.log("Importa")
-          }}
+          onImportPress={() => setShowImportModal(true)}
           onSettingsPress={() => {
             // TODO: Implementare la logica per le impostazioni
             console.log("Apri impostazioni")
@@ -156,6 +155,8 @@ export default function HomeScreen() {
             </View>
           </View>
         </ScrollView>
+
+        <ImportFoodModal visible={showImportModal} onClose={() => setShowImportModal(false)} />
       </ThemedView>
     </SafeAreaView>
   )
@@ -352,4 +353,3 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
   },
 })
-

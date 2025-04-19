@@ -10,7 +10,8 @@ import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
 import { Entypo } from "@expo/vector-icons"
 import { MealTypeMenu } from "@/components/ui/modals/MealTypeMenu"
 import { MealEntryModal } from "@/components/ui/modals/MealEntryModal"
-import { DiaryOptionsMenu } from "@/components/ui/modals/DiaryOptionsMenu"
+import { OptionsMenu } from "@/components/ui/modals/OptionsMenu"
+import { ImportFoodModal } from "@/components/ui/modals/ImportFoodModal"
 
 export default function PlannerScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date())
@@ -18,6 +19,7 @@ export default function PlannerScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [selectedMealType, setSelectedMealType] = useState("")
   const [showOptionsMenu, setShowOptionsMenu] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
 
   const handleMealSelect = (mealType: string) => {
     setSelectedMealType(mealType)
@@ -41,13 +43,10 @@ export default function PlannerScreen() {
           onOptionsPress={() => setShowOptionsMenu(true)}
         />
 
-        <DiaryOptionsMenu
+        <OptionsMenu
           visible={showOptionsMenu}
           onClose={() => setShowOptionsMenu(false)}
-          onImportPress={() => {
-            // TODO: Implementare la logica per l'importazione
-            console.log("Importa")
-          }}
+          onImportPress={() => setShowImportModal(true)}
           onSettingsPress={() => {
             // TODO: Implementare la logica per le impostazioni
             console.log("Apri impostazioni")
@@ -67,6 +66,8 @@ export default function PlannerScreen() {
           onClose={() => setIsModalVisible(false)}
           onSave={handleSaveMeal}
         />
+
+        <ImportFoodModal visible={showImportModal} onClose={() => setShowImportModal(false)} />
       </ThemedView>
     </SafeAreaView>
   )
@@ -88,4 +89,3 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
   },
 })
-
