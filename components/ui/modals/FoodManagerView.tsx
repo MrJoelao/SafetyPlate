@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Modal, StyleSheet, View, TouchableOpacity, FlatList, TextInput, Alert, Dimensions } from "react-native"
+import { Modal, StyleSheet, View, TouchableOpacity, FlatList, TextInput, Alert, Dimensions, Image } from "react-native"
 import { ThemedText } from "@/components/common/ThemedText"
 import { MaterialIcons } from "@expo/vector-icons"
 import { BlurView } from "expo-blur"
@@ -81,6 +81,15 @@ export function FoodManagerView({ visible, onClose }: FoodManagerViewProps) {
 
   const renderFoodItem = ({ item }: { item: Food }) => (
     <View style={styles.foodItem}>
+      <View style={styles.foodImageContainer}>
+        {item.imageUri ? (
+          <Image source={{ uri: item.imageUri }} style={styles.foodImage} />
+        ) : (
+          <View style={styles.foodIconPlaceholder}>
+            <MaterialIcons name="fastfood" size={24} color="#ccc" />
+          </View>
+        )}
+      </View>
       <View style={styles.foodInfo}>
         <ThemedText style={styles.foodName}>{item.name}</ThemedText>
         <ThemedText style={styles.foodDetails}>
@@ -310,5 +319,27 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#999",
   },
+  foodImageContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    overflow: "hidden",
+    marginRight: 12,
+    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+  },
+  foodImage: {
+    width: "100%",
+    height: "100%",
+  },
+  foodIconPlaceholder: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#f5f5f5",
+  },
 })
-

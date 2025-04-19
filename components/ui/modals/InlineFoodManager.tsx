@@ -15,18 +15,20 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native"
 import { ThemedText } from "@/components/common/ThemedText"
 import { MaterialIcons, Feather } from "@expo/vector-icons"
 import type { Food } from "@/types/food"
 import { loadFoods, deleteFood, addFood, updateFood } from "@/utils/foodStorage"
 import { SearchBar } from "@/components/ui/forms/SearchBar"
+import { ImagePicker } from "@/components/ui/forms/ImagePicker"
 
 // Funzione per determinare il colore in base al punteggio
 const getScoreColor = (score: number) => {
-  if (score <= 40) return "#F44336"  // rosso per punteggi bassi
-  if (score < 70) return "#FFC107"   // giallo per punteggi medi
-  return "#4CAF50"                   // verde per punteggi alti
+  if (score <= 40) return "#F44336" // rosso per punteggi bassi
+  if (score < 70) return "#FFC107" // giallo per punteggi medi
+  return "#4CAF50" // verde per punteggi alti
 }
 
 // Aggiungi le props per gestire gli eventi di inizio e fine modifica
@@ -64,18 +66,19 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
   const [proteins, setProteins] = useState("")
   const [carbs, setCarbs] = useState("")
   const [fats, setFats] = useState("")
+  const [imageUri, setImageUri] = useState<string | undefined>(undefined)
 
   // Define the SwipeableRow interface
   interface SwipeableRow {
-    rowRef: React.RefObject<View>;
-    rowMap: Map<string, Animated.Value>;
+    rowRef: React.RefObject<View>
+    rowMap: Map<string, Animated.Value>
   }
-  
+
   // Animation refs
-    const swipeableRow = useRef<SwipeableRow>({
-      rowRef: React.createRef<View>(),
-      rowMap: new Map(),
-    }).current
+  const swipeableRow = useRef<SwipeableRow>({
+    rowRef: React.createRef<View>(),
+    rowMap: new Map(),
+  }).current
 
   const loadFoodData = async () => {
     setIsLoading(true)
@@ -93,6 +96,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
     setName(food.name)
     setScore(food.score.toString())
     setDefaultUnit(food.defaultUnit)
+    setImageUri(food.imageUri)
     if (food.nutritionPer100g) {
       setCalories(food.nutritionPer100g.calories?.toString() || "")
       setProteins(food.nutritionPer100g.proteins?.toString() || "")
@@ -128,6 +132,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
     setProteins("")
     setCarbs("")
     setFats("")
+    setImageUri(undefined)
 
     // Notifica l'inizio della modifica
     onEditStart?.()
@@ -181,6 +186,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
         name: name.trim(),
         score: Number(score),
         defaultUnit: defaultUnit.trim(),
+        imageUri: imageUri,
         nutritionPer100g: {
           calories: calories ? Number(calories) : undefined,
           proteins: proteins ? Number(proteins) : undefined,
@@ -333,7 +339,11 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
         >
           <View style={styles.foodContent}>
             <View style={styles.foodIconContainer}>
-              <MaterialIcons name="fastfood" size={18} color="#333" />
+              {item.imageUri ? (
+                <Image source={{ uri: item.imageUri }} style={styles.foodImage} />
+              ) : (
+                <MaterialIcons name="fastfood" size={18} color="#333" />
+              )}
             </View>
 
             <View style={styles.foodTextContainer}>
@@ -394,6 +404,11 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
         contentContainerStyle={styles.editContentInner}
         showsVerticalScrollIndicator={false}
       >
+        {/* Image Picker */}
+        <View style={styles.editSection}>
+          <ImagePicker imageUri={imageUri} onImageSelected={(uri) => setImageUri(uri)} />
+        </View>
+
         {/* Basic Information */}
         <View style={styles.editSection}>
           <View style={styles.formGroup}>
@@ -811,5 +826,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#fff",
   },
+  foodImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 16,
+  },
 })
-

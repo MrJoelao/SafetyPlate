@@ -19,6 +19,7 @@ import type { Food } from "@/types/food"
 import { ActionButton } from "@/components/ui/buttons/ActionButton"
 import { QuantityInput } from "@/components/ui/forms/QuantityInput"
 import { NutritionInput } from "@/components/ui/forms/NutritionInput"
+import { ImagePicker } from "@/components/ui/forms/ImagePicker"
 
 interface AddEditFoodModalProps {
   visible: boolean
@@ -36,12 +37,14 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
   const [carbs, setCarbs] = useState("")
   const [fats, setFats] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [imageUri, setImageUri] = useState<string | undefined>()
 
   useEffect(() => {
     if (food) {
       setName(food.name)
       setScore(food.score.toString())
       setDefaultUnit(food.defaultUnit)
+      setImageUri(food.imageUri)
       if (food.nutritionPer100g) {
         setCalories(food.nutritionPer100g.calories?.toString() || "")
         setProteins(food.nutritionPer100g.proteins?.toString() || "")
@@ -61,6 +64,7 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
     setProteins("")
     setCarbs("")
     setFats("")
+    setImageUri(undefined)
   }
 
   const handleSave = async () => {
@@ -86,6 +90,7 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
         name: name.trim(),
         score: Number(score),
         defaultUnit: defaultUnit.trim(),
+        imageUri: imageUri,
         nutritionPer100g: {
           calories: calories ? Number(calories) : undefined,
           proteins: proteins ? Number(proteins) : undefined,
@@ -125,6 +130,11 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
             </View>
 
             <ScrollView style={styles.content}>
+              {/* Image Picker */}
+              <View style={styles.imagePickerSection}>
+                <ImagePicker imageUri={imageUri} onImageSelected={(uri: string | undefined) => setImageUri(uri)} />
+              </View>
+
               {/* Required Fields */}
               <View style={styles.section}>
                 <ThemedText style={styles.sectionTitle}>Basic Information *</ThemedText>
@@ -257,5 +267,9 @@ const styles = StyleSheet.create({
   saveButton: {
     backgroundColor: "#4CAF50",
   },
+  imagePickerSection: {
+    alignItems: "center",
+    marginBottom: 16,
+    paddingTop: 16,
+  },
 })
-
