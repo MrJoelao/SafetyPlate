@@ -588,14 +588,14 @@ const { width } = Dimensions.get("window")
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
   },
   listContainer: {
     flex: 1,
   },
   editContainer: {
     flex: 1,
-    backgroundColor: "#fff", // Changed from #f5f5f5 to white
+    backgroundColor: "#f5f5f5",
   },
   searchContainer: {
     flexDirection: "row",
@@ -739,7 +739,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     position: "relative",
   },
   editHeaderContent: {
@@ -759,14 +759,14 @@ const styles = StyleSheet.create({
   },
   editContent: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
   },
   editContentInner: {
     padding: 16,
     paddingBottom: 80, // Space for the footer
   },
   editSection: {
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -842,7 +842,7 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 16,
     paddingBottom: Platform.OS === "ios" ? 34 : 16, // Adjusted for iOS safe area
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
     shadowColor: "#000",

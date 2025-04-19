@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     marginTop: "5%",
   },
   modalContainer: {
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     borderRadius: 24,
     maxHeight: "95%",
     marginHorizontal: 10,
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     paddingBottom: 80, // Space for the footer
   },
   section: {
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 16,
     paddingBottom: Platform.OS === "ios" ? 34 : 16, // Adjusted for iOS safe area
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
     shadowColor: "#000",

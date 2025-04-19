@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     width: width,
     height: height * 0.9,
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     elevation: 24,
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   foodItem: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
