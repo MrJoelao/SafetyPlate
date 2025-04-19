@@ -1,13 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Modal, StyleSheet, View, TouchableOpacity, FlatList, TextInput, Alert, Dimensions, Image } from "react-native"
-import { ThemedText } from "@/components/common/ThemedText"
+import { Modal, StyleSheet, View, TouchableOpacity, FlatList, Alert, Dimensions } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
+import { ThemedText } from "@/components/common/ThemedText"
 import { BlurView } from "expo-blur"
 import type { Food } from "@/types/food"
 import { loadFoods, deleteFood, addFood, updateFood } from "@/utils/foodStorage"
 import { AddEditFoodModal } from "@/components/ui/modals/AddEditFoodModal"
+import { ModalHeader } from "@/components/ui/common/ModalHeader"
+import { SearchBar } from "@/components/ui/forms/SearchBar"
+import { FoodListItem } from "@/components/ui/food/FoodListItem"
 
 interface FoodManagerViewProps {
   visible: boolean
@@ -80,39 +83,7 @@ export function FoodManagerView({ visible, onClose }: FoodManagerViewProps) {
   }
 
   const renderFoodItem = ({ item }: { item: Food }) => (
-    <View style={styles.foodItem}>
-      <View style={styles.foodImageContainer}>
-        {item.imageUri ? (
-          <Image source={{ uri: item.imageUri }} style={styles.foodImage} />
-        ) : (
-          <View style={styles.foodIconPlaceholder}>
-            <MaterialIcons name="fastfood" size={24} color="#ccc" />
-          </View>
-        )}
-      </View>
-      <View style={styles.foodInfo}>
-        <ThemedText style={styles.foodName}>{item.name}</ThemedText>
-        <ThemedText style={styles.foodDetails}>
-          Score: {item.score} • Unità: {item.defaultUnit}
-        </ThemedText>
-        {item.nutritionPer100g && (
-          <ThemedText style={styles.nutritionInfo}>
-            {item.nutritionPer100g.calories ? `${item.nutritionPer100g.calories} kcal • ` : ""}
-            {item.nutritionPer100g.proteins ? `P: ${item.nutritionPer100g.proteins}g • ` : ""}
-            {item.nutritionPer100g.carbs ? `C: ${item.nutritionPer100g.carbs}g • ` : ""}
-            {item.nutritionPer100g.fats ? `G: ${item.nutritionPer100g.fats}g` : ""}
-          </ThemedText>
-        )}
-      </View>
-      <View style={styles.foodActions}>
-        <TouchableOpacity style={[styles.actionButton, styles.editButton]} onPress={() => handleEdit(item)}>
-          <MaterialIcons name="edit" size={20} color="#2196F3" />
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.deleteButton]} onPress={() => handleDelete(item.id)}>
-          <MaterialIcons name="delete" size={20} color="#F44336" />
-        </TouchableOpacity>
-      </View>
-    </View>
+    <FoodListItem food={item} onEdit={handleEdit} onDelete={handleDelete} />
   )
 
   return (
@@ -121,26 +92,22 @@ export function FoodManagerView({ visible, onClose }: FoodManagerViewProps) {
         <View style={styles.modalContainer}>
           <View style={styles.modalHandle} />
 
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerContent}>
-              <MaterialIcons name="restaurant-menu" size={24} color="#4CAF50" />
-              <ThemedText style={styles.title}>Gestione Alimenti</ThemedText>
-            </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
+          <ModalHeader
+            title="Gestione Alimenti"
+            onClose={onClose}
+            icon={{
+              name: "restaurant-menu",
+              color: "#4CAF50",
+            }}
+          />
 
           {/* Search Bar */}
           <View style={styles.searchContainer}>
-            <MaterialIcons name="search" size={24} color="#666" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Cerca alimenti..."
+            <SearchBar
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholderTextColor="#999"
+              placeholder="Cerca alimenti..."
+              onClear={() => setSearchQuery("")}
             />
           </View>
 
@@ -203,99 +170,22 @@ const styles = StyleSheet.create({
     marginTop: 12,
     alignSelf: "center",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    marginTop: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f5f5f5",
-  },
-  headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1f1f1f",
-  },
-  closeButton: {
-    padding: 8,
-    borderRadius: 20,
-  },
   searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#f5f5f5",
-    marginHorizontal: 16,
-    borderRadius: 16,
-    marginVertical: 16,
-  },
-  searchIcon: {
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-    padding: 8,
   },
   listContent: {
     padding: 16,
   },
-  foodItem: {
-    flexDirection: "row",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: "#f5f5f5",
-  },
-  foodInfo: {
-    flex: 1,
-  },
-  foodName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  foodDetails: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 4,
-  },
-  nutritionInfo: {
-    fontSize: 12,
-    color: "#888",
-    marginTop: 4,
-  },
-  foodActions: {
-    flexDirection: "row",
+  emptyState: {
     alignItems: "center",
-    gap: 8,
+    justifyContent: "center",
+    padding: 40,
   },
-  actionButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: "#f5f5f5",
-  },
-  editButton: {
-    backgroundColor: "#E3F2FD",
-  },
-  deleteButton: {
-    backgroundColor: "#FFEBEE",
+  emptyText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: "#999",
   },
   fab: {
     position: "absolute",
@@ -312,38 +202,5 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.27,
     shadowRadius: 4.65,
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 40,
-  },
-  emptyText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: "#999",
-  },
-  foodImageContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    overflow: "hidden",
-    marginRight: 12,
-    backgroundColor: "#f5f5f5",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-  },
-  foodImage: {
-    width: "100%",
-    height: "100%",
-  },
-  foodIconPlaceholder: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
   },
 })

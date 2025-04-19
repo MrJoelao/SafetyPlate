@@ -4,7 +4,7 @@ import { useState, useRef } from "react"
 import { Modal, StyleSheet, View, TouchableOpacity, Dimensions, type ScrollView } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
 import { BlurView } from "expo-blur"
-import { FoodImportView } from "@/components/ui/data-display/FoodImportView"
+import { FoodImportView } from "@/components/ui/modals/FoodImportView"
 import { InlineFoodManager } from "@/components/ui/modals/InlineFoodManager"
 
 interface ImportFoodModalProps {
