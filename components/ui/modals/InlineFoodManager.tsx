@@ -24,14 +24,13 @@ import { loadFoods, deleteFood, addFood, updateFood } from "@/utils/foodStorage"
 import { SearchBar } from "@/components/ui/forms/SearchBar"
 import { ImagePicker } from "@/components/ui/forms/ImagePicker"
 
-// Funzione per determinare il colore in base al punteggio
+// Function to determine color based on score
 const getScoreColor = (score: number) => {
-  if (score <= 40) return "#F44336" // rosso per punteggi bassi
-  if (score < 70) return "#FFC107" // giallo per punteggi medi
-  return "#4CAF50" // verde per punteggi alti
+  if (score <= 40) return "#F44336" // red for low scores
+  if (score < 70) return "#FFC107" // yellow for medium scores
+  return "#4CAF50" // green for high scores
 }
 
-// Aggiungi le props per gestire gli eventi di inizio e fine modifica
 interface InlineFoodManagerProps {
   onEditStart?: () => void
   onEditEnd?: () => void
@@ -45,6 +44,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
   // View mode: 'list' or 'edit'
   const [viewMode, setViewMode] = useState<"list" | "edit">("list")
   const slideAnim = useRef(new Animated.Value(0)).current
+  const [isAnimating, setIsAnimating] = useState(false) // Track animation state to prevent multiple clicks
 
   useEffect(() => {
     loadFoodData()
@@ -66,7 +66,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
   const [proteins, setProteins] = useState("")
   const [carbs, setCarbs] = useState("")
   const [fats, setFats] = useState("")
-  const [imageUri, setImageUri] = useState<string | undefined>(undefined)
+  const [imageUri, setImageUri] = useState<string | undefined>("")
 
   // Define the SwipeableRow interface
   interface SwipeableRow {
@@ -92,6 +92,8 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
   }
 
   const handleEdit = (food: Food) => {
+    if (isAnimating) return // Prevent multiple clicks during animation
+
     setEditingFood(food)
     setName(food.name)
     setScore(food.score.toString())
@@ -109,8 +111,11 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
       setFats("")
     }
 
-    // Notifica l'inizio della modifica
+    // Notify edit start
     onEditStart?.()
+
+    // Set animating flag
+    setIsAnimating(true)
 
     // Animate to edit view
     Animated.timing(slideAnim, {
@@ -120,10 +125,13 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
     }).start(() => {
       setViewMode("edit")
       slideAnim.setValue(0)
+      setIsAnimating(false) // Reset animation flag
     })
   }
 
   const handleAdd = () => {
+    if (isAnimating) return // Prevent multiple clicks during animation
+
     setEditingFood(undefined)
     setName("")
     setScore("")
@@ -134,8 +142,11 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
     setFats("")
     setImageUri(undefined)
 
-    // Notifica l'inizio della modifica
+    // Notify edit start
     onEditStart?.()
+
+    // Set animating flag
+    setIsAnimating(true)
 
     // Animate to edit view
     Animated.timing(slideAnim, {
@@ -145,10 +156,16 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
     }).start(() => {
       setViewMode("edit")
       slideAnim.setValue(0)
+      setIsAnimating(false) // Reset animation flag
     })
   }
 
   const handleCancel = () => {
+    if (isAnimating) return // Prevent multiple clicks during animation
+
+    // Set animating flag
+    setIsAnimating(true)
+
     // Animate back to list view
     Animated.timing(slideAnim, {
       toValue: Dimensions.get("window").width,
@@ -157,13 +174,16 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
     }).start(() => {
       setViewMode("list")
       slideAnim.setValue(0)
+      setIsAnimating(false) // Reset animation flag
 
-      // Notifica la fine della modifica
+      // Notify edit end
       onEditEnd?.()
     })
   }
 
   const handleSave = async () => {
+    if (isAnimating || isLoading) return // Prevent actions during animation or loading
+
     if (!name.trim()) {
       Alert.alert("Error", "Name is required")
       return
@@ -199,6 +219,9 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
       if (result.success) {
         await loadFoodData()
 
+        // Set animating flag
+        setIsAnimating(true)
+
         // Animate back to list view
         Animated.timing(slideAnim, {
           toValue: Dimensions.get("window").width,
@@ -207,8 +230,9 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
         }).start(() => {
           setViewMode("list")
           slideAnim.setValue(0)
+          setIsAnimating(false) // Reset animation flag
 
-          // Notifica la fine della modifica
+          // Notify edit end
           onEditEnd?.()
         })
       } else {
@@ -252,7 +276,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
       onMoveShouldSetPanResponder: () => true,
       onPanResponderMove: (_, { dx }) => {
         const swipeAnim = getSwipeAnimation(id)
-        // Limite lo swipe tra -100 e 100
+        // Limit swipe between -100 and 100
         const newValue = Math.max(-100, Math.min(100, dx))
         swipeAnim.setValue(newValue)
       },
@@ -290,7 +314,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
     const swipeAnim = getSwipeAnimation(item.id)
     const panResponder = createPanResponder(item.id)
 
-    // Calcola l'opacità delle azioni basata sulla posizione dello swipe
+    // Calculate action opacity based on swipe position
     const leftActionOpacity = swipeAnim.interpolate({
       inputRange: [0, 100],
       outputRange: [0, 1],
@@ -303,19 +327,19 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
       extrapolate: "clamp",
     })
 
-    // Calcola la scala degli elementi per un feedback tattile
+    // Calculate element scale for tactile feedback
     const contentScale = swipeAnim.interpolate({
       inputRange: [-100, 0, 100],
       outputRange: [0.97, 1, 0.97],
       extrapolate: "clamp",
     })
 
-    // Determina il colore del punteggio
+    // Determine score color
     const scoreColor = getScoreColor(item.score)
 
     return (
       <View style={styles.foodItemContainer}>
-        {/* Indicatori di azione swipe */}
+        {/* Swipe action indicators */}
         <View style={styles.swipeIndicatorsContainer}>
           <Animated.View style={[styles.swipeIndicator, styles.editIndicator, { opacity: leftActionOpacity }]}>
             <MaterialIcons name="edit" size={18} color="#fff" />
@@ -389,7 +413,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
   const renderEditView = () => (
     <Animated.View style={[styles.editContainer, { transform: [{ translateX: slideAnim }] }]}>
       <View style={styles.editHeader}>
-        <TouchableOpacity onPress={handleCancel} style={styles.backButton}>
+        <TouchableOpacity onPress={handleCancel} style={styles.backButton} disabled={isAnimating || isLoading}>
           <Feather name="arrow-left" size={24} color="#666" />
         </TouchableOpacity>
 
@@ -505,7 +529,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
       </ScrollView>
 
       <View style={styles.editFooter}>
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={isLoading}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={isAnimating || isLoading}>
           {isLoading ? (
             <ActivityIndicator size="small" color="#fff" />
           ) : (
@@ -529,7 +553,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
             onClear={() => setSearchQuery("")}
           />
         </View>
-        <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
+        <TouchableOpacity style={styles.addButton} onPress={handleAdd} disabled={isAnimating}>
           <MaterialIcons name="add" size={24} color="#333" />
         </TouchableOpacity>
       </View>
@@ -564,14 +588,14 @@ const { width } = Dimensions.get("window")
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fff",
   },
   listContainer: {
     flex: 1,
   },
   editContainer: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fff", // Changed from #f5f5f5 to white
   },
   searchContainer: {
     flexDirection: "row",
@@ -655,6 +679,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderWidth: 1,
     borderColor: "#ccc",
+    overflow: "hidden",
   },
   foodTextContainer: {
     flex: 1,
@@ -677,7 +702,6 @@ const styles = StyleSheet.create({
   },
   scoreText: {
     fontSize: 14,
-    // Il colore ora sarà impostato dinamicamente
     fontWeight: "500",
   },
   foodActions: {
@@ -686,7 +710,7 @@ const styles = StyleSheet.create({
     paddingLeft: 6,
   },
   scoreBadge: {
-    backgroundColor: "#cce6cd", // Questo sfondo sarà sovrascritto dinamicamente
+    backgroundColor: "#cce6cd",
     paddingVertical: 2,
     paddingHorizontal: 6,
     borderRadius: 10,
@@ -706,13 +730,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#999",
   },
-  // Edit view styles - Migliorati per un'interfaccia più compatta
+  // Edit view styles - Improved for a more compact interface
   editHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: "#e0e0e0",
     backgroundColor: "#fff",
@@ -730,74 +754,81 @@ const styles = StyleSheet.create({
   backButton: {
     position: "absolute",
     left: 12,
-    padding: 6,
+    padding: 8,
     borderRadius: 20,
   },
   editContent: {
     flex: 1,
+    backgroundColor: "#fff",
   },
   editContentInner: {
-    padding: 12,
-    paddingBottom: 80,
+    padding: 16,
+    paddingBottom: 80, // Space for the footer
   },
   editSection: {
     backgroundColor: "#fff",
     borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
+    padding: 16,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   sectionTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600",
-    color: "#666",
-    marginBottom: 10,
+    color: "#333",
+    marginBottom: 12,
   },
   formGroup: {
-    marginBottom: 10,
+    marginBottom: 12,
   },
   formRow: {
     flexDirection: "row",
-    gap: 10,
+    gap: 12,
   },
   formGroupHalf: {
     flex: 1,
   },
   formLabel: {
-    fontSize: 13,
-    color: "#666",
-    marginBottom: 4,
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 6,
+    fontWeight: "500",
   },
   formInput: {
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
-    padding: 10,
+    padding: 12,
     fontSize: 15,
     color: "#333",
     borderWidth: 1,
     borderColor: "#e0e0e0",
   },
-  // Nuovi stili per il layout a griglia dei valori nutrizionali
   nutritionGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginHorizontal: -5,
+    marginHorizontal: -6,
   },
   nutritionItem: {
     width: "50%",
-    paddingHorizontal: 5,
-    marginBottom: 10,
+    paddingHorizontal: 6,
+    marginBottom: 12,
   },
   nutritionLabel: {
-    fontSize: 13,
-    color: "#666",
-    marginBottom: 4,
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 6,
+    fontWeight: "500",
   },
   nutritionInput: {
     backgroundColor: "#f5f5f5",
     borderRadius: 8,
-    padding: 10,
+    padding: 12,
     fontSize: 15,
     color: "#333",
     borderWidth: 1,
@@ -809,17 +840,27 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 12,
-    paddingBottom: Platform.OS === "ios" ? 24 : 12,
+    padding: 16,
+    paddingBottom: Platform.OS === "ios" ? 34 : 16, // Adjusted for iOS safe area
     backgroundColor: "#fff",
     borderTopWidth: 1,
     borderTopColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 3,
   },
   saveButton: {
-    padding: 12,
+    padding: 14,
     borderRadius: 10,
     backgroundColor: "#4CAF50",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.5,
+    elevation: 2,
   },
   saveButtonText: {
     fontSize: 16,

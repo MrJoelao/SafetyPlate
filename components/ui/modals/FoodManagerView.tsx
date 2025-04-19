@@ -210,6 +210,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     marginTop: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f5f5f5",
   },
   headerContent: {
     flexDirection: "row",
@@ -229,11 +231,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingVertical: 12,
     backgroundColor: "#f5f5f5",
-    marginHorizontal: 20,
+    marginHorizontal: 16,
     borderRadius: 16,
-    marginBottom: 16,
+    marginVertical: 16,
   },
   searchIcon: {
     marginRight: 8,
@@ -245,7 +247,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   listContent: {
-    padding: 20,
+    padding: 16,
   },
   foodItem: {
     flexDirection: "row",
@@ -258,6 +260,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: "#f5f5f5",
   },
   foodInfo: {
     flex: 1,

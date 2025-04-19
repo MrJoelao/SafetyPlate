@@ -38,6 +38,7 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
   const [fats, setFats] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [imageUri, setImageUri] = useState<string | undefined>()
+  const [isSubmitting, setIsSubmitting] = useState(false) // Track submission state
 
   useEffect(() => {
     if (food) {
@@ -68,6 +69,8 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
   }
 
   const handleSave = async () => {
+    if (isSubmitting) return // Prevent multiple submissions
+
     if (!name.trim()) {
       Alert.alert("Error", "Name is required")
       return
@@ -85,6 +88,7 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
 
     try {
       setIsLoading(true)
+      setIsSubmitting(true)
       const foodData: Food = {
         id: food?.id || `food-${Date.now()}`,
         name: name.trim(),
@@ -106,11 +110,14 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
       Alert.alert("Error", "An unexpected error occurred")
     } finally {
       setIsLoading(false)
+      setIsSubmitting(false)
     }
   }
 
   const handleBackPress = () => {
-    onClose()
+    if (!isSubmitting) {
+      onClose()
+    }
   }
 
   return (
@@ -124,15 +131,15 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
                 <Feather name={food ? "edit" : "plus-circle"} size={24} color={food ? "#2196F3" : "#4CAF50"} />
                 <ThemedText style={styles.title}>{food ? "Edit Food" : "New Food"}</ThemedText>
               </View>
-              <TouchableOpacity onPress={handleBackPress} style={styles.closeButton}>
+              <TouchableOpacity onPress={handleBackPress} style={styles.closeButton} disabled={isSubmitting}>
                 <Feather name="x" size={24} color="#666" />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.content}>
+            <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
               {/* Image Picker */}
               <View style={styles.imagePickerSection}>
-                <ImagePicker imageUri={imageUri} onImageSelected={(uri: string | undefined) => setImageUri(uri)} />
+                <ImagePicker imageUri={imageUri} onImageSelected={(uri) => setImageUri(uri)} />
               </View>
 
               {/* Required Fields */}
@@ -178,7 +185,7 @@ export function AddEditFoodModal({ visible, onClose, food, onSave }: AddEditFood
                 label="Save"
                 icon="save"
                 variant="primary"
-                disabled={isLoading}
+                disabled={isLoading || isSubmitting}
                 style={styles.saveButton}
               />
             </View>
@@ -219,6 +226,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     marginTop: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
   },
   headerContent: {
     flexDirection: "row",
@@ -235,15 +244,29 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   content: {
-    paddingHorizontal: 20,
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 16,
+    paddingBottom: 80, // Space for the footer
   },
   section: {
-    marginBottom: 24,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#666",
+    color: "#333",
     marginBottom: 12,
   },
   inputGroup: {
@@ -259,10 +282,20 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
   },
   footer: {
-    padding: 20,
-    paddingTop: 12,
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    paddingBottom: Platform.OS === "ios" ? 34 : 16, // Adjusted for iOS safe area
+    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 3,
   },
   saveButton: {
     backgroundColor: "#4CAF50",
@@ -270,6 +303,5 @@ const styles = StyleSheet.create({
   imagePickerSection: {
     alignItems: "center",
     marginBottom: 16,
-    paddingTop: 16,
   },
 })
