@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import { Modal, StyleSheet, View, TouchableOpacity, FlatList, Alert, Dimensions } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
@@ -11,6 +9,7 @@ import { AddEditFoodModal } from "@/components/ui/modals/AddEditFoodModal"
 import { ModalHeader } from "@/components/ui/common/ModalHeader"
 import { SearchBar } from "@/components/ui/forms/SearchBar"
 import { FoodListItem } from "@/components/ui/food/FoodListItem"
+import { green } from "react-native-reanimated/lib/typescript/Colors"
 
 interface FoodManagerViewProps {
   visible: boolean
@@ -127,7 +126,6 @@ export function FoodManagerView({ visible, onClose }: FoodManagerViewProps) {
             }
           />
 
-          {/* FAB */}
           <TouchableOpacity style={styles.fab} onPress={handleAdd}>
             <MaterialIcons name="add" size={24} color="#fff" />
           </TouchableOpacity>

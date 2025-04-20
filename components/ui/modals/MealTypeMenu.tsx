@@ -1,5 +1,3 @@
-"use client"
-
 import React from "react"
 import { View, TouchableOpacity, StyleSheet, Animated } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"

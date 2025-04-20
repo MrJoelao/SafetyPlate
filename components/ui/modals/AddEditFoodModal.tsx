@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Modal, StyleSheet, View, KeyboardAvoidingView, Platform } from "react-native"
 import { BlurView } from "expo-blur"

@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect } from "react"
 import { View, StyleSheet, Dimensions, Animated, Pressable } from "react-native"
 import { ThemedText } from "@/components/common/ThemedText"
