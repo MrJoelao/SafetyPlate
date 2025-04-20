@@ -8,20 +8,22 @@ interface FoodListItemProps {
   food: Food
   onEdit: (food: Food) => void
   onDelete: (foodId: string) => void
-  compact?: boolean
+  compact?: boolean // Re-added
 }
 
-export function FoodListItem({ food, onEdit, onDelete, compact = false }: FoodListItemProps) {
+export function FoodListItem({ food, onEdit, onDelete, compact = false }: FoodListItemProps) { // Re-added compact prop
   const scoreColor = getScoreColor(food.score)
 
   return (
-    <View style={[styles.foodItem, compact && styles.foodItemCompact]}>
+      // Re-added conditional compact style
+      <View style={[styles.foodItem, compact && styles.foodItemCompact]}>
       <View style={styles.foodContent}>
         <View style={styles.foodIconContainer}>
           {food.imageUri ? (
             <Image source={{ uri: food.imageUri }} style={styles.foodImage} />
           ) : (
-            <MaterialIcons name="fastfood" size={compact ? 18 : 24} color="#333" />
+           // Re-added compact size check for icon
+           <MaterialIcons name="fastfood" size={compact ? 18 : 24} color="#333" />
           )}
         </View>
 
@@ -33,6 +35,7 @@ export function FoodListItem({ food, onEdit, onDelete, compact = false }: FoodLi
             </View>
           </View>
 
+          {/* Re-added !compact check for calories */}
           {food.nutritionPer100g?.calories && !compact && (
             <ThemedText style={styles.caloriesText}>{food.nutritionPer100g.calories} kcal/100g</ThemedText>
           )}
@@ -61,14 +64,14 @@ export function FoodListItem({ food, onEdit, onDelete, compact = false }: FoodLi
 
 const styles = StyleSheet.create({
   foodItem: {
-    borderRadius: 24,
+    borderRadius: 9999,
     backgroundColor: "#e0e0e0",
     borderWidth: 1,
-    borderColor: "#d0d0d0",
+    borderColor: "transparent",
     marginBottom: 12,
   },
   foodItemCompact: {
-    borderRadius: 12,
+    borderRadius: 9999,
     marginBottom: 8,
   },
   foodContent: {
@@ -115,7 +118,7 @@ const styles = StyleSheet.create({
   scoreBadge: {
     paddingVertical: 2,
     paddingHorizontal: 8,
-    borderRadius: 12,
+    borderRadius: 30,
   },
   scoreText: {
     fontSize: 14,
@@ -127,7 +130,7 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     padding: 8,
-    borderRadius: 8,
+    borderRadius: 30,
     backgroundColor: "#d5d5d5",
   },
 })
