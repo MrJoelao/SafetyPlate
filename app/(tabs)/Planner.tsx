@@ -1,11 +1,7 @@
-"use client"
-
 import { useState } from "react"
 import { StyleSheet, View, SafeAreaView, Platform } from "react-native"
 import { useRouter } from "expo-router"
 import { ThemedView } from "@/components/common/ThemedView"
-import { PlannerCalendar } from "@/components/planner/PlannerCalendar"
-import { MealPlanSheet } from "@/components/planner/MealPlanSheet"
 import { FloatingActionButton } from "@/components/ui/buttons/FloatingActionButton"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
 import { Entypo } from "@expo/vector-icons"
@@ -31,9 +27,6 @@ export default function PlannerScreen() {
           showOptions={true}
           onOptionsPress={() => router.push("/settings")}
         />
-
-        <PlannerCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
-        <MealPlanSheet date={selectedDate} onAddMeal={handleMealSelect} />
 
         <View style={styles.fabContainer}>
           /* MealTypeMenu rimane gestito localmente */
