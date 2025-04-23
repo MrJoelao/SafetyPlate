@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { StyleSheet, View, SafeAreaView, Dimensions, StatusBar, ScrollView } from "react-native"
-import { useRouter } from "expo-router" // Importa useRouter
+import { useRouter } from "expo-router"
 import { ThemedView } from "@/components/common/ThemedView"
 import { ThemedText } from "@/components/common/ThemedText"
 import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons"
@@ -144,9 +144,6 @@ export default function HomeScreen() {
             </View>
           </View>
         </ScrollView>
-
-        {/* Rimuovi il rendering dei modali originali */}
-        {/* <ImportFoodModal ... /> */}
       </ThemedView>
     </SafeAreaView>
   )
