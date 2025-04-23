@@ -3,36 +3,23 @@
 import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar } from "react-native"
 import { ThemedView } from "@/components/common/ThemedView"
 import { useState } from "react"
-import { useRouter } from "expo-router" // Importa useRouter
+import { useRouter } from "expo-router"
 import { DiaryCalendar } from "@/components/diary/DiaryCalendar"
 import { DiaryTimeSlots } from "@/components/diary/DiaryTimeSlots"
 import { FloatingActionButton } from "@/components/ui/buttons/FloatingActionButton"
 import { FontAwesome } from "@expo/vector-icons"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
 import { MealTypeMenu } from "@/components/ui/modals/MealTypeMenu"
-// Rimuovi importazioni dei modali originali
-// import { MealEntryModal } from "@/components/ui/modals/MealEntryModal"
-// import { ImportFoodModal } from "@/components/ui/modals/ImportFoodModal"
-// import { OptionsMenu } from "@/components/ui/modals/OptionsMenu"
 
 export default function DiaryScreen() {
-  const router = useRouter() // Inizializza useRouter
+  const router = useRouter()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  // Rimuovi stati per la visibilità dei modali
-  // const [isModalVisible, setIsModalVisible] = useState(false)
-  // const [selectedMealType, setSelectedMealType] = useState("")
-  // const [showImportModal, setShowImportModal] = useState(false)
-  // const [showOptionsMenu, setShowOptionsMenu] = useState(false)
 
   const handleMealSelect = (mealType: string) => {
-    // setSelectedMealType(mealType) // Non più necessario qui, passato come param
     setIsMenuOpen(false)
-    // Naviga alla route modale passando mealType
     router.push({ pathname: "/modals/meal-entry", params: { mealType } })
   }
-
-  // handleSaveMeal non è più necessario qui, gestito dentro il modale
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -40,7 +27,6 @@ export default function DiaryScreen() {
         <ScreenHeader
           title="Diary"
           icon={<FontAwesome name="bookmark" size={24} color="#000" />}
-          // Naviga alla schermata Impostazioni
           onOptionsPress={() => router.push("/settings")}
         />
 
@@ -53,15 +39,9 @@ export default function DiaryScreen() {
         </View>
 
         <View style={styles.fabContainer}>
-          {/* MealTypeMenu rimane gestito localmente */}
           <MealTypeMenu visible={isMenuOpen} onSelect={handleMealSelect} onClose={() => setIsMenuOpen(false)} />
           <FloatingActionButton onPress={() => setIsMenuOpen(!isMenuOpen)} isOpen={isMenuOpen} />
         </View>
-
-        {/* Rimuovi il rendering dei modali originali */}
-        {/* <MealEntryModal ... /> */}
-        {/* <OptionsMenu ... /> */}
-        {/* <ImportFoodModal ... /> */}
       </ThemedView>
     </SafeAreaView>
   )

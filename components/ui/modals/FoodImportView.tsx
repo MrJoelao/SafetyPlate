@@ -166,9 +166,10 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <View style={styles.headerContainer}>
+      {/* Rimuoviamo l'header interno del componente */}
+      {/* <View style={styles.headerContainer}>
         <ThemedText style={styles.headerTitle}>Importa Alimenti</ThemedText>
-      </View>
+      </View> */}
 
       {!importComplete ? (
         <>
@@ -299,16 +300,18 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 16,
     paddingBottom: 40,
+    paddingTop: 16, // Aggiungiamo un po' di padding sopra ora che l'header è rimosso
   },
-  headerContainer: {
-    alignItems: "center",
-    marginVertical: 16,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#000",
-  },
+  // Rimuoviamo gli stili dell'header interno
+  // headerContainer: {
+  //   alignItems: "center",
+  //   marginVertical: 16,
+  // },
+  // headerTitle: {
+  //   fontSize: 24,
+  //   fontWeight: "700",
+  //   color: "#000",
+  // },
   optionsContainer: {
     gap: 24,
   },

@@ -1,20 +1,23 @@
 import React from "react"
-import { ScrollView, StyleSheet, View } from "react-native"
-import { Appbar, List, Divider, Text } from "react-native-paper"
+import { ScrollView, StyleSheet } from "react-native"
+import { List, Divider } from "react-native-paper"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
-import { ThemedView } from "@/components/common/ThemedView"
-import { ThemedText } from "@/components/common/ThemedText"
+import { ScreenHeader } from "@/components/ui/layout/ScreenHeader" 
+import { View } from "react-native"
 
 export default function SettingsScreen() {
   const router = useRouter()
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <Appbar.Header elevated>
-        <Appbar.BackAction onPress={() => router.back()} />
-        <Appbar.Content title="Impostazioni" />
-      </Appbar.Header>
+    <View style={styles.container}>
+      <ScreenHeader
+        title="Impostazioni"
+        showBackButton={true}
+        onBackPress={() => router.back()}
+        showSearch={false}
+        showOptions={false}
+      />
       <ScrollView style={styles.scrollView}>
         {/* Sezione Profilo (Segnaposto) */}
         <List.Section title="Profilo">
@@ -57,17 +60,16 @@ export default function SettingsScreen() {
 
         {/* Aggiungere altre sezioni se necessario */}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5", // Sfondo leggermente grigio per coerenza
+    backgroundColor: "#f5f5f5",
   },
   scrollView: {
     flex: 1,
   },
-  // Aggiungere altri stili se necessario
 })
