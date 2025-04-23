@@ -4,9 +4,9 @@ import type React from "react"
 import { useCallback, useRef, useEffect, useState } from "react"
 import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from "react-native"
 import { ThemedText } from "@/components/common/ThemedText"
-import { MaterialIcons } from "@expo/vector-icons"
 import { format, addMonths, subMonths } from "date-fns"
 import { it } from "date-fns/locale"
+import { IconButton } from "@/components/ui/buttons/IconButton"
 
 interface CalendarProps {
   selectedDate: Date
@@ -35,9 +35,9 @@ export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect }
     return dates
   }, [selectedDate])
 
-  // Scroll alla data selezionata solo quando cambia il mese
+  // Scroll to selected date only when month changes
   useEffect(() => {
-    if (isScrolling) return // Non scrollare se l'utente sta interagendo
+    if (isScrolling) return // Don't scroll if user is interacting
 
     const dates = getDatesInMonth()
     const selectedIndex = dates.findIndex((date) => date.getDate() === selectedDate.getDate())
@@ -85,13 +85,9 @@ export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect }
         </View>
 
         <View style={styles.arrowsContainer}>
-          <TouchableOpacity onPress={handlePrevMonth} style={[styles.iconButton, styles.leftArrow]}>
-            <MaterialIcons name="chevron-left" size={24} color="#666" />
-          </TouchableOpacity>
+          <IconButton onPress={handlePrevMonth} icon="chevron-left" size={24} color="#666" style={styles.leftArrow} />
 
-          <TouchableOpacity onPress={handleNextMonth} style={[styles.iconButton, styles.rightArrow]}>
-            <MaterialIcons name="chevron-right" size={24} color="#666" />
-          </TouchableOpacity>
+          <IconButton onPress={handleNextMonth} icon="chevron-right" size={24} color="#666" style={styles.rightArrow} />
         </View>
       </View>
 
@@ -181,12 +177,6 @@ const styles = StyleSheet.create({
     zIndex: 1,
     height: 32,
   },
-  iconButton: {
-    width: ARROW_WIDTH,
-    height: 32,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   leftArrow: {
     paddingLeft: 4,
   },
@@ -244,4 +234,3 @@ const styles = StyleSheet.create({
     color: "#4CAF50",
   },
 })
-

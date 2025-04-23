@@ -4,8 +4,8 @@ import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar } from 
 import { ThemedView } from "@/components/common/ThemedView"
 import { useState } from "react"
 import { useRouter } from "expo-router"
-import { DiaryCalendar } from "@/components/diary/DiaryCalendar"
-import { DiaryTimeSlots } from "@/components/diary/DiaryTimeSlots"
+import { Calendar } from "@/components/ui/data-display/Calendar"
+import { TimeSlots } from "@/components/ui/data-display/TimeSlots"
 import { FloatingActionButton } from "@/components/ui/buttons/FloatingActionButton"
 import { FontAwesome } from "@expo/vector-icons"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
@@ -31,11 +31,11 @@ export default function DiaryScreen() {
         />
 
         <View style={styles.stickyHeader}>
-          <DiaryCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+          <Calendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
         </View>
 
         <View style={styles.scrollableContent}>
-          <DiaryTimeSlots textColor="#000" />
+          <TimeSlots textColor="#000" />
         </View>
 
         <View style={styles.fabContainer}>
