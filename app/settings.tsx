@@ -1,7 +1,6 @@
 import React from "react"
 import { ScrollView, StyleSheet } from "react-native"
 import { List, Divider } from "react-native-paper"
-import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader" 
 import { View } from "react-native"
