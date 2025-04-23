@@ -40,8 +40,8 @@ export default function DiaryScreen() {
         <ScreenHeader
           title="Diary"
           icon={<FontAwesome name="bookmark" size={24} color="#000" />}
-          // Apri il modale Options tramite router
-          onOptionsPress={() => router.push("/modals/options")}
+          // Naviga alla schermata Impostazioni
+          onOptionsPress={() => router.push("/settings")}
         />
 
         <View style={styles.stickyHeader}>
