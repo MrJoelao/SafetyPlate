@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { StyleSheet, View, SafeAreaView, Platform } from "react-native"
+import { useRouter } from "expo-router" // Importa useRouter
 import { ThemedView } from "@/components/common/ThemedView"
 import { PlannerCalendar } from "@/components/planner/PlannerCalendar"
 import { MealPlanSheet } from "@/components/planner/MealPlanSheet"
@@ -9,28 +10,29 @@ import { FloatingActionButton } from "@/components/ui/buttons/FloatingActionButt
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
 import { Entypo } from "@expo/vector-icons"
 import { MealTypeMenu } from "@/components/ui/modals/MealTypeMenu"
-import { MealEntryModal } from "@/components/ui/modals/MealEntryModal"
-import { OptionsMenu } from "@/components/ui/modals/OptionsMenu"
-import { ImportFoodModal } from "@/components/ui/modals/ImportFoodModal"
+// Rimuovi importazioni dei modali originali
+// import { MealEntryModal } from "@/components/ui/modals/MealEntryModal"
+// import { OptionsMenu } from "@/components/ui/modals/OptionsMenu"
+// import { ImportFoodModal } from "@/components/ui/modals/ImportFoodModal"
 
 export default function PlannerScreen() {
+  const router = useRouter() // Inizializza useRouter
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isModalVisible, setIsModalVisible] = useState(false)
-  const [selectedMealType, setSelectedMealType] = useState("")
-  const [showOptionsMenu, setShowOptionsMenu] = useState(false)
-  const [showImportModal, setShowImportModal] = useState(false)
+  // Rimuovi stati per la visibilità dei modali
+  // const [isModalVisible, setIsModalVisible] = useState(false)
+  // const [selectedMealType, setSelectedMealType] = useState("")
+  // const [showOptionsMenu, setShowOptionsMenu] = useState(false)
+  // const [showImportModal, setShowImportModal] = useState(false)
 
   const handleMealSelect = (mealType: string) => {
-    setSelectedMealType(mealType)
+    // setSelectedMealType(mealType) // Non più necessario qui
     setIsMenuOpen(false)
-    setIsModalVisible(true)
+    // Naviga alla route modale passando mealType
+    router.push({ pathname: "/modals/meal-entry", params: { mealType } })
   }
 
-  const handleSaveMeal = (mealData: any) => {
-    console.log("Salvataggio pasto:", { type: selectedMealType, ...mealData })
-    // Qui implementeremo la logica per salvare il pasto
-  }
+  // handleSaveMeal non è più necessario qui
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -40,34 +42,26 @@ export default function PlannerScreen() {
           icon={<Entypo name="calendar" size={24} color="#000" />}
           showSearch={true}
           showOptions={true}
-          onOptionsPress={() => setShowOptionsMenu(true)}
+          // Apri il modale Options tramite router
+          onOptionsPress={() => router.push("/modals/options")}
         />
 
-        <OptionsMenu
-          visible={showOptionsMenu}
-          onClose={() => setShowOptionsMenu(false)}
-          onImportPress={() => setShowImportModal(true)}
-          onSettingsPress={() => {
-            // TODO: Implementare la logica per le impostazioni
-            console.log("Apri impostazioni")
-          }}
-        />
+        {/* Rimuovi il rendering dei modali originali */}
+        {/* <OptionsMenu ... /> */}
+
         <PlannerCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
+        {/* Passa la nuova funzione handleMealSelect a MealPlanSheet */}
         <MealPlanSheet date={selectedDate} onAddMeal={handleMealSelect} />
 
         <View style={styles.fabContainer}>
+          {/* MealTypeMenu rimane gestito localmente */}
           <MealTypeMenu visible={isMenuOpen} onSelect={handleMealSelect} onClose={() => setIsMenuOpen(false)} />
           <FloatingActionButton onPress={() => setIsMenuOpen(!isMenuOpen)} isOpen={isMenuOpen} />
         </View>
 
-        <MealEntryModal
-          visible={isModalVisible}
-          mealType={selectedMealType}
-          onClose={() => setIsModalVisible(false)}
-          onSave={handleSaveMeal}
-        />
-
-        <ImportFoodModal visible={showImportModal} onClose={() => setShowImportModal(false)} />
+        {/* Rimuovi il rendering dei modali originali */}
+        {/* <MealEntryModal ... /> */}
+        {/* <ImportFoodModal ... /> */}
       </ThemedView>
     </SafeAreaView>
   )

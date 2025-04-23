@@ -2,12 +2,11 @@
 
 import { useState } from "react"
 import { StyleSheet, View, SafeAreaView, Dimensions, StatusBar, ScrollView } from "react-native"
+import { useRouter } from "expo-router" // Importa useRouter
 import { ThemedView } from "@/components/common/ThemedView"
 import { ThemedText } from "@/components/common/ThemedText"
 import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
-import { OptionsMenu } from "@/components/ui/modals/OptionsMenu"
-import { ImportFoodModal } from "@/components/ui/modals/ImportFoodModal"
 
 const { width, height } = Dimensions.get("window")
 const STATUSBAR_HEIGHT = StatusBar.currentHeight || 0
@@ -44,8 +43,7 @@ const getScoreColor = (score: number) => {
 }
 
 export default function HomeScreen() {
-  const [showOptionsMenu, setShowOptionsMenu] = useState(false)
-  const [showImportModal, setShowImportModal] = useState(false)
+  const router = useRouter() // Inizializza useRouter
   const scoreColor = getScoreColor(DAILY_STATS.score)
 
   return (
@@ -56,17 +54,8 @@ export default function HomeScreen() {
           icon={<FontAwesome5 name="apple-alt" size={24} color="#000" />}
           showSearch={true}
           showOptions={true}
-          onOptionsPress={() => setShowOptionsMenu(true)}
-        />
-
-        <OptionsMenu
-          visible={showOptionsMenu}
-          onClose={() => setShowOptionsMenu(false)}
-          onImportPress={() => setShowImportModal(true)}
-          onSettingsPress={() => {
-            // TODO: Implementare la logica per le impostazioni
-            console.log("Apri impostazioni")
-          }}
+          // Apri il modale Options tramite router
+          onOptionsPress={() => router.push("/modals/options")}
         />
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -156,7 +145,8 @@ export default function HomeScreen() {
           </View>
         </ScrollView>
 
-        <ImportFoodModal visible={showImportModal} onClose={() => setShowImportModal(false)} />
+        {/* Rimuovi il rendering dei modali originali */}
+        {/* <ImportFoodModal ... /> */}
       </ThemedView>
     </SafeAreaView>
   )

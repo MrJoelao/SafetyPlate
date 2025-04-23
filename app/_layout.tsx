@@ -50,6 +50,34 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen name="+not-found" />
+        {/* Modal Screens */}
+        <Stack.Screen
+          name="modals/meal-entry"
+          options={{
+            presentation: "modal",
+            headerShown: false,
+            animation: "slide_from_bottom", // O un'altra animazione per replicare l'originale
+            contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" }, // Sfondo semi-trasparente
+          }}
+        />
+        <Stack.Screen
+          name="modals/options"
+          options={{
+            presentation: "transparentModal", // Per OptionsMenu che appare sopra
+            headerShown: false,
+            animation: "fade",
+            contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" },
+          }}
+        />
+        <Stack.Screen
+          name="modals/import-food"
+          options={{
+            presentation: "modal",
+            headerShown: false,
+            animation: "slide_from_bottom",
+            contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" },
+          }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
