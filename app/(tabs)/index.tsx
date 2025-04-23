@@ -1,15 +1,9 @@
-"use client"
-
-import { useState } from "react"
 import { StyleSheet, View, SafeAreaView, Dimensions, StatusBar, ScrollView } from "react-native"
 import { useRouter } from "expo-router"
 import { ThemedView } from "@/components/common/ThemedView"
 import { ThemedText } from "@/components/common/ThemedText"
 import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
-
-const { width, height } = Dimensions.get("window")
-const STATUSBAR_HEIGHT = StatusBar.currentHeight || 0
 
 // Example data (to be replaced with real data)
 const DAILY_STATS = {
