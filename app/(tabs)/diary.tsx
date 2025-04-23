@@ -3,34 +3,36 @@
 import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar } from "react-native"
 import { ThemedView } from "@/components/common/ThemedView"
 import { useState } from "react"
+import { useRouter } from "expo-router" // Importa useRouter
 import { DiaryCalendar } from "@/components/diary/DiaryCalendar"
 import { DiaryTimeSlots } from "@/components/diary/DiaryTimeSlots"
 import { FloatingActionButton } from "@/components/ui/buttons/FloatingActionButton"
 import { FontAwesome } from "@expo/vector-icons"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
 import { MealTypeMenu } from "@/components/ui/modals/MealTypeMenu"
-import { MealEntryModal } from "@/components/ui/modals/MealEntryModal"
-import { ImportFoodModal } from "@/components/ui/modals/ImportFoodModal"
-import { OptionsMenu } from "@/components/ui/modals/OptionsMenu"
+// Rimuovi importazioni dei modali originali
+// import { MealEntryModal } from "@/components/ui/modals/MealEntryModal"
+// import { ImportFoodModal } from "@/components/ui/modals/ImportFoodModal"
+// import { OptionsMenu } from "@/components/ui/modals/OptionsMenu"
 
 export default function DiaryScreen() {
+  const router = useRouter() // Inizializza useRouter
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isModalVisible, setIsModalVisible] = useState(false)
-  const [selectedMealType, setSelectedMealType] = useState("")
-  const [showImportModal, setShowImportModal] = useState(false)
-  const [showOptionsMenu, setShowOptionsMenu] = useState(false)
+  // Rimuovi stati per la visibilità dei modali
+  // const [isModalVisible, setIsModalVisible] = useState(false)
+  // const [selectedMealType, setSelectedMealType] = useState("")
+  // const [showImportModal, setShowImportModal] = useState(false)
+  // const [showOptionsMenu, setShowOptionsMenu] = useState(false)
 
   const handleMealSelect = (mealType: string) => {
-    setSelectedMealType(mealType)
+    // setSelectedMealType(mealType) // Non più necessario qui, passato come param
     setIsMenuOpen(false)
-    setIsModalVisible(true)
+    // Naviga alla route modale passando mealType
+    router.push({ pathname: "/modals/meal-entry", params: { mealType } })
   }
 
-  const handleSaveMeal = (mealData: any) => {
-    console.log("Salvataggio pasto:", { type: selectedMealType, ...mealData })
-    // Qui implementeremo la logica per salvare il pasto
-  }
+  // handleSaveMeal non è più necessario qui, gestito dentro il modale
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -38,7 +40,8 @@ export default function DiaryScreen() {
         <ScreenHeader
           title="Diary"
           icon={<FontAwesome name="bookmark" size={24} color="#000" />}
-          onOptionsPress={() => setShowOptionsMenu(true)}
+          // Apri il modale Options tramite router
+          onOptionsPress={() => router.push("/modals/options")}
         />
 
         <View style={styles.stickyHeader}>
@@ -50,28 +53,15 @@ export default function DiaryScreen() {
         </View>
 
         <View style={styles.fabContainer}>
+          {/* MealTypeMenu rimane gestito localmente */}
           <MealTypeMenu visible={isMenuOpen} onSelect={handleMealSelect} onClose={() => setIsMenuOpen(false)} />
           <FloatingActionButton onPress={() => setIsMenuOpen(!isMenuOpen)} isOpen={isMenuOpen} />
         </View>
 
-        <MealEntryModal
-          visible={isModalVisible}
-          mealType={selectedMealType}
-          onClose={() => setIsModalVisible(false)}
-          onSave={handleSaveMeal}
-        />
-
-        <OptionsMenu
-          visible={showOptionsMenu}
-          onClose={() => setShowOptionsMenu(false)}
-          onImportPress={() => setShowImportModal(true)}
-          onSettingsPress={() => {
-            // TODO: Implementare la logica per le impostazioni
-            console.log("Apri impostazioni")
-          }}
-        />
-
-        <ImportFoodModal visible={showImportModal} onClose={() => setShowImportModal(false)} />
+        {/* Rimuovi il rendering dei modali originali */}
+        {/* <MealEntryModal ... /> */}
+        {/* <OptionsMenu ... /> */}
+        {/* <ImportFoodModal ... /> */}
       </ThemedView>
     </SafeAreaView>
   )

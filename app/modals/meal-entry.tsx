@@ -1,10 +1,9 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Modal, View, StyleSheet, TouchableOpacity, TextInput, ScrollView, Dimensions, Platform } from "react-native"
+import { View, StyleSheet, TouchableOpacity, TextInput, ScrollView, Dimensions, Platform, SafeAreaView } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
 import { ThemedText } from "@/components/common/ThemedText"
-import { BlurView } from "expo-blur"
 import DateTimePicker from "@react-native-community/datetimepicker"
 import { SearchBar } from "@/components/ui/forms/SearchBar"
 import { QuantityInput } from "@/components/ui/forms/QuantityInput"
@@ -12,14 +11,9 @@ import { NutritionInput } from "@/components/ui/forms/NutritionInput"
 import { ActionButton } from "@/components/ui/buttons/ActionButton"
 import type { Food } from "@/types/food"
 import { loadFoods } from "@/utils/foodStorage"
+import { useLocalSearchParams, useRouter } from "expo-router"
 
-interface MealEntryModalProps {
-  visible: boolean
-  mealType: string
-  onClose: () => void
-  onSave: (mealData: MealData) => void
-}
-
+// Interfacce definite come prima
 interface DishItem {
   id: string
   name: string
@@ -47,7 +41,7 @@ interface SuggestedMeal {
   score: number
 }
 
-// Suggested meals data
+// Suggested meals data (come prima)
 const SUGGESTED_MEALS: SuggestedMeal[] = [
   { id: "1", name: "Pasta", icon: "restaurant", color: "#FF9800", score: 70 },
   { id: "2", name: "Insalata", icon: "eco", color: "#4CAF50", score: 90 },
@@ -57,7 +51,11 @@ const SUGGESTED_MEALS: SuggestedMeal[] = [
   { id: "6", name: "Riso", icon: "rice-bowl", color: "#FF5722", score: 75 },
 ]
 
-export const MealEntryModal: React.FC<MealEntryModalProps> = ({ visible, mealType, onClose, onSave }) => {
+export default function MealEntryModalScreen() {
+  const router = useRouter()
+  const params = useLocalSearchParams<{ mealType?: string }>()
+  const mealType = params.mealType || "Pasto" // Default se non passato
+
   const [dishes, setDishes] = useState<DishItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [showQuickAdd, setShowQuickAdd] = useState(false)
@@ -78,7 +76,7 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({ visible, mealTyp
       }
     }
     fetchFoods()
-  }, [visible])
+  }, []) // Carica i cibi solo una volta all'apertura
 
   const handleAddDish = (item?: Food) => {
     const newDish: DishItem = {
@@ -143,12 +141,13 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({ visible, mealTyp
   }
 
   const handleSave = () => {
-    onSave({
+    const mealData: MealData = {
       dishes,
       datetime: selectedDate,
-    })
-    setDishes([])
-    onClose()
+    }
+    console.log("Salvataggio pasto (da router modal):", { type: mealType, ...mealData })
+    // Qui andrebbe la logica effettiva di salvataggio o passaggio dati
+    router.back() // Chiude il modale
   }
 
   const filteredItems = availableFoods.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -200,197 +199,194 @@ export const MealEntryModal: React.FC<MealEntryModalProps> = ({ visible, mealTyp
   )
 
   return (
-    <Modal visible={visible} transparent animationType="slide" statusBarTranslucent onRequestClose={onClose}>
-      <BlurView intensity={20} style={styles.backdrop}>
-        <View style={styles.modalContainer}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerContent}>
-              <MaterialIcons name={getMealTypeIcon(mealType)} size={24} color="#4CAF50" />
-              <ThemedText style={styles.title}>{getMealTypeLabel(mealType)}</ThemedText>
+    // Usiamo SafeAreaView per evitare sovrapposizioni con notch/barra stato
+    <SafeAreaView style={styles.safeArea}>
+      {/* Applichiamo lo stile del contenitore modale qui */}
+      <View style={styles.modalContainer}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerContent}>
+            <MaterialIcons name={getMealTypeIcon(mealType)} size={24} color="#4CAF50" />
+            <ThemedText style={styles.title}>{getMealTypeLabel(mealType)}</ThemedText>
+          </View>
+          {/* Bottone chiusura ora usa router.back() */}
+          <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
+            <MaterialIcons name="close" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.content}>
+          {/* Search bar */}
+          <View style={styles.searchSection}>
+            <View style={styles.searchContainer}>
+              <SearchBar
+                value={searchQuery}
+                onChangeText={(text) => {
+                  setSearchQuery(text)
+                  setShowQuickAdd(true)
+                }}
+                placeholder="Cerca un alimento..."
+                onClear={() => setSearchQuery("")}
+              />
+              <TouchableOpacity style={styles.addCustomButton} onPress={() => handleAddDish()}>
+                <MaterialIcons name="add" size={24} color="#4CAF50" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color="#666" />
+
+            {/* Search suggestions */}
+            {showQuickAdd && searchQuery.length > 0 && (
+              <View style={styles.quickAddContainer}>
+                {filteredItems.map((item) => (
+                  <TouchableOpacity key={item.id} style={styles.quickAddItem} onPress={() => handleAddDish(item)}>
+                    <MaterialIcons name="add-circle-outline" size={20} color="#4CAF50" />
+                    <ThemedText style={styles.quickAddText}>{item.name}</ThemedText>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* Suggested meals */}
+          <View style={styles.suggestedSection}>
+            <ThemedText style={styles.suggestedTitle}>Suggeriti</ThemedText>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.suggestedScrollContent}
+            >
+              {SUGGESTED_MEALS.map((meal) => (
+                <TouchableOpacity
+                  key={meal.id}
+                  style={styles.suggestedCard}
+                  onPress={() =>
+                    handleAddDish({
+                      id: meal.id,
+                      name: meal.name,
+                      defaultUnit: "g",
+                      score: meal.score,
+                    })
+                  }
+                >
+                  <View style={[styles.suggestedIconContainer, { backgroundColor: meal.color }]}>
+                    <MaterialIcons name={meal.icon as keyof typeof MaterialIcons.glyphMap} size={24} color="#fff" />
+                  </View>
+                  <ThemedText style={styles.suggestedText}>{meal.name}</ThemedText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Dish list */}
+          <ScrollView ref={scrollViewRef} style={styles.dishList}>
+            {dishes.map(renderDishItem)}
+          </ScrollView>
+
+          {/* Empty state */}
+          {dishes.length === 0 && (
+            <View style={styles.emptyState}>
+              <MaterialIcons name="restaurant" size={48} color="#ddd" />
+              <ThemedText style={styles.emptyStateTitle}>Aggiungi i tuoi piatti</ThemedText>
+              <ThemedText style={styles.emptyStateText}>
+                Cerca tra gli alimenti disponibili o aggiungi un piatto personalizzato
+              </ThemedText>
+            </View>
+          )}
+
+          {/* Date/time selection */}
+          <View style={styles.dateTimeSection}>
+            <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowDatePicker(true)}>
+              <MaterialIcons name="calendar-today" size={18} color="#666" />
+              <ThemedText style={styles.dateTimeText}>
+                {selectedDate.toLocaleDateString("it-IT", {
+                  day: "numeric",
+                  month: "short",
+                })}
+              </ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowTimePicker(true)}>
+              <MaterialIcons name="access-time" size={18} color="#666" />
+              <ThemedText style={styles.dateTimeText}>
+                {selectedDate.toLocaleTimeString("it-IT", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: false,
+                })}
+              </ThemedText>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.content}>
-            {/* Search bar */}
-            <View style={styles.searchSection}>
-              <View style={styles.searchContainer}>
-                <SearchBar
-                  value={searchQuery}
-                  onChangeText={(text) => {
-                    setSearchQuery(text)
-                    setShowQuickAdd(true)
-                  }}
-                  placeholder="Cerca un alimento..."
-                  onClear={() => setSearchQuery("")}
-                />
-                <TouchableOpacity style={styles.addCustomButton} onPress={() => handleAddDish()}>
-                  <MaterialIcons name="add" size={24} color="#4CAF50" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Search suggestions */}
-              {showQuickAdd && searchQuery.length > 0 && (
-                <View style={styles.quickAddContainer}>
-                  {filteredItems.map((item) => (
-                    <TouchableOpacity key={item.id} style={styles.quickAddItem} onPress={() => handleAddDish(item)}>
-                      <MaterialIcons name="add-circle-outline" size={20} color="#4CAF50" />
-                      <ThemedText style={styles.quickAddText}>{item.name}</ThemedText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              )}
-            </View>
-
-            {/* Suggested meals */}
-            <View style={styles.suggestedSection}>
-              <ThemedText style={styles.suggestedTitle}>Suggeriti</ThemedText>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.suggestedScrollContent}
-              >
-                {SUGGESTED_MEALS.map((meal) => (
-                  <TouchableOpacity
-                    key={meal.id}
-                    style={styles.suggestedCard}
-                    onPress={() =>
-                      handleAddDish({
-                        id: meal.id,
-                        name: meal.name,
-                        defaultUnit: "g",
-                        score: meal.score,
-                      })
-                    }
-                  >
-                    <View style={[styles.suggestedIconContainer, { backgroundColor: meal.color }]}>
-                      <MaterialIcons name={meal.icon as keyof typeof MaterialIcons.glyphMap} size={24} color="#fff" />
-                    </View>
-                    <ThemedText style={styles.suggestedText}>{meal.name}</ThemedText>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* Dish list */}
-            <ScrollView ref={scrollViewRef} style={styles.dishList}>
-              {dishes.map(renderDishItem)}
-            </ScrollView>
-
-            {/* Empty state */}
-            {dishes.length === 0 && (
-              <View style={styles.emptyState}>
-                <MaterialIcons name="restaurant" size={48} color="#ddd" />
-                <ThemedText style={styles.emptyStateTitle}>Aggiungi i tuoi piatti</ThemedText>
-                <ThemedText style={styles.emptyStateText}>
-                  Cerca tra gli alimenti disponibili o aggiungi un piatto personalizzato
-                </ThemedText>
-              </View>
-            )}
-
-            {/* Date/time selection */}
-            <View style={styles.dateTimeSection}>
-              <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowDatePicker(true)}>
-                <MaterialIcons name="calendar-today" size={18} color="#666" />
-                <ThemedText style={styles.dateTimeText}>
-                  {selectedDate.toLocaleDateString("it-IT", {
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowTimePicker(true)}>
-                <MaterialIcons name="access-time" size={18} color="#666" />
-                <ThemedText style={styles.dateTimeText}>
-                  {selectedDate.toLocaleTimeString("it-IT", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                  })}
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-
-            {/* Date/time pickers */}
-            {showDatePicker && (
-              <DateTimePicker
-                value={selectedDate}
-                mode="date"
-                is24Hour={true}
-                display="default"
-                onChange={(event, date) => {
-                  setShowDatePicker(false)
-                  if (date) {
-                    const newDate = new Date(date)
-                    newDate.setHours(selectedDate.getHours())
-                    newDate.setMinutes(selectedDate.getMinutes())
-                    setSelectedDate(newDate)
-                  }
-                }}
-              />
-            )}
-
-            {showTimePicker && (
-              <DateTimePicker
-                value={selectedDate}
-                mode="time"
-                is24Hour={true}
-                display="default"
-                onChange={(event, date) => {
-                  setShowTimePicker(false)
-                  if (date) {
-                    setSelectedDate(date)
-                  }
-                }}
-              />
-            )}
-          </View>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <ActionButton
-              onPress={handleSave}
-              label={
-                dishes.length > 0
-                  ? `Salva ${getMealTypeLabel(mealType).toLowerCase()} (${dishes.length})`
-                  : `Salva ${getMealTypeLabel(mealType).toLowerCase()}`
-              }
-              icon="check"
-              variant="primary"
-              style={styles.saveButton}
+          {/* Date/time pickers */}
+          {showDatePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="date"
+              is24Hour={true}
+              display="default"
+              onChange={(event, date) => {
+                setShowDatePicker(false)
+                if (date) {
+                  const newDate = new Date(date)
+                  newDate.setHours(selectedDate.getHours())
+                  newDate.setMinutes(selectedDate.getMinutes())
+                  setSelectedDate(newDate)
+                }
+              }}
             />
-          </View>
+          )}
+
+          {showTimePicker && (
+            <DateTimePicker
+              value={selectedDate}
+              mode="time"
+              is24Hour={true}
+              display="default"
+              onChange={(event, date) => {
+                setShowTimePicker(false)
+                if (date) {
+                  setSelectedDate(date)
+                }
+              }}
+            />
+          )}
         </View>
-      </BlurView>
-    </Modal>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <ActionButton
+            onPress={handleSave} // handleSave ora usa router.back()
+            label={
+              dishes.length > 0
+                ? `Salva ${getMealTypeLabel(mealType).toLowerCase()} (${dishes.length})`
+                : `Salva ${getMealTypeLabel(mealType).toLowerCase()}`
+            }
+            icon="check"
+            variant="primary"
+            style={styles.saveButton}
+          />
+        </View>
+      </View>
+    </SafeAreaView>
   )
 }
 
 const { width, height } = Dimensions.get("window")
 
+// Stili copiati da MealEntryModal.tsx, con piccole modifiche
 const styles = StyleSheet.create({
-  backdrop: {
+  safeArea: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 0,
+    backgroundColor: "transparent", // Sfondo trasparente gestito da Expo Router
   },
   modalContainer: {
-    width: width,
-    height: height * 0.95,
+    flex: 1, // Occupa tutto lo spazio disponibile nella route modale
     backgroundColor: "#fff",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    elevation: 24,
     overflow: "hidden",
-    position: "absolute",
-    bottom: 0,
+    // Rimuoviamo position: 'absolute' e bottom: 0
     paddingTop: 6,
+    marginTop: height * 0.05, // Simula il posizionamento originale
   },
   header: {
     flexDirection: "row",
@@ -491,7 +487,7 @@ const styles = StyleSheet.create({
   dishList: {
     flex: 1,
     padding: 12,
-    paddingBottom: 80,
+    paddingBottom: 80, // Spazio per evitare sovrapposizione con footer
   },
   dishItem: {
     backgroundColor: "#fff",
@@ -589,8 +585,8 @@ const styles = StyleSheet.create({
   },
 })
 
-// Helper functions
-const getMealTypeIcon = (type: string) => {
+// Helper functions (copiate)
+const getMealTypeIcon = (type: string): keyof typeof MaterialIcons.glyphMap => {
   switch (type) {
     case "breakfast":
       return "free-breakfast"
@@ -619,4 +615,3 @@ const getMealTypeLabel = (type: string) => {
       return "Pasto"
   }
 }
-
