@@ -1,7 +1,5 @@
 import React from "react"
-import { StyleSheet } from "react-native"
-// Rimuovi Appbar
-import { SafeAreaView } from "react-native-safe-area-context"
+import { StyleSheet, View } from "react-native"
 import { useRouter } from "expo-router"
 import { FoodImportView } from "@/components/ui/modals/FoodImportView"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader" // Importa ScreenHeader
@@ -17,7 +15,7 @@ export default function ImportFoodScreen() {
 
   return (
     // Rimuovi edges={["top"]}
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScreenHeader
         title="Importa Alimenti"
         showBackButton={true}
@@ -27,7 +25,7 @@ export default function ImportFoodScreen() {
       />
       {/* Utilizziamo il componente esistente per la UI di importazione */}
       <FoodImportView onSuccess={handleSuccess} />
-    </SafeAreaView>
+    </View>
   )
 }
 

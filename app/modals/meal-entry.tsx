@@ -199,9 +199,6 @@ export default function MealEntryModalScreen() {
   )
 
   return (
-    // Usiamo SafeAreaView per evitare sovrapposizioni con notch/barra stato
-    <SafeAreaView style={styles.safeArea}>
-      {/* Applichiamo lo stile del contenitore modale qui */}
       <View style={styles.modalContainer}>
         {/* Header */}
         <View style={styles.header}>
@@ -366,7 +363,6 @@ export default function MealEntryModalScreen() {
           />
         </View>
       </View>
-    </SafeAreaView>
   )
 }
 
