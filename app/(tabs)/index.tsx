@@ -54,8 +54,8 @@ export default function HomeScreen() {
           icon={<FontAwesome5 name="apple-alt" size={24} color="#000" />}
           showSearch={true}
           showOptions={true}
-          // Apri il modale Options tramite router
-          onOptionsPress={() => router.push("/modals/options")}
+          // Naviga alla schermata Impostazioni
+          onOptionsPress={() => router.push("/settings")}
         />
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

@@ -50,6 +50,8 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen name="+not-found" />
+        {/* Settings Group */}
+        <Stack.Screen name="(settings)" />
         {/* Modal Screens */}
         <Stack.Screen
           name="modals/meal-entry"
@@ -60,22 +62,13 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" }, // Sfondo semi-trasparente
           }}
         />
+        {/* Rimosse modals/options e modals/import-food */}
+        {/* Schermata Impostazioni */}
         <Stack.Screen
-          name="modals/options"
+          name="settings"
           options={{
-            presentation: "transparentModal", // Per OptionsMenu che appare sopra
-            headerShown: false,
-            animation: "fade",
-            contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" },
-          }}
-        />
-        <Stack.Screen
-          name="modals/import-food"
-          options={{
-            presentation: "modal",
-            headerShown: false,
-            animation: "slide_from_bottom",
-            contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" },
+            headerShown: false, // L'header è gestito dentro la schermata
+            animation: "slide_from_right",
           }}
         />
       </Stack>

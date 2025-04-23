@@ -42,8 +42,8 @@ export default function PlannerScreen() {
           icon={<Entypo name="calendar" size={24} color="#000" />}
           showSearch={true}
           showOptions={true}
-          // Apri il modale Options tramite router
-          onOptionsPress={() => router.push("/modals/options")}
+          // Naviga alla schermata Impostazioni
+          onOptionsPress={() => router.push("/settings")}
         />
 
         {/* Rimuovi il rendering dei modali originali */}
