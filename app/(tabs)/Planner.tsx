@@ -2,21 +2,12 @@ import { useState } from "react"
 import { StyleSheet, View, SafeAreaView, Platform } from "react-native"
 import { useRouter } from "expo-router"
 import { ThemedView } from "@/components/common/ThemedView"
-import { FloatingActionButton } from "@/components/ui/buttons/FloatingActionButton"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
 import { Entypo } from "@expo/vector-icons"
-import { MealTypeMenu } from "@/components/ui/modals/MealTypeMenu"
 
 export default function PlannerScreen() {
   const router = useRouter()
-  const [selectedDate, setSelectedDate] = useState(new Date())
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
-
-  const handleMealSelect = (mealType: string) => {
-    setIsMenuOpen(false)
-    router.push({ pathname: "/modals/meal-entry", params: { mealType } })
-  }
-
+  
   return (
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
@@ -27,13 +18,6 @@ export default function PlannerScreen() {
           showOptions={true}
           onOptionsPress={() => router.push("/settings")}
         />
-
-        <View style={styles.fabContainer}>
-          /* MealTypeMenu rimane gestito localmente */
-          <MealTypeMenu visible={isMenuOpen} onSelect={handleMealSelect} onClose={() => setIsMenuOpen(false)} />
-          <FloatingActionButton onPress={() => setIsMenuOpen(!isMenuOpen)} isOpen={isMenuOpen} />
-            
-        </View>
       </ThemedView>
     </SafeAreaView>
   )
