@@ -104,11 +104,10 @@ export function SelectFoodModal({
       <View style={styles.backdrop}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
           <View style={styles.modalContainer}>
-            <View style={styles.modalHandle} />
             <ModalHeader
               title={modalTitle}
               onClose={onClose}
-              icon={{ name: 'shopping-cart', color: '#4CAF50' }}
+              showIcon={false}
             />
             <View style={styles.contentWrapper}>
               {!selectedFood ? (
@@ -154,7 +153,7 @@ export function SelectFoodModal({
                 onPress={handleSelectAndClose}
                 disabled={!selectedFood || !quantity}
                 icon="add-circle"
-                style={styles.addButton}
+                style={styles.addButton} 
               />
             </View>
           </View>
@@ -182,19 +181,11 @@ const styles = StyleSheet.create({
     paddingBottom: 25,
     overflow: 'hidden',
   },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    backgroundColor: '#e0e0e0',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginTop: 12,
-    marginBottom: 10,
-  },
   contentWrapper: {
     flexGrow: 1,
     flexShrink: 1,
     paddingHorizontal: 15,
+    paddingTop: 10, // Add padding to move SearchBar up slightly
   },
   list: {},
   listContent: {
@@ -234,7 +225,10 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
     marginTop: 10,
   },
-  addButton: {},
+  addButton: {
+    borderRadius: 30,
+    paddingVertical: 14,
+  },
   listItemTouchable: {
     marginHorizontal: 5,
     borderRadius: 8,
