@@ -1,6 +1,7 @@
 import type React from "react"
-import { View, TextInput, StyleSheet } from "react-native"
-import { ThemedText } from "@/components/common/ThemedText"
+import { View, TextInput, StyleSheet, Text } from "react-native" // Import Text
+// Remove ThemedText import
+// import { ThemedText } from "@/components/common/ThemedText"
 
 interface QuantityInputProps {
   quantity: string
@@ -19,7 +20,8 @@ export const QuantityInput: React.FC<QuantityInputProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      {label && <ThemedText style={styles.label}>{label}</ThemedText>}
+      {/* Replace ThemedText with Text */}
+      {label && <Text style={styles.label}>{label}</Text>}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.quantityInput}

@@ -1,7 +1,8 @@
 import type React from "react"
-import { TouchableOpacity, StyleSheet, type ViewStyle, type TextStyle } from "react-native"
+import { TouchableOpacity, StyleSheet, type ViewStyle, type TextStyle, Text } from "react-native" // Import Text
 import { MaterialIcons } from "@expo/vector-icons"
-import { ThemedText } from "@/components/common/ThemedText"
+// Remove ThemedText import
+// import { ThemedText } from "@/components/common/ThemedText"
 
 interface ActionButtonProps {
   onPress: () => void
@@ -68,7 +69,8 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
           style={styles.icon}
         />
       )}
-      <ThemedText
+      {/* Replace ThemedText with Text */}
+      <Text
         style={[
           styles.text,
           { color: getTextColor() },
@@ -77,7 +79,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
         ]}
       >
         {label}
-      </ThemedText>
+      </Text>
     </TouchableOpacity>
   )
 }
