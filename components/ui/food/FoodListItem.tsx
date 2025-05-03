@@ -1,6 +1,7 @@
-import { View, StyleSheet, TouchableOpacity, Image } from "react-native"
+import { View, StyleSheet, TouchableOpacity, Image, type ViewStyle, Text } from "react-native" // Import Text
 import { MaterialIcons } from "@expo/vector-icons"
-import { ThemedText } from "@/components/common/ThemedText"
+// Remove ThemedText import
+// import { ThemedText } from "@/components/common/ThemedText"
 import type { Food } from "@/types/food"
 import { getScoreColor, withOpacity } from "@/utils/colorUtils"
 
@@ -9,6 +10,7 @@ interface FoodListItemProps {
   onEdit: (food: Food) => void
   onDelete: (foodId: string) => void
   compact?: boolean // Re-added
+  style?: ViewStyle // Add style prop
 }
 
 export function FoodListItem({ food, onEdit, onDelete, compact = false }: FoodListItemProps) { // Re-added compact prop
@@ -29,15 +31,18 @@ export function FoodListItem({ food, onEdit, onDelete, compact = false }: FoodLi
 
         <View style={styles.foodTextContainer}>
           <View style={styles.nameScoreContainer}>
-            <ThemedText style={styles.foodName}>{food.name}</ThemedText>
+            {/* Replace ThemedText with Text */}
+            <Text style={styles.foodName}>{food.name}</Text>
             <View style={[styles.scoreBadge, { backgroundColor: withOpacity(scoreColor, 20) }]}>
-              <ThemedText style={[styles.scoreText, { color: scoreColor }]}>Score: {food.score}</ThemedText>
+              {/* Replace ThemedText with Text */}
+              <Text style={[styles.scoreText, { color: scoreColor }]}>Score: {food.score}</Text>
             </View>
           </View>
 
           {/* Re-added !compact check for calories */}
           {food.nutritionPer100g?.calories && !compact && (
-            <ThemedText style={styles.caloriesText}>{food.nutritionPer100g.calories} kcal/100g</ThemedText>
+            // Replace ThemedText with Text
+            <Text style={styles.caloriesText}>{food.nutritionPer100g.calories} kcal/100g</Text>
           )}
         </View>
 
