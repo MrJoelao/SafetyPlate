@@ -4,36 +4,40 @@ import { View, StyleSheet, TouchableOpacity, Text } from "react-native" // Impor
 import { Feather } from "@expo/vector-icons"
 
 interface ModalHeaderProps {
-  title: string
+  title: string;
   onClose?: () => void;
+  onBack?: () => void; // Add onBack prop
   icon?: {
     name: string;
     color: string;
   };
-  showIcon?: boolean; // Add prop to control icon visibility
-  disabled?: boolean;
+  showIcon?: boolean;
+  disabled?: boolean; // Applies to close/back buttons
 }
 
-export function ModalHeader({ title, onClose, icon, showIcon = true, disabled }: ModalHeaderProps) {
-  // Determine header justification based on icon visibility
-  const headerJustifyContent = showIcon ? 'space-between' : 'center';
+export function ModalHeader({ title, onClose, onBack, icon, showIcon = true, disabled }: ModalHeaderProps) {
+  // Header is always centered now, back/close buttons are absolutely positioned
+  const headerJustifyContent = 'center';
 
   return (
-    // Apply dynamic justification and remove bottom border for potentially tighter layout
     <View style={[styles.header, { justifyContent: headerJustifyContent }]}>
-      {/* Conditionally render an empty view to help center title when icon is hidden and close button is present */}
-      {!showIcon && onClose && <View style={styles.placeholder} />}
+      {/* Back Button (Absolutely Positioned Left) */}
+      {onBack && (
+        <TouchableOpacity onPress={onBack} style={styles.backButton} disabled={disabled}>
+          <Feather name="chevron-left" size={26} color="#666" />
+        </TouchableOpacity>
+      )}
 
+      {/* Title Area (Centered) */}
       <View style={styles.headerContent}>
-        {/* Conditionally render icon */}
         {icon && showIcon && <Feather name={icon.name as any} size={24} color={icon.color} />}
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title} numberOfLines={1}>{title}</Text>
       </View>
 
+      {/* Close Button (Absolutely Positioned Right) */}
       {onClose && (
-        // Position close button absolutely to ensure alignment regardless of title centering
         <TouchableOpacity onPress={onClose} style={styles.closeButton} disabled={disabled}>
-          <Feather name="x" size={24} color="#666" />
+          <Feather name="x" size={26} color="#666" />
         </TouchableOpacity>
       )}
     </View>
@@ -48,10 +52,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15, // Reduce horizontal padding slightly
     paddingVertical: 12, // Reduce vertical padding
     // marginTop: 4, // Remove top margin
-    // borderBottomWidth: 1, // Remove bottom border
+    // borderBottomWidth: 1,
     // borderBottomColor: "#e0e0e0",
-    position: 'relative', // Needed for absolute positioning of close button
-    minHeight: 50, // Ensure a minimum height
+    position: 'relative',
+    // minHeight: 50, // Remove minHeight, let content define height
   },
   headerContent: {
     flexDirection: "row",
@@ -68,13 +72,20 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute', // Position absolutely
-    right: 10, // Position from the right edge
-    top: '50%', // Align vertically
-    transform: [{ translateY: -16 }], // Adjust vertical centering based on button size (padding + icon size / 2)
-    padding: 4, // Reduce padding slightly
-    zIndex: 1, // Ensure it's above other elements
+    right: 10,
+    top: 12, // Align with top padding (adjust as needed)
+    // transform: [{ translateY: -17 }], // Remove transform
+    padding: 4,
+    zIndex: 1,
   },
-  placeholder: { // Empty view to balance the close button for centering
-    width: 24 + 8, // Match the approximate width of the close button area
+  backButton: {
+    position: 'absolute',
+    left: 10,
+    top: 12, // Align with top padding (adjust as needed)
+    // transform: [{ translateY: -17 }], // Remove transform
+    padding: 4,
+    zIndex: 1,
   },
+  // Placeholder is no longer needed as title is always centered by default flex behavior
+  // placeholder: { ... },
 })

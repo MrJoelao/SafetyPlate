@@ -7,18 +7,29 @@ import { getScoreColor, withOpacity } from "@/utils/colorUtils"
 
 interface FoodListItemProps {
   food: Food
-  onEdit: (food: Food) => void
-  onDelete: (foodId: string) => void
-  compact?: boolean // Re-added
-  style?: ViewStyle // Add style prop
+  onEdit: (food: Food) => void;
+  onDelete: (foodId: string) => void;
+  compact?: boolean;
+  style?: ViewStyle;
+  isSelected?: boolean;
+  showActions?: boolean;
+  scorePosition?: 'left' | 'right'; // Add scorePosition prop
 }
 
-export function FoodListItem({ food, onEdit, onDelete, compact = false }: FoodListItemProps) { // Re-added compact prop
-  const scoreColor = getScoreColor(food.score)
+export function FoodListItem({
+  food,
+  onEdit,
+  onDelete,
+  compact = false,
+  isSelected = false,
+  showActions = true,
+  scorePosition = 'left', // Default to 'left'
+}: FoodListItemProps) {
+  const scoreColor = getScoreColor(food.score);
 
   return (
-      // Re-added conditional compact style
-      <View style={[styles.foodItem, compact && styles.foodItemCompact]}>
+    // Apply conditional selection style and compact style
+    <View style={[styles.foodItem, compact && styles.foodItemCompact, isSelected && styles.selectedFoodItem]}>
       <View style={styles.foodContent}>
         <View style={styles.foodIconContainer}>
           {food.imageUri ? (
@@ -30,26 +41,28 @@ export function FoodListItem({ food, onEdit, onDelete, compact = false }: FoodLi
         </View>
 
         <View style={styles.foodTextContainer}>
-          <View style={styles.nameScoreContainer}>
-            {/* Replace ThemedText with Text */}
-            <Text style={styles.foodName}>{food.name}</Text>
+          {/* Apply conditional style for score position */}
+          <View style={[styles.nameScoreContainer, scorePosition === 'right' && styles.nameScoreContainerRight]}>
+            <Text style={styles.foodName} numberOfLines={compact ? 1 : 2}>{food.name}</Text>
+            {/* Score Badge */}
             <View style={[styles.scoreBadge, { backgroundColor: withOpacity(scoreColor, 20) }]}>
-              {/* Replace ThemedText with Text */}
               <Text style={[styles.scoreText, { color: scoreColor }]}>Score: {food.score}</Text>
             </View>
           </View>
 
-          {/* Re-added !compact check for calories */}
+          {/* Calories Text */}
           {food.nutritionPer100g?.calories && !compact && (
             // Replace ThemedText with Text
             <Text style={styles.caloriesText}>{food.nutritionPer100g.calories} kcal/100g</Text>
           )}
         </View>
 
-        <View style={styles.foodActions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => onEdit(food)}
+        {/* Conditionally render actions */}
+        {showActions && (
+          <View style={styles.foodActions}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={() => onEdit(food)}
             hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
           >
             <MaterialIcons name="edit" size={20} color="#666" />
@@ -59,9 +72,10 @@ export function FoodListItem({ food, onEdit, onDelete, compact = false }: FoodLi
             onPress={() => onDelete(food.id)}
             hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
           >
-            <MaterialIcons name="delete-outline" size={20} color="#666" />
-          </TouchableOpacity>
-        </View>
+              <MaterialIcons name="delete-outline" size={20} color="#666" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </View>
   )
@@ -78,6 +92,12 @@ const styles = StyleSheet.create({
   foodItemCompact: {
     borderRadius: 9999,
     marginBottom: 8,
+  },
+  selectedFoodItem: { // Style for selected state
+    backgroundColor: '#e0f2f7', // Use the same highlight color
+    borderColor: '#b3e5fc', // Use the same border highlight
+    // Ensure border width is consistent or applied only when selected
+    borderWidth: 1,
   },
   foodContent: {
     flexDirection: "row",
@@ -107,10 +127,14 @@ const styles = StyleSheet.create({
   nameScoreContainer: {
     flexDirection: "row",
     alignItems: "center",
-    flexWrap: "wrap",
+    // flexWrap: "wrap", // Remove wrap, let flex handle spacing
     gap: 8,
   },
+  nameScoreContainerRight: { // Style to push score to the right
+    justifyContent: 'space-between',
+  },
   foodName: {
+    flexShrink: 1, // Allow name to shrink if score is on the right
     fontSize: 16,
     fontWeight: "600",
     color: "#333",

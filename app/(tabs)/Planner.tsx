@@ -44,12 +44,15 @@ export default function PlannerScreen() {
     setTargetMealType(null); // Reset target meal type
   };
 
-  // Function called when an item is selected in the modal
-  const handleFoodSelected = (item: PlannedMealItem) => {
+  // Function called when items are selected and confirmed in the modal
+  const handleFoodSelected = (items: PlannedMealItem[]) => { // Accept an array of items
     if (targetMealType) {
-      addMealItem(targetMealType, item);
+      // Iterate over the array and add each item
+      items.forEach(item => {
+        addMealItem(targetMealType, item);
+      });
     }
-    // The modal closes itself upon selection via its internal logic
+    // The modal closes itself after confirmation (handleConfirmAdd calls onClose)
   };
 
   return (
