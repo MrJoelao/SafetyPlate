@@ -58,10 +58,23 @@ export default function SettingsScreen() {
         <Divider />
 
         {/* Aggiungere altre sezioni se necessario */}
-      </ScrollView>
-    </View>
-  )
-}
+          {/* Sezione Onboarding */}
+          <List.Section title="Onboarding">
+            <List.Item
+              title="Ricomincia configurazione iniziale"
+              description="Ripeti il setup guidato e il tutorial"
+              left={(props) => <List.Icon {...props} icon="restart" />}
+              onPress={async () => {
+                const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+                await AsyncStorage.setItem('onboardingCompleted', 'false');
+                router.replace('/(onboarding)/Welcome');
+              }}
+            />
+          </List.Section>
+        </ScrollView>
+      </View>
+    )
+  }
 
 const styles = StyleSheet.create({
   container: {

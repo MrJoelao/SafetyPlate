@@ -5,7 +5,8 @@ import { useFonts } from "expo-font"
 import { Stack } from "expo-router"
 import * as SplashScreen from "expo-splash-screen"
 import { StatusBar } from "expo-status-bar"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 import "react-native-reanimated"
 
 import { useColorScheme } from "@/hooks/useColorScheme"
@@ -18,6 +19,19 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   })
+  const [onboardingCompleted, setOnboardingCompleted] = useState<null | boolean>(null)
+
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const value = await AsyncStorage.getItem("onboardingCompleted")
+        setOnboardingCompleted(value === "true")
+      } catch (e) {
+        setOnboardingCompleted(false)
+      }
+    }
+    checkOnboarding()
+  }, [])
 
   useEffect(() => {
     if (loaded) {
@@ -25,7 +39,7 @@ export default function RootLayout() {
     }
   }, [loaded])
 
-  if (!loaded) {
+  if (!loaded || onboardingCompleted === null) {
     return null
   }
 
@@ -40,37 +54,55 @@ export default function RootLayout() {
           animation: "fade",
         }}
       >
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-            contentStyle: {
-              flex: 1,
-            },
-          }}
-        />
-        <Stack.Screen name="+not-found" />
-        {/* Settings Group */}
-        <Stack.Screen name="(settings)" />
-        {/* Modal Screens */}
-        <Stack.Screen
-          name="modals/meal-entry"
-          options={{
-            presentation: "modal",
-            headerShown: false,
-            animation: "slide_from_bottom", // O un'altra animazione per replicare l'originale
-            contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" }, // Sfondo semi-trasparente
-          }}
-        />
-        {/* Rimosse modals/options e modals/import-food */}
-        {/* Schermata Impostazioni */}
-        <Stack.Screen
-          name="settings"
-          options={{
-            headerShown: false, // L'header è gestito dentro la schermata
-            animation: "slide_from_right",
-          }}
-        />
+        {onboardingCompleted ? (
+          <>
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                headerShown: false,
+                contentStyle: {
+                  flex: 1,
+                },
+              }}
+            />
+            <Stack.Screen name="+not-found" />
+            {/* Settings Group */}
+            <Stack.Screen name="(settings)" />
+            {/* Modal Screens */}
+            <Stack.Screen
+              name="modals/meal-entry"
+              options={{
+                presentation: "modal",
+                headerShown: false,
+                animation: "slide_from_bottom",
+                contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" },
+              }}
+            />
+            {/* Schermata Impostazioni */}
+            <Stack.Screen
+              name="settings"
+              options={{
+                headerShown: false,
+                animation: "slide_from_right",
+              }}
+            />
+          </>
+        ) : (
+          <>
+            <Stack.Screen
+              name="(onboarding)/Welcome"
+              options={{
+                headerShown: false,
+                contentStyle: {
+                  flex: 1,
+                },
+              }}
+            />
+            <Stack.Screen name="(onboarding)/Tutorial1" />
+            <Stack.Screen name="(onboarding)/Tutorial2" />
+            <Stack.Screen name="(onboarding)/PlannerSetup" />
+          </>
+        )}
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
