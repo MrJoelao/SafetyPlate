@@ -13,7 +13,7 @@ const { width } = Dimensions.get("window");
 
 export default function PlannerScreen() {
   const router = useRouter();
-  const { allFoods, addMealItem } = usePlanner(); // Ottieni dati e funzioni dal hook
+  const { allFoods, addMealItem, removeMealItem } = usePlanner(); // Ottieni dati e funzioni dal hook
   // Stato per il modal di aggiunta alimento
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<keyof DailyPlan>("snack");
@@ -51,10 +51,10 @@ export default function PlannerScreen() {
         goals: { kcal: 2000, protein: 120, carbs: 250, fat: 60 }, // Valori predefiniti
         progress: { kcal: 0, protein: 0, carbs: 0, fat: 0 }, // Calcolare in base ai pasti
         meals: [
-          { type: "colazione" as const, items: dailyPlan.breakfast?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}` })) || [] },
-          { type: "pranzo" as const, items: dailyPlan.lunch?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}` })) || [] },
-          { type: "cena" as const, items: dailyPlan.dinner?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}` })) || [] },
-          { type: "spuntino" as const, items: dailyPlan.snack?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}` })) || [] },
+          { type: "colazione" as const, items: dailyPlan.breakfast?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}`, id: item.foodId })) || [] },
+          { type: "pranzo" as const, items: dailyPlan.lunch?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}`, id: item.foodId })) || [] },
+          { type: "cena" as const, items: dailyPlan.dinner?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}`, id: item.foodId })) || [] },
+          { type: "spuntino" as const, items: dailyPlan.snack?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}`, id: item.foodId })) || [] },
         ],
       };
 
@@ -165,6 +165,21 @@ export default function PlannerScreen() {
     setModalVisible(true);
   };
 
+  // Funzione per eliminare un alimento
+  const handleDeleteFood = async (mealType: string, foodId: string) => {
+    const storageMealType = mapMealTypeToStorage(mealType);
+    await removeMealItem(storageMealType, foodId);
+    generateDays();
+  };
+
+  // Funzione per modificare un alimento (per ora apre solo il modal di aggiunta)
+  const handleEditFood = (mealType: string, foodId: string) => {
+    const storageMealType = mapMealTypeToStorage(mealType);
+    setSelectedMealType(storageMealType);
+    setModalVisible(true);
+    // In futuro, potremmo implementare una vera funzionalità di modifica
+    // che precompila il modal con i dati dell'alimento selezionato
+  };
 
   // Swipe tra giorni con FlatList orizzontale
   return (
@@ -241,7 +256,9 @@ export default function PlannerScreen() {
                   progress={item.progress}
                   meals={item.meals}
                   selectedMealType={selectedMealType}
-                  onAddMeal={(mealType) => handleAddFood(mealType as keyof DailyPlan)}
+                  onAddMeal={(mealType) => handleAddFood(mealType)}
+                  onDeleteItem={(mealType, itemId) => handleDeleteFood(mealType, itemId)}
+                  onEditItem={(mealType, itemId) => handleEditFood(mealType, itemId)}
                 />
               </View>
             )}
@@ -259,28 +276,6 @@ export default function PlannerScreen() {
             <Text>Caricamento giorni...</Text>
           </View>
         )}
-
-        {/* FAB fisso per aggiungere alimenti con tooltip */}
-        <View style={styles.fabContainer}>
-          {/* Tooltip che mostra il tipo di pasto selezionato */}
-          <View style={styles.fabTooltip}>
-            <Text style={styles.fabTooltipText}>
-              Aggiungi alimento a {mapMealTypeToUI(selectedMealType)}
-            </Text>
-          </View>
-
-          <TouchableOpacity 
-            style={styles.globalFab}
-            onPress={() => {
-              // Use the currently selected meal type
-              setModalVisible(true);
-            }}
-            accessibilityLabel="Aggiungi alimento"
-            accessibilityRole="button"
-          >
-            <MaterialIcons name="restaurant-menu" size={30} color="#fff" />
-          </TouchableOpacity>
-        </View>
 
         {/* Modal per l'aggiunta di alimenti */}
         <SelectFoodModal
@@ -403,50 +398,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-  },
-  // Stili per il FAB e il tooltip
-  fabContainer: {
-    position: 'absolute',
-    right: 24,
-    bottom: Platform.OS === 'ios' ? 110 : 90, // Significantly increased bottom margin to avoid navigation bar
-    alignItems: 'flex-end',
-    zIndex: 100,
-  },
-  fabTooltip: {
-    backgroundColor: 'rgba(33, 150, 243, 0.9)',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginBottom: 12,
-    maxWidth: 220,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 2 },
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  fabTooltipText: {
-    color: '#fff',
-    fontSize: 15,
-    textAlign: 'center',
-    fontWeight: '500',
-    letterSpacing: 0.3,
-  },
-  globalFab: {
-    backgroundColor: '#2196F3',
-    borderRadius: 30,
-    width: 60,
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
+  }
 });
