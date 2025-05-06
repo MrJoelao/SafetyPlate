@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useThemeColor } from '@/hooks/useThemeColor'; // Importato
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 interface MacroData {
   current: number;
@@ -12,43 +12,33 @@ interface MacroNutrientsSectionProps {
   proteins: MacroData;
   carbs: MacroData;
   fats: MacroData;
-  onPress?: () => void; // Opzionale, per navigare a dettagli macro
+  onPress?: () => void;
 }
 
 interface MacroDisplayProps {
   name: string;
-  iconName: keyof typeof MaterialCommunityIcons.glyphMap; // Tipo per icone da MaterialCommunityIcons
+  iconName: keyof typeof MaterialCommunityIcons.glyphMap;
   data: MacroData;
   color: string;
-  // Aggiunte per il tema
   itemBackgroundColor: string;
   textColor: string;
   secondaryTextColor: string;
 }
 
-// Unificato: questo sarà il nostro MacroDisplay
-const MacroDisplay: React.FC<MacroDisplayProps> = ({
-  name,
-  iconName,
-  data,
-  color,
-  itemBackgroundColor,
-  textColor,
-  secondaryTextColor
-}) => {
-  const progressPercent = data.target > 0 ? (data.current / data.target) * 100 : 0;
+const MacroDisplay: React.FC<MacroDisplayProps> = (props) => {
+  const progressPercent = props.data.target > 0 ? (props.data.current / props.data.target) * 100 : 0;
   return (
-    <View style={[styles.macroItem, {backgroundColor: itemBackgroundColor}]}>
+    <View style={[styles.macroItem, {backgroundColor: props.itemBackgroundColor}]}>
       <View style={styles.macroHeader}>
-        <MaterialCommunityIcons name={iconName} size={20} color={color} /> {/* Icona leggermente più piccola */}
-        <Text style={[styles.macroName, { color, flexShrink: 1 }]}>{name}</Text> {/* Aggiunto flexShrink */}
+        <MaterialCommunityIcons name={props.iconName} size={20} color={props.color} />
+        <Text style={[styles.macroName, { color: props.color, flexShrink: 1 }]}>{props.name}</Text>
       </View>
       <View style={styles.macroValues}>
-        <Text style={[styles.macroCurrent, {color: textColor}]}>{data.current}g</Text>
-        <Text style={[styles.macroTarget, {color: secondaryTextColor}]}> / {data.target}g</Text>
+        <Text style={[styles.macroCurrent, {color: props.textColor}]}>{props.data.current}g</Text>
+        <Text style={[styles.macroTarget, {color: props.secondaryTextColor}]}> / {props.data.target}g</Text>
       </View>
-      <View style={[styles.progressBarContainer, {backgroundColor: secondaryTextColor + '30'}]}>
-        <View style={[styles.progressBar, { width: `${Math.min(progressPercent, 100)}%`, backgroundColor: color }]} />
+      <View style={[styles.progressBarContainer, {backgroundColor: props.secondaryTextColor + '30'}]}>
+        <View style={[styles.progressBar, { width: `${Math.min(progressPercent, 100)}%`, backgroundColor: props.color }]} />
       </View>
     </View>
   );
@@ -64,12 +54,11 @@ export const MacroNutrientsSection: React.FC<MacroNutrientsSectionProps> = ({
   const themedBackgroundColor = useThemeColor({}, 'background');
   const themedTextColor = useThemeColor({}, 'text');
   const themedSecondaryTextColor = useThemeColor({light: '#7f8c8d', dark: '#95a5a6'}, 'text');
-  const themedItemBackgroundColor = useThemeColor({ light: '#f8f9fa', dark: '#2c2c2e' }, 'background'); // Sfondo per item macro
+  const themedItemBackgroundColor = useThemeColor({ light: '#f8f9fa', dark: '#2c2c2e' }, 'background');
 
-  // Colori specifici per macro (potrebbero essere derivati dal tema o definiti nel tema)
-  const proteinColor = useThemeColor({ light: '#3498db', dark: '#5dade2' }, 'tint'); // Blu/Azzurro
-  const carbsColor = useThemeColor({ light: '#f1c40f', dark: '#f5d040' }, 'tint');   // Giallo (usando tint come base, ma idealmente un colore a sé)
-  const fatsColor = useThemeColor({ light: '#e74c3c', dark: '#ec7063' }, 'tint');     // Rosso (usando tint come base, ma idealmente un colore a sé)
+  const proteinColor = useThemeColor({ light: '#3498db', dark: '#5dade2' }, 'tint');
+  const carbsColor = useThemeColor({ light: '#f1c40f', dark: '#f5d040' }, 'tint');
+  const fatsColor = useThemeColor({ light: '#e74c3c', dark: '#ec7063' }, 'tint');
 
 
   return (
@@ -90,14 +79,10 @@ export const MacroNutrientsSection: React.FC<MacroNutrientsSectionProps> = ({
   );
 };
 
-// Rimosse le definizioni duplicate e la sovrascrittura
-// const ThemedMacroDisplay ...
-// const MacroDisplay = ThemedMacroDisplay;
 
 
 const styles = StyleSheet.create({
   container: {
-    // backgroundColor: '#FFFFFF', // Rimosso
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 20,
@@ -109,20 +94,19 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   title: {
-    fontSize: 18, // Uniformato a 18px
+    fontSize: 18,
     fontWeight: '600',
-    // color: '#2c3e50', // Rimosso
   },
   macrosContainer: {
     flexDirection: 'row',
-    gap: 8, // Ridotto ulteriormente il gap
+    gap: 8,
   },
   macroItem: {
     flex: 1,
     alignItems: 'flex-start',
-    paddingHorizontal: 6, // Ridotto padding orizzontale
-    paddingVertical: 8,   // Mantenuto padding verticale
-    borderRadius: 8, // Leggermente ridotto
+    paddingHorizontal: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
   },
   macroHeader: {
     flexDirection: 'row',
@@ -130,26 +114,25 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   macroName: {
-    fontSize: 12, // Ridotto fontSize
+    fontSize: 12,
     fontWeight: '500',
-    marginLeft: 4, // Ridotto marginLeft
+    marginLeft: 4,
   },
   macroValues: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 5, // Leggermente ridotto
+    marginBottom: 5,
   },
   macroCurrent: {
-    fontSize: 16, // Leggermente ridotto
+    fontSize: 16,
     fontWeight: 'bold',
   },
   macroTarget: {
-    fontSize: 12, // Leggermente ridotto
+    fontSize: 12,
   },
   progressBarContainer: {
     width: '100%',
     height: 7,
-    // backgroundColor: '#ecf0f1', // Rimosso
     borderRadius: 3.5,
     overflow: 'hidden',
   },
