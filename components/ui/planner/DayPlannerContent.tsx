@@ -15,6 +15,7 @@ export interface DayPlannerContentProps {
   onAddMeal: (mealType: string) => void;
   onDeleteItem?: (mealType: string, itemId: string) => void;
   onEditItem?: (mealType: string, itemId: string) => void;
+  onMealPress?: (mealType: string) => void; // New prop for handling meal section clicks
 }
 
 export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
@@ -26,6 +27,7 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
   onAddMeal,
   onDeleteItem,
   onEditItem,
+  onMealPress,
 }) => {
   // Funzione per gestire l'eliminazione di un elemento
   const handleDeleteItem = (mealType: string, itemId: string) => {
@@ -49,12 +51,14 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
     <View style={styles.root}>
       <View style={styles.meals}>
         {meals.map((meal) => (
-          <View 
+          <TouchableOpacity 
             key={meal.type} 
             style={[
               styles.mealSection,
               selectedMealType === meal.type && styles.selectedMealSection
             ]}
+            onPress={() => onMealPress && onMealPress(meal.type)}
+            activeOpacity={onMealPress ? 0.7 : 1}
           >
             {/* Header del pasto con titolo e pulsante di aggiunta */}
             <View style={styles.mealHeader}>
@@ -77,7 +81,10 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
               {/* Pulsante per aggiungere alimenti */}
               <TouchableOpacity
                 style={styles.addButton}
-                onPress={() => onAddMeal(meal.type)}
+                onPress={(e) => {
+                  e.stopPropagation(); // Prevent triggering the parent TouchableOpacity
+                  onAddMeal(meal.type);
+                }}
                 accessibilityLabel={`Aggiungi alimento a ${meal.type}`}
                 accessibilityRole="button"
               >
@@ -115,7 +122,10 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
                         {onEditItem && (
                           <TouchableOpacity 
                             style={styles.actionButton}
-                            onPress={() => onEditItem(meal.type, item.id || '')}
+                            onPress={(e) => {
+                              e.stopPropagation(); // Prevent triggering the parent TouchableOpacity
+                              onEditItem(meal.type, item.id || '');
+                            }}
                             accessibilityLabel={`Modifica ${item.name}`}
                           >
                             <MaterialIcons name="edit" size={22} color="#4CAF50" />
@@ -125,7 +135,10 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
                         {onDeleteItem && (
                           <TouchableOpacity 
                             style={styles.actionButton}
-                            onPress={() => handleDeleteItem(meal.type, item.id || '')}
+                            onPress={(e) => {
+                              e.stopPropagation(); // Prevent triggering the parent TouchableOpacity
+                              handleDeleteItem(meal.type, item.id || '');
+                            }}
                             accessibilityLabel={`Elimina ${item.name}`}
                           >
                             <MaterialIcons name="delete" size={22} color="#F44336" />
@@ -137,7 +150,7 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
                 </View>
               )}
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </View>

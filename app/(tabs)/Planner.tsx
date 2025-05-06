@@ -7,6 +7,7 @@ import { ScreenHeader } from "@/components/ui/layout/ScreenHeader";
 import { MaterialIcons } from "@expo/vector-icons";
 import { usePlanner } from "@/hooks/usePlanner"; // Import usePlanner
 import { SelectFoodModal } from "@/components/ui/modals/SelectFoodModal"; // Import SelectFoodModal
+import { MealDetailModal } from "@/components/ui/modals/MealDetailModal"; // Import MealDetailModal
 import type { DailyPlan, PlannedMealItem } from "@/types/planner"; // Import tipi necessari
 import * as plannerStorage from "@/utils/plannerStorage"; // Import plannerStorage
 const { width } = Dimensions.get("window");
@@ -16,10 +17,13 @@ export default function PlannerScreen() {
   const { allFoods, addMealItem, removeMealItem } = usePlanner(); // Ottieni dati e funzioni dal hook
   // Stato per il modal di aggiunta alimento
   const [modalVisible, setModalVisible] = useState(false);
+  const [mealDetailModalVisible, setMealDetailModalVisible] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<keyof DailyPlan>("snack");
+  const [selectedMealTypeUI, setSelectedMealTypeUI] = useState<string>("spuntino");
   const [days, setDays] = useState<any[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeDayIndex, setActiveDayIndex] = useState(0);
+  const [selectedMealItems, setSelectedMealItems] = useState<{ name: string; quantity: string; id?: string }[]>([]);
 
   // Funzione per generare i giorni dinamicamente
   const generateDays = useCallback(async () => {
@@ -162,7 +166,23 @@ export default function PlannerScreen() {
     // Converti il tipo di pasto dall'italiano all'inglese
     const storageMealType = mapMealTypeToStorage(mealType);
     setSelectedMealType(storageMealType);
+    setSelectedMealTypeUI(mealType);
     setModalVisible(true);
+  };
+  
+  // Funzione per gestire il click su una sezione pasto
+  const handleMealPress = (mealType: string) => {
+    // Trova gli elementi del pasto selezionato nel giorno attivo
+    const activeDay = days[activeDayIndex];
+    if (activeDay) {
+      const meal = activeDay.meals.find((m: any) => m.type === mealType);
+      if (meal) {
+        setSelectedMealItems(meal.items);
+        setSelectedMealTypeUI(mealType);
+        setSelectedMealType(mapMealTypeToStorage(mealType));
+        setMealDetailModalVisible(true);
+      }
+    }
   };
 
   // Funzione per eliminare un alimento
@@ -259,6 +279,7 @@ export default function PlannerScreen() {
                   onAddMeal={(mealType) => handleAddFood(mealType)}
                   onDeleteItem={(mealType, itemId) => handleDeleteFood(mealType, itemId)}
                   onEditItem={(mealType, itemId) => handleEditFood(mealType, itemId)}
+                  onMealPress={(mealType) => handleMealPress(mealType)}
                 />
               </View>
             )}
@@ -284,6 +305,36 @@ export default function PlannerScreen() {
           allFoods={allFoods}
           onClose={() => setModalVisible(false)}
           onSelect={handleSelectFood}
+        />
+        
+        {/* Modal per i dettagli del pasto */}
+        <MealDetailModal
+          visible={mealDetailModalVisible}
+          mealType={selectedMealTypeUI}
+          storageMealType={selectedMealType}
+          items={selectedMealItems}
+          date={days[activeDayIndex]?.date || ''}
+          onClose={() => setMealDetailModalVisible(false)}
+          onAddFood={(mealType) => {
+            setMealDetailModalVisible(false);
+            handleAddFood(mealType);
+          }}
+          onDeleteItem={(mealType, itemId) => {
+            handleDeleteFood(mealType, itemId);
+            // Aggiorna gli elementi selezionati dopo l'eliminazione
+            const activeDay = days[activeDayIndex];
+            if (activeDay) {
+              const meal = activeDay.meals.find((m: any) => m.type === mealType);
+              if (meal) {
+                setSelectedMealItems(meal.items.filter((item: any) => item.id !== itemId));
+              }
+            }
+          }}
+          onEditItem={(mealType, itemId) => {
+            setMealDetailModalVisible(false);
+            handleEditFood(mealType, itemId);
+          }}
+          allFoods={allFoods}
         />
 
       </View>
