@@ -25,15 +25,9 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
 }) => {
   return (
     <View style={styles.root}>
-      {/* Header obiettivi */}
+      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.date}>{date}</Text>
-        <View style={styles.goalsRow}>
-          <GoalChip label="Kcal" value={progress.kcal} goal={goals.kcal} color="#FFB300" />
-          <GoalChip label="P" value={progress.protein} goal={goals.protein} color="#4CAF50" />
-          <GoalChip label="C" value={progress.carbs} goal={goals.carbs} color="#2196F3" />
-          <GoalChip label="F" value={progress.fat} goal={goals.fat} color="#E57373" />
-        </View>
       </View>
       {/* Sezioni pasti integrate */}
       <View style={styles.meals}>
@@ -70,9 +64,7 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
             </View>
             {meal.items.length === 0 ? (
               <Text style={styles.emptyText}>
-                {selectedMealType === meal.type 
-                  ? "Clicca sul + in basso per aggiungere alimenti" 
-                  : "Nessun alimento"}
+                Nessun alimento
               </Text>
             ) : (
               meal.items.map((item, idx) => (

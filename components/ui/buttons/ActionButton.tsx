@@ -28,7 +28,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   const getVariantStyles = (): ViewStyle => {
     switch (variant) {
       case "primary":
-        return { backgroundColor: "#4CAF50" }
+        return { backgroundColor: "#2196F3" }
       case "secondary":
         return { backgroundColor: "#f5f5f5", borderWidth: 1, borderColor: "#e0e0e0" }
       case "danger":
@@ -36,7 +36,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
       case "success":
         return { backgroundColor: "#4CAF50" }
       default:
-        return { backgroundColor: "#4CAF50" }
+        return { backgroundColor: "#2196F3" }
     }
   }
 
@@ -102,4 +102,3 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
 })
-
