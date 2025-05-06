@@ -82,9 +82,6 @@ export const Calendar: React.FC<CalendarProps> = ({ selectedDate, onDateSelect }
       <View style={styles.header}>
         <View style={styles.monthContainer}>
           <ThemedText style={styles.monthText}>{format(selectedDate, "MMMM yyyy", { locale: it })}</ThemedText>
-          <ThemedText style={styles.dayNumberText}>
-            {format(selectedDate, "EEEE d", { locale: it })}
-          </ThemedText>
         </View>
 
         <View style={styles.arrowsContainer}>
@@ -169,7 +166,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#000",
     textTransform: "capitalize",
-    lineHeight: 16,
+    lineHeight: 20,
   },
   dayNumberText: {
     fontSize: 14,
@@ -184,7 +181,7 @@ const styles = StyleSheet.create({
     right: 0,
     justifyContent: "space-between",
     zIndex: 1,
-    height: 32,
+    height: 40,
   },
   leftArrow: {
     paddingLeft: 4,
