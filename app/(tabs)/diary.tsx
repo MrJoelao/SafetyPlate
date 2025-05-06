@@ -1,6 +1,6 @@
 "use client"
 
-import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar } from "react-native"
+import { StyleSheet, View, SafeAreaView, Dimensions, Platform, StatusBar, ScrollView } from "react-native"
 import { ThemedView } from "@/components/common/ThemedView"
 import { useState } from "react"
 import { useRouter } from "expo-router"
@@ -34,9 +34,13 @@ export default function DiaryScreen() {
           <Calendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
         </View>
 
-        <View style={styles.scrollableContent}>
+        <ScrollView
+          style={styles.scrollableContent}
+          contentContainerStyle={{ paddingBottom: BOTTOM_TAB_HEIGHT + 32 }}
+          showsVerticalScrollIndicator={true}
+        >
           <TimeSlots textColor="#000" />
-        </View>
+        </ScrollView>
 
         <View style={styles.fabContainer}>
           <MealTypeMenu visible={isMenuOpen} onSelect={handleMealSelect} onClose={() => setIsMenuOpen(false)} />

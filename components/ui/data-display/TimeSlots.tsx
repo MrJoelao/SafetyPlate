@@ -16,7 +16,7 @@ interface TimeSlot {
 
 const { width } = Dimensions.get("window")
 const HOUR_HEIGHT = 64
-const TIME_WIDTH = 50
+const TIME_WIDTH = 54
 
 const timeSlots: TimeSlot[] = Array.from({ length: 24 }, (_, i) => ({
   time: `${i.toString().padStart(2, "0")}:00`,
@@ -81,7 +81,13 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ textColor = "#000", onSlot
       {timeSlots.map((slot, index) => (
         <Pressable key={index} style={styles.timeSlot} onPress={() => onSlotPress?.(slot.time)}>
           <View style={styles.timeContainer}>
-            <ThemedText style={[styles.timeText, { color: textColor }]}>{slot.time}</ThemedText>
+            <ThemedText
+              style={[styles.timeText, { color: textColor }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {slot.time}
+            </ThemedText>
             <View style={styles.timeIndicator} />
           </View>
 
