@@ -1,336 +1,177 @@
-import { StyleSheet, View, SafeAreaView, Dimensions, StatusBar, ScrollView } from "react-native"
-import { useRouter } from "expo-router"
-import { ThemedView } from "@/components/common/ThemedView"
-import { ThemedText } from "@/components/common/ThemedText"
-import { MaterialIcons, FontAwesome5 } from "@expo/vector-icons"
-import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
+import { StyleSheet, View, SafeAreaView, ScrollView, Text } from "react-native"; // Aggiunto Text
+import { useRouter } from "expo-router";
+import { FontAwesome5 } from "@expo/vector-icons"; // Mantenuto FontAwesome5 per l'header
+import { ScreenHeader } from "@/components/ui/layout/ScreenHeader";
+import { DailySummarySection } from "@/components/ui/dashboard/DailySummarySection";
+import { MacroNutrientsSection } from "@/components/ui/dashboard/MacroNutrientsSection";
+import { WeeklyTrendSection } from "@/components/ui/dashboard/WeeklyTrendSection";
+import { QuickAddSection } from "@/components/ui/dashboard/QuickAddSection";
+import { QuickSnackModal, QuickSnack } from "@/components/ui/modals/QuickSnackModal";
+import { MealSummarySection, MealSummary } from "@/components/ui/dashboard/MealSummarySection"; // Importato
+import { useState } from "react";
 
-// Example data (to be replaced with real data)
-const DAILY_STATS = {
-  score: 90, // 0-100
-  calories: {
-    current: 1850,
-    target: 2000,
-  },
+// Dati fittizi (da spostare o integrare con usePlanner)
+const USER_DATA = {
+  dailyScore: 85,
+  calories: { current: 1850, target: 2200 },
   macros: {
-    proteins: { current: 80, target: 120 },
-    carbs: { current: 200, target: 250 },
-    fats: { current: 55, target: 65 },
+    proteins: { current: 90, target: 120 },
+    carbs: { current: 210, target: 280 },
+    fats: { current: 60, target: 70 },
   },
-}
-
-// Weekly stats data
-const WEEKLY_STATS = [
-  { day: "Lun", score: 65 },
-  { day: "Mar", score: 70 },
-  { day: "Mer", score: 85 },
-  { day: "Gio", score: 75 },
-  { day: "Ven", score: 40 },
-  { day: "Sab", score: 90 },
-  { day: "Dom", score: 75 },
-]
-
-const getScoreColor = (score: number) => {
-  if (score <= 40) return "#F44336"
-  if (score < 70) return "#FFC107"
-  return "#4CAF50"
-}
+  weeklyScores: [
+    { day: "Lun", score: 65 },
+    { day: "Mar", score: 70 },
+    { day: "Mer", score: 85 },
+    { day: "Gio", score: 75 },
+    { day: "Ven", score: 40 },
+    { day: "Sab", score: 90 },
+    { day: "Dom", score: 78 },
+  ],
+  favoriteSnacks: [ // Aggiunti spuntini preferiti
+    { id: '1', name: 'Mela', details: '1 media (circa 95kcal)', calories: 95 },
+    { id: '2', name: 'Yogurt Greco 0%', details: '1 vasetto (circa 90kcal)', calories: 90 },
+    { id: '3', name: 'Mandorle (10pz)', details: 'Circa 70kcal', calories: 70 },
+    { id: '4', name: 'Banana piccola', details: 'Circa 90kcal', calories: 90 },
+  ] as QuickSnack[],
+  dailyMeals: [ // Aggiunti pasti giornalieri
+    { id: 'm1', name: 'Colazione', status: 'Completo', calories: 450, iconName: 'food-croissant' },
+    { id: 'm2', name: 'Pranzo', status: 'Parziale', calories: 600, iconName: 'food-variant' },
+    { id: 'm3', name: 'Cena', status: 'Mancante', iconName: 'food-steak' },
+    { id: 'm4', name: 'Spuntini', status: 'Registrato', calories: 250, iconName: 'food-apple' },
+  ] as MealSummary[],
+  // ...altri dati necessari per i widget
+};
 
 export default function HomeScreen() {
-  const router = useRouter() // Inizializza useRouter
-  const scoreColor = getScoreColor(DAILY_STATS.score)
+  const router = useRouter();
+  const [isSnackModalVisible, setIsSnackModalVisible] = useState(false);
+
+  const handleAddWater = () => {
+    console.log("Acqua aggiunta!");
+  };
+
+  const handleOpenSnackModal = () => {
+    setIsSnackModalVisible(true);
+  };
+
+  const handleCloseSnackModal = () => {
+    setIsSnackModalVisible(false);
+  };
+
+  const handleSelectSnack = (snack: QuickSnack) => {
+    console.log("Spuntino selezionato:", snack.name);
+  };
+
+  const handlePressMeal = (mealId: string) => {
+    console.log("Pasto premuto:", mealId);
+    // router.push(`/(tabs)/planner?mealId=${mealId}`); // Esempio navigazione
+  };
+
+  const handleViewAllMeals = () => {
+    console.log("Vedi tutti i pasti");
+    router.push('/Planner'); // Corretto il percorso per la tab Planner
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ThemedView style={styles.container}>
+      <View style={styles.container}>
         <ScreenHeader
-          title="Home"
-          icon={<FontAwesome5 name="apple-alt" size={24} color="#000" />}
-          showSearch={true}
-          showOptions={true}
-          // Naviga alla schermata Impostazioni
+          title="Home" // Titolo rimane "Home" o quello che preferisci
+          icon={<FontAwesome5 name="apple-alt" size={24} color="#333" />} // Icona esistente
+          showSearch={true} // Mantenuto come da UI precedente
+          showOptions={true} // Mantenuto
           onOptionsPress={() => router.push("/settings")}
         />
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Score Card */}
-          <View style={styles.scoreCard}>
-            <View style={styles.scoreHeader}>
-              <ThemedText style={styles.scoreTitle}>Punteggio Nutrizionale</ThemedText>
-              <ThemedText style={styles.scoreDate}>Oggi</ThemedText>
-            </View>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* 1. Sezione Riepilogo Giornaliero */}
+          <DailySummarySection
+            score={USER_DATA.dailyScore}
+            caloriesCurrent={USER_DATA.calories.current}
+            caloriesTarget={USER_DATA.calories.target}
+            onPress={() => router.push('/(tabs)/diary')} // Esempio di navigazione
+          />
 
-            <View style={styles.scoreContainer}>
-              <View style={styles.scoreCircle}>
-                <ThemedText style={[styles.scoreValue, { color: scoreColor }]}>{DAILY_STATS.score}</ThemedText>
-                <ThemedText style={styles.scoreLabel}>/ 100</ThemedText>
-              </View>
+          {/* Divisore o Spaziatura */}
+          <View style={styles.sectionDivider} />
 
-              <View style={styles.progressBar}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    {
-                      width: `${DAILY_STATS.score}%`,
-                      backgroundColor: scoreColor,
-                    },
-                  ]}
-                />
-              </View>
-            </View>
+          {/* 2. Sezione Macronutrienti */}
+          <MacroNutrientsSection
+            proteins={USER_DATA.macros.proteins}
+            carbs={USER_DATA.macros.carbs}
+            fats={USER_DATA.macros.fats}
+            // onPress={() => console.log("Macro section pressed")} // Esempio interazione
+          />
+          
+          {/* 3. Sezione Andamento Settimanale */}
+          <View style={styles.sectionDivider} />
+          <WeeklyTrendSection weeklyScores={USER_DATA.weeklyScores} />
 
-            <View style={styles.scoreInsights}>
-              <MaterialIcons name={DAILY_STATS.score >= 70 ? "thumb-up" : "info"} size={20} color={scoreColor} />
-              <ThemedText style={[styles.insightText, { color: scoreColor }]}>
-                {(() => {
-                  switch (true) {
-                    case DAILY_STATS.score >= 70:
-                      return "Ottimo lavoro! Continua così!"
-                    case DAILY_STATS.score <= 40:
-                      return "Attenzione! Hai bisogno di migliorare!"
-                    case DAILY_STATS.score > 40 && DAILY_STATS.score < 70:
-                      return "Ci devi ancora lavorare, non mollare!"
-                    default:
-                      return ""
-                  }
-                })()}
-              </ThemedText>
-            </View>
-          </View>
+          {/* 4. Sezione Quick Add */}
+          <View style={styles.sectionDivider} />
+          <QuickAddSection
+            onAddWater={handleAddWater}
+            onOpenSnackModal={handleOpenSnackModal}
+          />
+          
+          {/* 5. Sezione Riepilogo Pasti (Opzionale) */}
+          {USER_DATA.dailyMeals && USER_DATA.dailyMeals.length > 0 && (
+            <>
+              <View style={styles.sectionDivider} />
+              <MealSummarySection
+                meals={USER_DATA.dailyMeals}
+                onPressMeal={handlePressMeal}
+                onViewAllPress={handleViewAllMeals}
+              />
+            </>
+          )}
 
-          {/* Weekly Progress */}
-          <View style={styles.weeklyCard}>
-            <ThemedText style={styles.weeklyTitle}>Andamento Settimanale</ThemedText>
-            <View style={styles.chartContainer}>
-              {WEEKLY_STATS.map((stat, index) => (
-                <View key={index} style={styles.chartColumn}>
-                  <View style={styles.barContainer}>
-                    <View
-                      style={[
-                        styles.bar,
-                        {
-                          height: `${stat.score}%`,
-                          backgroundColor: getScoreColor(stat.score),
-                        },
-                      ]}
-                    />
-                  </View>
-                  <ThemedText style={styles.dayLabel}>{stat.day}</ThemedText>
-                </View>
-              ))}
-            </View>
-          </View>
+           {/* Esempio di testo per vedere se lo scroll funziona */}
+           <Text style={{padding: 20, textAlign: 'center', fontSize: 18, color: '#aaa'}}>Altri contenuti qui...</Text>
+           <Text style={{padding: 20, textAlign: 'center', fontSize: 18, color: '#aaa'}}>Altri contenuti qui...</Text>
+           <Text style={{padding: 20, textAlign: 'center', fontSize: 18, color: '#aaa'}}>Altri contenuti qui...</Text>
+           <Text style={{padding: 20, textAlign: 'center', fontSize: 18, color: '#aaa'}}>Altri contenuti qui...</Text>
+           <Text style={{padding: 20, textAlign: 'center', fontSize: 18, color: '#aaa'}}>Altri contenuti qui...</Text>
 
-          {/* Recent Meals */}
-          <View style={styles.recentMealsCard}>
-            <View style={styles.recentMealsHeader}>
-              <ThemedText style={styles.recentMealsTitle}>Pasti Recenti</ThemedText>
-              <ThemedText style={styles.viewAllText}>Vedi tutti</ThemedText>
-            </View>
-            {/* Example of a recent meal */}
-            <View style={styles.mealItem}>
-              <MaterialIcons name="restaurant" size={24} color="#4CAF50" />
-              <View style={styles.mealInfo}>
-                <ThemedText style={styles.mealName}>Pranzo</ThemedText>
-                <ThemedText style={styles.mealDetails}>Pasta integrale, Insalata</ThemedText>
-              </View>
-              <ThemedText style={styles.mealScore}>85</ThemedText>
-            </View>
-          </View>
+
         </ScrollView>
-      </ThemedView>
+
+        <QuickSnackModal
+          visible={isSnackModalVisible}
+          onClose={handleCloseSnackModal}
+          onSelectSnack={handleSelectSnack}
+          favoriteSnacks={USER_DATA.favoriteSnacks}
+        />
+      </View>
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: "#f7f8fa", // Colore di sfondo generale per SafeArea
   },
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f7f8fa", // Sfondo coerente
   },
-  content: {
-    flex: 1,
-    padding: 16,
-    paddingBottom: 32,
-  },
-  scoreCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    minHeight: 160,
-  },
-  scoreHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  scoreTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1f1f1f",
-  },
-  scoreDate: {
-    fontSize: 14,
-    color: "#666",
-  },
-  scoreContainer: {
-    alignItems: "center",
-    marginVertical: 8,
-  },
-  scoreCircle: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    marginBottom: 8,
-  },
-  scoreValue: {
-    fontSize: 42,
-    fontWeight: "700",
-    lineHeight: 42,
-  },
-  scoreLabel: {
-    fontSize: 16,
-    color: "#666",
-    marginLeft: 4,
-    lineHeight: 16,
-  },
-  progressBar: {
-    width: "100%",
-    height: 8,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: 4,
-  },
-  scoreInsights: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 12,
-  },
-  insightText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  weeklyCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-    marginVertical: 16,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    minHeight: 220,
-  },
-  weeklyTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1f1f1f",
-    marginBottom: 8,
-  },
-  chartContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    height: 160,
-    marginTop: 8,
-    paddingBottom: 24,
-  },
-  chartColumn: {
-    alignItems: "center",
-    flex: 1,
-    minWidth: 32,
-    height: "100%",
-    justifyContent: "flex-end",
-    paddingHorizontal: 4,
-  },
-  barContainer: {
-    height: "100%",
-    width: 10,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 5,
-    overflow: "hidden",
-  },
-  bar: {
-    width: "100%",
-    borderRadius: 5,
-    minHeight: 4,
-  },
-  dayLabel: {
-    fontSize: 11,
-    color: "#666",
-    marginTop: 8,
-    position: "absolute",
-    bottom: -24,
-    width: "100%",
-    textAlign: "center",
-  },
-  recentMealsCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 20,
-    marginTop: 16,
-    marginBottom: 24,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    minHeight: 150,
-  },
-  recentMealsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  recentMealsTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1f1f1f",
-  },
-  viewAllText: {
-    fontSize: 14,
-    color: "#4CAF50",
-    fontWeight: "500",
-  },
-  mealItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    backgroundColor: "#f8f8f8",
-    borderRadius: 12,
-    gap: 12,
-  },
-  mealInfo: {
+  scrollView: {
     flex: 1,
   },
-  mealName: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: "#1f1f1f",
+  scrollViewContent: {
+    paddingTop: 16, // Spazio iniziale
+    paddingBottom: 32, // Spazio finale per scroll, per non tagliare l'ultimo elemento
+    paddingHorizontal: 16,
   },
-  mealDetails: {
-    fontSize: 14,
-    color: "#666",
+  sectionDivider: {
+    height: 20, // Aumentato leggermente per più respiro tra le sezioni
   },
-  mealScore: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#4CAF50",
-  },
-})
+  // Rimuovi gli stili delle vecchie card (scoreCard, weeklyCard, recentMealsCard, ecc.)
+  // Gli stili specifici saranno definiti all'interno di ogni componente Sezione.
+});
