@@ -19,6 +19,7 @@ export default function PlannerScreen() {
   const [selectedMealType, setSelectedMealType] = useState<keyof DailyPlan>("snack");
   const [days, setDays] = useState<any[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [activeDayIndex, setActiveDayIndex] = useState(0);
 
   // Funzione per generare i giorni dinamicamente
   const generateDays = useCallback(async () => {
@@ -192,12 +193,23 @@ export default function PlannerScreen() {
           </TouchableOpacity>
 
           <View style={styles.dateHeaderContainer}>
-            <Text style={styles.dateHeaderText}>
-              {new Date(currentDate).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}
-            </Text>
-            <Text style={styles.dateSubheaderText}>
-              Settimana {Math.ceil((currentDate.getDate()) / 7)}
-            </Text>
+            <View style={styles.datePillRow}>
+              <Text style={styles.datePillWeekday}>
+                {days[activeDayIndex]
+                  ? days[activeDayIndex].dateObj.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase()
+                  : ""}
+              </Text>
+              <Text style={styles.datePillDay}>
+                {days[activeDayIndex]
+                  ? days[activeDayIndex].dateObj.getDate()
+                  : ""}
+              </Text>
+              <Text style={styles.datePillMonthYear}>
+                {days[activeDayIndex]
+                  ? days[activeDayIndex].dateObj.toLocaleDateString('it-IT', { month: 'short', year: 'numeric' })
+                  : ""}
+              </Text>
+            </View>
           </View>
 
           <TouchableOpacity 
@@ -231,8 +243,15 @@ export default function PlannerScreen() {
                   selectedMealType={selectedMealType}
                   onAddMeal={(mealType) => handleAddFood(mealType as keyof DailyPlan)}
                 />
-
               </View>
+            )}
+            onMomentumScrollEnd={e => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / width);
+              setActiveDayIndex(index);
+            }}
+            initialScrollIndex={0}
+            getItemLayout={(data, index) => (
+              {length: width, offset: width * index, index}
             )}
           />
         ) : (
@@ -328,22 +347,55 @@ const styles = StyleSheet.create({
   dateHeaderContainer: {
     alignItems: 'center',
     flex: 1,
-    paddingHorizontal: 10, // Add some horizontal padding
+    paddingHorizontal: 10,
+    paddingVertical: 0,
+    marginBottom: 2,
   },
-  dateHeaderText: {
-    fontSize: 19, // Slightly larger
+  datePillRow: {
+    backgroundColor: '#f4f8fd',
+    borderRadius: 22,
+    paddingVertical: 4,
+    paddingHorizontal: 18,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    shadowColor: '#1976d2',
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    marginBottom: 2,
+    minWidth: 120,
+    gap: 10,
+  },
+  datePillWeekday: {
+    fontSize: 13,
+    color: '#1976d2',
+    fontWeight: '600',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginRight: 2,
+  },
+  datePillDay: {
+    fontSize: 26,
+    color: '#1976d2',
     fontWeight: 'bold',
+    lineHeight: 30,
+    marginHorizontal: 2,
+  },
+  datePillMonthYear: {
+    fontSize: 13,
     color: '#333',
+    fontWeight: '500',
+    letterSpacing: 0.5,
     textTransform: 'capitalize',
-    letterSpacing: 0.7, // Increased letter spacing
-    marginBottom: 2, // Add some space between header and subheader
+    marginLeft: 2,
   },
   dateSubheaderText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#666',
-    marginTop: 4,
-    letterSpacing: 0.5, // Increased letter spacing
-    fontWeight: '500', // Slightly bolder
+    marginTop: 2,
+    letterSpacing: 0.5,
+    fontWeight: '500',
   },
   // Stili per il container di caricamento
   loadingContainer: {

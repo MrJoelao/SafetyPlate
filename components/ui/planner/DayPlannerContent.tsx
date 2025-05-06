@@ -26,9 +26,7 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
   return (
     <View style={styles.root}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.date}>{date}</Text>
-      </View>
+      {/* Header rimosso: la data è ora solo nella pill in alto */}
       {/* Sezioni pasti integrate */}
       <View style={styles.meals}>
         {meals.map((meal) => (
