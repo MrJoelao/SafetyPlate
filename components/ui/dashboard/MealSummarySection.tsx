@@ -41,29 +41,43 @@ const MealItem: React.FC<{
   partialColor,
   missingColor
 }) => {
-  let statusColor = missingColor;
-  if (item.status === 'Completo' || item.status === 'Registrato') statusColor = successColor;
-  else if (item.status === 'Parziale') statusColor = partialColor;
+  // let statusColor = missingColor;
+  // if (item.status === 'Completo' || item.status === 'Registrato') statusColor = successColor;
+  // else if (item.status === 'Parziale') statusColor = partialColor;
 
+  // DEBUG: Semplificazione drastica per isolare l'errore
   return (
     <TouchableOpacity
       style={styles.mealItemContainer}
       onPress={() => onPress && onPress(item.id)}
       disabled={!onPress}
     >
-      <View style={[styles.mealIconContainer, { backgroundColor: `${statusColor}2A` }]}> {/* Leggermente più trasparente */}
-        <MaterialCommunityIcons name={item.iconName} size={24} color={statusColor} />
-      </View>
       <View style={styles.mealInfo}>
-        <Text style={[styles.mealName, {color: textColor}]}>{item.name}</Text>
-        <Text style={[styles.mealStatus, { color: statusColor }]}>{item.status}</Text>
+         <Text style={[styles.mealName, { color: textColor }]}>TEST: {item.name}</Text>
       </View>
-      {item.calories !== undefined && (
-        <Text style={[styles.mealCalories, {color: textColor}]}>{item.calories} kcal</Text>
-      )}
-      {onPress && <MaterialIcons name="chevron-right" size={22} color={iconColor} />}
     </TouchableOpacity>
   );
+
+  // Codice Originale di MealItem:
+  // return (
+  //   <TouchableOpacity
+  //     style={styles.mealItemContainer}
+  //     onPress={() => onPress && onPress(item.id)}
+  //     disabled={!onPress}
+  //   >
+  //     <View style={[styles.mealIconContainer, { backgroundColor: `${statusColor}2A` }]}>
+  //       <MaterialCommunityIcons name={item.iconName} size={24} color={statusColor} />
+  //     </View>
+  //     <View style={styles.mealInfo}>
+  //       <Text style={[styles.mealName, {color: textColor}]}>{item.name}</Text>
+  //       <Text style={[styles.mealStatus, { color: statusColor }]}>{item.status}</Text>
+  //     </View>
+  //     {item.calories !== undefined && (
+  //       <Text style={[styles.mealCalories, {color: textColor}]}>{item.calories} kcal</Text>
+  //     )}
+  //     {onPress && <MaterialIcons name="chevron-right" size={22} color={iconColor} />}
+  //   </TouchableOpacity>
+  // );
 };
 
 

@@ -40,8 +40,8 @@ const MacroDisplay: React.FC<MacroDisplayProps> = ({
   return (
     <View style={[styles.macroItem, {backgroundColor: itemBackgroundColor}]}>
       <View style={styles.macroHeader}>
-        <MaterialCommunityIcons name={iconName} size={22} color={color} />
-        <Text style={[styles.macroName, { color }]}>{name}</Text>
+        <MaterialCommunityIcons name={iconName} size={20} color={color} /> {/* Icona leggermente più piccola */}
+        <Text style={[styles.macroName, { color, flexShrink: 1 }]}>{name}</Text> {/* Aggiunto flexShrink */}
       </View>
       <View style={styles.macroValues}>
         <Text style={[styles.macroCurrent, {color: textColor}]}>{data.current}g</Text>
@@ -115,15 +115,14 @@ const styles = StyleSheet.create({
   },
   macrosContainer: {
     flexDirection: 'row',
-    // justifyContent: 'space-between', // Rimosso per lasciare che flex e gap gestiscano
-    gap: 10, // Leggermente ridotto il gap
+    gap: 8, // Ridotto ulteriormente il gap
   },
   macroItem: {
-    flex: 1, // Mantiene la distribuzione equa
+    flex: 1,
     alignItems: 'flex-start',
-    padding: 8, // Leggermente ridotto il padding interno
-    // backgroundColor: '#f8f9fa', // Rimosso
-    borderRadius: 10, // Leggermente ridotto
+    paddingHorizontal: 6, // Ridotto padding orizzontale
+    paddingVertical: 8,   // Mantenuto padding verticale
+    borderRadius: 8, // Leggermente ridotto
   },
   macroHeader: {
     flexDirection: 'row',
@@ -131,9 +130,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   macroName: {
-    fontSize: 14, // Leggermente ridotto
+    fontSize: 12, // Ridotto fontSize
     fontWeight: '500',
-    marginLeft: 5, // Leggermente ridotto
+    marginLeft: 4, // Ridotto marginLeft
   },
   macroValues: {
     flexDirection: 'row',
