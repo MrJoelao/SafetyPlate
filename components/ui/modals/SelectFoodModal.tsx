@@ -8,6 +8,7 @@ import {
   FlatList,
   TouchableOpacity,
   Text,
+  Alert,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Food } from '@/types/food';
@@ -50,6 +51,11 @@ export function SelectFoodModal({
   const [quantitiesData, setQuantitiesData] = useState<Record<string, { quantity: string; unit: string }>>({});
   const [repetitionSettings, setRepetitionSettings] = useState<{ type: string, count: number } | null>(null);
   const [itemsToAdd, setItemsToAdd] = useState<PlannedMealItem[]>([]);
+  const [showCustomRepetition, setShowCustomRepetition] = useState(false);
+  const [customRepetitionData, setCustomRepetitionData] = useState({
+    type: 'day', // 'day', 'week', 'month'
+    count: 1,
+  });
 
   // Filter foods based on search term
   const filteredFoods = useMemo(() => {
@@ -69,6 +75,11 @@ export function SelectFoodModal({
       setQuantitiesData({});
       setRepetitionSettings(null);
       setItemsToAdd([]);
+      setShowCustomRepetition(false);
+      setCustomRepetitionData({
+        type: 'day',
+        count: 1,
+      });
     } else {
       // Full reset on show for simplicity
       setSearchTerm('');
@@ -77,6 +88,11 @@ export function SelectFoodModal({
       setQuantitiesData({});
       setRepetitionSettings(null);
       setItemsToAdd([]);
+      setShowCustomRepetition(false);
+      setCustomRepetitionData({
+        type: 'day',
+        count: 1,
+      });
     }
   }, [visible]);
 
@@ -137,7 +153,33 @@ export function SelectFoodModal({
 
   // Handle repetition selection
   const handleRepetitionSelect = (type: string, count: number) => {
-    setRepetitionSettings({ type, count });
+    if (type === 'custom') {
+      // Toggle custom repetition UI
+      setShowCustomRepetition(!showCustomRepetition);
+      if (showCustomRepetition) {
+        // If we're closing the custom UI, apply the settings
+        setRepetitionSettings({ 
+          type: customRepetitionData.type, 
+          count: customRepetitionData.count 
+        });
+      } else {
+        // If we're opening the custom UI, clear other selections
+        setRepetitionSettings(null);
+      }
+    } else {
+      // For non-custom options, just set the repetition settings directly
+      setRepetitionSettings({ type, count });
+      // Close custom UI if open
+      setShowCustomRepetition(false);
+    }
+  };
+
+  // Handle changes to custom repetition data
+  const handleCustomRepetitionChange = (field: 'type' | 'count', value: string | number) => {
+    setCustomRepetitionData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   // Update quantity/unit state
@@ -313,7 +355,11 @@ export function SelectFoodModal({
                         styles.repetitionOption,
                         repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 && styles.repetitionOptionSelected
                       ]}
-                      onPress={() => handleRepetitionSelect('day', 7)}
+                      onPress={() => {
+                        handleRepetitionSelect('day', 7);
+                        // Close custom UI if open
+                        setShowCustomRepetition(false);
+                      }}
                     >
                       <MaterialIcons
                         name="today"
@@ -331,7 +377,11 @@ export function SelectFoodModal({
                         styles.repetitionOption,
                         repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 && styles.repetitionOptionSelected
                       ]}
-                      onPress={() => handleRepetitionSelect('day', 14)}
+                      onPress={() => {
+                        handleRepetitionSelect('day', 14);
+                        // Close custom UI if open
+                        setShowCustomRepetition(false);
+                      }}
                     >
                       <MaterialIcons
                         name="date-range"
@@ -359,6 +409,8 @@ export function SelectFoodModal({
                         const currentDay = today.getDate();
                         const daysLeft = lastDay - currentDay + 1;
                         handleRepetitionSelect('month-current', daysLeft);
+                        // Close custom UI if open
+                        setShowCustomRepetition(false);
                       }}
                     >
                       <MaterialIcons
@@ -381,29 +433,86 @@ export function SelectFoodModal({
                     <TouchableOpacity
                       style={[
                         styles.repetitionOption,
-                        repetitionSettings?.type === 'custom' && styles.repetitionOptionSelected
+                        (repetitionSettings?.type === 'custom' || showCustomRepetition) && styles.repetitionOptionSelected
                       ]}
-                      onPress={() => {
-                        // Placeholder: logica personalizzata da implementare
-                        handleRepetitionSelect('custom', 0);
-                        alert('Funzionalità di personalizzazione da implementare');
-                      }}
+                      onPress={() => handleRepetitionSelect('custom', 0)}
                     >
                       <MaterialIcons
                         name="edit-calendar"
                         size={24}
-                        color={repetitionSettings?.type === 'custom' ? "#fff" : "#2196F3"}
+                        color={(repetitionSettings?.type === 'custom' || showCustomRepetition) ? "#fff" : "#2196F3"}
                       />
                       <Text style={[
                         styles.repetitionOptionText,
-                        repetitionSettings?.type === 'custom' && styles.repetitionOptionTextSelected
+                        (repetitionSettings?.type === 'custom' || showCustomRepetition) && styles.repetitionOptionTextSelected
                       ]}>Personalizza…</Text>
                     </TouchableOpacity>
+
+                    {/* Custom repetition UI */}
+                    {showCustomRepetition && (
+                      <View style={styles.customRepetitionContainer}>
+                        <Text style={styles.customRepetitionTitle}>Personalizza ripetizione</Text>
+
+                        <View style={styles.customRepetitionRow}>
+                          <Text style={styles.customRepetitionLabel}>Ripeti ogni</Text>
+                          <TextInput
+                            style={styles.customRepetitionInput}
+                            value={customRepetitionData.count.toString()}
+                            onChangeText={(text) => {
+                              const count = parseInt(text) || 1;
+                              handleCustomRepetitionChange('count', count);
+                            }}
+                            keyboardType="numeric"
+                            maxLength={3}
+                          />
+
+                          <View style={styles.customRepetitionTypeContainer}>
+                            <Picker
+                              selectedValue={customRepetitionData.type}
+                              onValueChange={(value) => handleCustomRepetitionChange('type', value)}
+                              style={styles.customRepetitionTypePicker}
+                            >
+                              <Picker.Item label="Giorni" value="day" />
+                              <Picker.Item label="Settimane" value="week" />
+                              <Picker.Item label="Mesi" value="month" />
+                            </Picker>
+                          </View>
+                        </View>
+
+                        <TouchableOpacity
+                          style={styles.customRepetitionApplyButton}
+                          onPress={() => {
+                            // Apply custom repetition settings
+                            setRepetitionSettings({
+                              type: customRepetitionData.type,
+                              count: customRepetitionData.count
+                            });
+                            setShowCustomRepetition(false);
+                          }}
+                        >
+                          <Text style={styles.customRepetitionApplyButtonText}>Applica</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
 
                   <Text style={styles.repetitionNote}>
                     {repetitionSettings
-                      ? "Questo pasto verrà aggiunto automaticamente ai giorni selezionati"
+                      ? repetitionSettings.type === 'custom'
+                        ? `Questo pasto verrà ripetuto per ${repetitionSettings.count} ${
+                            repetitionSettings.count === 1
+                              ? repetitionSettings.type === 'day'
+                                ? 'giorno'
+                                : repetitionSettings.type === 'week'
+                                ? 'settimana'
+                                : 'mese'
+                              : repetitionSettings.type === 'day'
+                                ? 'giorni'
+                                : repetitionSettings.type === 'week'
+                                ? 'settimane'
+                                : 'mesi'
+                          }`
+                        : "Questo pasto verrà aggiunto automaticamente ai giorni selezionati"
                       : "Puoi anche saltare questo passaggio per aggiungere il pasto solo al giorno corrente"}
                   </Text>
                 </View>
@@ -635,5 +744,70 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 8,
+  },
+  // Custom repetition styles
+  customRepetitionContainer: {
+    backgroundColor: '#f0f7ff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#2196F3',
+  },
+  customRepetitionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2196F3',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  customRepetitionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  customRepetitionLabel: {
+    fontSize: 15,
+    color: '#333',
+    marginRight: 8,
+  },
+  customRepetitionInput: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    width: 60,
+    textAlign: 'center',
+    fontSize: 16,
+    backgroundColor: '#fff',
+  },
+  customRepetitionTypeContainer: {
+    flex: 1,
+    marginLeft: 8,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    height: 40,
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  customRepetitionTypePicker: {
+    width: '100%',
+    height: 40,
+  },
+  customRepetitionApplyButton: {
+    backgroundColor: '#2196F3',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  customRepetitionApplyButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
