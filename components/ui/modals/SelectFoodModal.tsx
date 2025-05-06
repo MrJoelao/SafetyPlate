@@ -51,6 +51,7 @@ export function SelectFoodModal({
   const [quantitiesData, setQuantitiesData] = useState<Record<string, { quantity: string; unit: string }>>({});
   const [repetitionSettings, setRepetitionSettings] = useState<{ type: string, count: number } | null>(null);
   const [itemsToAdd, setItemsToAdd] = useState<PlannedMealItem[]>([]);
+  const [customizing, setCustomizing] = useState(false);
   const [showCustomRepetition, setShowCustomRepetition] = useState(false);
   const [customRepetitionData, setCustomRepetitionData] = useState({
     type: 'day', // 'day', 'week', 'month'
@@ -346,172 +347,179 @@ export function SelectFoodModal({
               ) : (
                 // Stage 3: Setting Repetition
                 <View style={[styles.repetitionContainer, {minHeight: 500, maxHeight: 600, justifyContent: 'flex-start'}]}>
-                  <Text style={styles.repetitionTitle}>Vuoi ripetere questo pasto nei giorni successivi?</Text>
-                  <Text style={styles.repetitionSubtitle}>Seleziona per quanti giorni, settimane o mesi vuoi ripetere questo pasto</Text>
-
-                  <View style={styles.repetitionOptionsContainer}>
-                    <TouchableOpacity
-                      style={[
-                        styles.repetitionOption,
-                        repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 && styles.repetitionOptionSelected
-                      ]}
-                      onPress={() => {
-                        handleRepetitionSelect('day', 7);
-                        // Close custom UI if open
-                        setShowCustomRepetition(false);
-                      }}
-                    >
-                      <MaterialIcons
-                        name="today"
-                        size={24}
-                        color={repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 ? "#fff" : "#2196F3"}
-                      />
-                      <Text style={[
-                        styles.repetitionOptionText,
-                        repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 && styles.repetitionOptionTextSelected
-                      ]}>7 giorni</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.repetitionOption,
-                        repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 && styles.repetitionOptionSelected
-                      ]}
-                      onPress={() => {
-                        handleRepetitionSelect('day', 14);
-                        // Close custom UI if open
-                        setShowCustomRepetition(false);
-                      }}
-                    >
-                      <MaterialIcons
-                        name="date-range"
-                        size={24}
-                        color={repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 ? "#fff" : "#2196F3"}
-                      />
-                      <Text style={[
-                        styles.repetitionOptionText,
-                        repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 && styles.repetitionOptionTextSelected
-                      ]}>14 giorni</Text>
-                    </TouchableOpacity>
-
-                    {/* Pulsante mese corrente */}
-                    <TouchableOpacity
-                      style={[
-                        styles.repetitionOption,
-                        repetitionSettings?.type === 'month-current' && styles.repetitionOptionSelected
-                      ]}
-                      onPress={() => {
-                        // Calcola i giorni rimanenti del mese corrente
-                        const today = new Date();
-                        const year = today.getFullYear();
-                        const month = today.getMonth();
-                        const lastDay = new Date(year, month + 1, 0).getDate();
-                        const currentDay = today.getDate();
-                        const daysLeft = lastDay - currentDay + 1;
-                        handleRepetitionSelect('month-current', daysLeft);
-                        // Close custom UI if open
-                        setShowCustomRepetition(false);
-                      }}
-                    >
-                      <MaterialIcons
-                        name="event-available"
-                        size={24}
-                        color={repetitionSettings?.type === 'month-current' ? "#fff" : "#2196F3"}
-                      />
-                      <Text style={[
-                        styles.repetitionOptionText,
-                        repetitionSettings?.type === 'month-current' && styles.repetitionOptionTextSelected
-                      ]}>
-                        {(() => {
-                          const today = new Date();
-                          return today.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
-                        })()}
-                      </Text>
-                    </TouchableOpacity>
-
-                    {/* Pulsante personalizza */}
-                    <TouchableOpacity
-                      style={[
-                        styles.repetitionOption,
-                        (repetitionSettings?.type === 'custom' || showCustomRepetition) && styles.repetitionOptionSelected
-                      ]}
-                      onPress={() => handleRepetitionSelect('custom', 0)}
-                    >
-                      <MaterialIcons
-                        name="edit-calendar"
-                        size={24}
-                        color={(repetitionSettings?.type === 'custom' || showCustomRepetition) ? "#fff" : "#2196F3"}
-                      />
-                      <Text style={[
-                        styles.repetitionOptionText,
-                        (repetitionSettings?.type === 'custom' || showCustomRepetition) && styles.repetitionOptionTextSelected
-                      ]}>Personalizza…</Text>
-                    </TouchableOpacity>
-
-                    {/* Custom repetition UI */}
-                    {showCustomRepetition && (
-                      <View style={styles.customRepetitionContainer}>
-                        <Text style={styles.customRepetitionTitle}>Personalizza ripetizione</Text>
-
-                        <View style={styles.customRepetitionRow}>
-                          <Text style={styles.customRepetitionLabel}>Ripeti ogni</Text>
-                          <TextInput
-                            style={styles.customRepetitionInput}
-                            value={customRepetitionData.count.toString()}
-                            onChangeText={(text) => {
-                              const count = parseInt(text) || 1;
-                              handleCustomRepetitionChange('count', count);
-                            }}
-                            keyboardType="numeric"
-                            maxLength={3}
-                          />
-
-                          <View style={styles.customRepetitionTypeContainer}>
-                            <Picker
-                              selectedValue={customRepetitionData.type}
-                              onValueChange={(value) => handleCustomRepetitionChange('type', value)}
-                              style={styles.customRepetitionTypePicker}
-                            >
-                              <Picker.Item label="Giorni" value="day" />
-                              <Picker.Item label="Settimane" value="week" />
-                              <Picker.Item label="Mesi" value="month" />
-                            </Picker>
-                          </View>
-                        </View>
-
+                  {!showCustomRepetition && (
+                    <>
+                      <Text style={styles.repetitionTitle}>Vuoi ripetere questo pasto nei giorni successivi?</Text>
+                      <Text style={styles.repetitionSubtitle}>Seleziona per quanti giorni, settimane o mesi vuoi ripetere questo pasto</Text>
+                      <View style={styles.repetitionOptionsContainer}>
                         <TouchableOpacity
-                          style={styles.customRepetitionApplyButton}
+                          style={[
+                            styles.repetitionOption,
+                            repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 && styles.repetitionOptionSelected
+                          ]}
                           onPress={() => {
-                            // Apply custom repetition settings
-                            setRepetitionSettings({
-                              type: customRepetitionData.type,
-                              count: customRepetitionData.count
-                            });
+                            handleRepetitionSelect('day', 7);
                             setShowCustomRepetition(false);
                           }}
                         >
-                          <Text style={styles.customRepetitionApplyButtonText}>Applica</Text>
+                          <MaterialIcons
+                            name="today"
+                            size={24}
+                            color={repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 ? "#fff" : "#2196F3"}
+                          />
+                          <Text style={[
+                            styles.repetitionOptionText,
+                            repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 && styles.repetitionOptionTextSelected
+                          ]}>7 giorni</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[
+                            styles.repetitionOption,
+                            repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 && styles.repetitionOptionSelected
+                          ]}
+                          onPress={() => {
+                            handleRepetitionSelect('day', 14);
+                            setShowCustomRepetition(false);
+                          }}
+                        >
+                          <MaterialIcons
+                            name="date-range"
+                            size={24}
+                            color={repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 ? "#fff" : "#2196F3"}
+                          />
+                          <Text style={[
+                            styles.repetitionOptionText,
+                            repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 && styles.repetitionOptionTextSelected
+                          ]}>14 giorni</Text>
+                        </TouchableOpacity>
+
+                        {/* Pulsante mese corrente */}
+                        <TouchableOpacity
+                          style={[
+                            styles.repetitionOption,
+                            repetitionSettings?.type === 'month-current' && styles.repetitionOptionSelected
+                          ]}
+                          onPress={() => {
+                            const today = new Date();
+                            const year = today.getFullYear();
+                            const month = today.getMonth();
+                            const lastDay = new Date(year, month + 1, 0).getDate();
+                            const currentDay = today.getDate();
+                            const daysLeft = lastDay - currentDay + 1;
+                            handleRepetitionSelect('month-current', daysLeft);
+                            setShowCustomRepetition(false);
+                          }}
+                        >
+                          <MaterialIcons
+                            name="event-available"
+                            size={24}
+                            color={repetitionSettings?.type === 'month-current' ? "#fff" : "#2196F3"}
+                          />
+                          <Text style={[
+                            styles.repetitionOptionText,
+                            repetitionSettings?.type === 'month-current' && styles.repetitionOptionTextSelected
+                          ]}>
+                            {(() => {
+                              const today = new Date();
+                              return today.toLocaleString('it-IT', { month: 'long', year: 'numeric' });
+                            })()}
+                          </Text>
+                        </TouchableOpacity>
+
+                        {/* Pulsante personalizza */}
+                        <TouchableOpacity
+                          style={[
+                            styles.repetitionOption,
+                            (repetitionSettings?.type === 'custom' || showCustomRepetition) && styles.repetitionOptionSelected
+                          ]}
+                          onPress={() => handleRepetitionSelect('custom', 0)}
+                        >
+                          <MaterialIcons
+                            name="edit-calendar"
+                            size={24}
+                            color={(repetitionSettings?.type === 'custom' || showCustomRepetition) ? "#fff" : "#2196F3"}
+                          />
+                          <Text style={[
+                            styles.repetitionOptionText,
+                            (repetitionSettings?.type === 'custom' || showCustomRepetition) && styles.repetitionOptionTextSelected
+                          ]}>Personalizza…</Text>
                         </TouchableOpacity>
                       </View>
-                    )}
-                  </View>
+                    </>
+                  )}
+                  {showCustomRepetition && (
+                    <View style={styles.customRepetitionContainer}>
+                      <Text style={styles.customRepetitionTitle}>Personalizza ripetizione</Text>
+                      <View style={styles.customRepetitionRow}>
+                        <Text style={styles.customRepetitionLabel}>Ripeti ogni</Text>
+                        <TextInput
+                          style={styles.customRepetitionInput}
+                          value={customRepetitionData.count.toString()}
+                          onChangeText={(text) => {
+                            const count = parseInt(text) || 1;
+                            handleCustomRepetitionChange('count', count);
+                          }}
+                          keyboardType="numeric"
+                          maxLength={3}
+                        />
+                        <View style={styles.customRepetitionTypeContainer}>
+                          <Picker
+                            selectedValue={customRepetitionData.type}
+                            onValueChange={(value) => handleCustomRepetitionChange('type', value)}
+                            style={styles.customRepetitionTypePicker}
+                          >
+                            <Picker.Item label="Giorni" value="day" />
+                            <Picker.Item label="Settimane" value="week" />
+                            <Picker.Item label="Mesi" value="month" />
+                          </Picker>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.customRepetitionApplyButton}
+                        onPress={() => {
+                          setRepetitionSettings({
+                            type: customRepetitionData.type,
+                            count: customRepetitionData.count
+                          });
+                          setShowCustomRepetition(false);
+                        }}
+                      >
+                        <Text style={styles.customRepetitionApplyButtonText}>Applica</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                  {/* Preview scelta personalizzata */}
+                  {showCustomRepetition && (
+                    <Text style={styles.customRepetitionChoicePreview}>
+                      {`Ripeti ogni ${customRepetitionData.count} ${
+                        customRepetitionData.type === 'day'
+                          ? customRepetitionData.count === 1 ? 'giorno' : 'giorni'
+                          : customRepetitionData.type === 'week'
+                          ? customRepetitionData.count === 1 ? 'settimana' : 'settimane'
+                          : customRepetitionData.count === 1 ? 'mese' : 'mesi'
+                      }`}
+                    </Text>
+                  )}
 
                   <Text style={styles.repetitionNote}>
                     {repetitionSettings
                       ? repetitionSettings.type === 'custom'
-                        ? `Questo pasto verrà ripetuto per ${repetitionSettings.count} ${
-                            repetitionSettings.count === 1
-                              ? repetitionSettings.type === 'day'
-                                ? 'giorno'
-                                : repetitionSettings.type === 'week'
-                                ? 'settimana'
-                                : 'mese'
-                              : repetitionSettings.type === 'day'
-                                ? 'giorni'
-                                : repetitionSettings.type === 'week'
-                                ? 'settimane'
-                                : 'mesi'
-                          }`
+                        ? (() => {
+                            let unitSing = '';
+                            let unitPlur = '';
+                            if (customRepetitionData.type === 'day') {
+                              unitSing = 'giorno';
+                              unitPlur = 'giorni';
+                            } else if (customRepetitionData.type === 'week') {
+                              unitSing = 'settimana';
+                              unitPlur = 'settimane';
+                            } else {
+                              unitSing = 'mese';
+                              unitPlur = 'mesi';
+                            }
+                            return `Questo pasto verrà ripetuto per ${repetitionSettings.count} ${repetitionSettings.count === 1 ? unitSing : unitPlur}`;
+                          })()
                         : "Questo pasto verrà aggiunto automaticamente ai giorni selezionati"
                       : "Puoi anche saltare questo passaggio per aggiungere il pasto solo al giorno corrente"}
                   </Text>
@@ -747,67 +755,145 @@ const styles = StyleSheet.create({
   },
   // Custom repetition styles
   customRepetitionContainer: {
-    backgroundColor: '#f0f7ff',
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 12,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 18,
+    padding: 24,
+    marginTop: 18,
     marginBottom: 8,
     borderWidth: 1,
     borderColor: '#2196F3',
+    alignItems: 'center',
+    shadowColor: '#2196F3',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    minHeight: 220,
+    justifyContent: 'center',
   },
   customRepetitionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2196F3',
-    marginBottom: 12,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1976d2',
+    marginBottom: 8,
     textAlign: 'center',
+    letterSpacing: 0.2,
+  },
+  customRepetitionHelp: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 18,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    maxWidth: 320,
   },
   customRepetitionRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+    alignItems: 'flex-end',
+    marginBottom: 18,
+    width: '100%',
+    justifyContent: 'center',
+    gap: 12,
   },
   customRepetitionLabel: {
     fontSize: 15,
-    color: '#333',
+    color: '#1976d2',
     marginRight: 8,
+    fontWeight: '500',
+    marginBottom: 4,
   },
   customRepetitionInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    width: 60,
+    borderColor: '#2196F3',
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    width: 70,
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: 17,
     backgroundColor: '#fff',
+    marginRight: 8,
+    fontWeight: '600',
+    color: '#1976d2',
   },
   customRepetitionTypeContainer: {
     flex: 1,
-    marginLeft: 8,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
+    marginLeft: 0,
+    borderWidth: 1.5,
+    borderColor: '#2196F3',
+    borderRadius: 22,
     backgroundColor: '#fff',
-    height: 40,
+    height: 54,
     justifyContent: 'center',
     overflow: 'hidden',
+    minWidth: 180,
+    maxWidth: 220,
+    marginLeft: 8,
+    marginRight: 8,
+    elevation: 1,
   },
   customRepetitionTypePicker: {
     width: '100%',
-    height: 40,
+    height: 54,
+    color: '#1976d2',
+    fontSize: 19,
+    borderRadius: 22,
+    paddingHorizontal: 8,
+  },
+  customRepetitionChoicePreview: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#1976d2',
+    fontWeight: '600',
+    textAlign: 'center',
+    backgroundColor: '#e3f2fd',
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    alignSelf: 'center',
+    minWidth: 120,
+    maxWidth: 260,
+  },
+  customRepetitionButtonRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 16,
+    marginTop: 18,
+    width: '100%',
   },
   customRepetitionApplyButton: {
     backgroundColor: '#2196F3',
-    borderRadius: 8,
-    paddingVertical: 10,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
     alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
+    marginHorizontal: 0,
+    elevation: 2,
+  },
+  customRepetitionCancelButton: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    marginHorizontal: 0,
+    borderWidth: 1,
+    borderColor: '#2196F3',
+    elevation: 0,
   },
   customRepetitionApplyButtonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  customRepetitionCancelButtonText: {
+    color: '#2196F3',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });

@@ -53,12 +53,29 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
               >
                 {meal.type.charAt(0).toUpperCase() + meal.type.slice(1)}
               </Text>
-              <MaterialIcons
-                name="add-circle-outline"
-                size={22}
-                color={selectedMealType === meal.type ? "#2196F3" : "#4CAF50"}
-                style={{ marginLeft: "auto" }}
-              />
+              <View
+                style={{
+                  marginLeft: "auto",
+                  backgroundColor: selectedMealType === meal.type ? "#e3f2fd" : "#f0f7fa",
+                  borderRadius: 20,
+                  padding: 2,
+                  shadowColor: "#1976d2",
+                  shadowOpacity: selectedMealType === meal.type ? 0.12 : 0.06,
+                  shadowRadius: 4,
+                  shadowOffset: { width: 0, height: 1 },
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <MaterialIcons
+                  name="add-circle"
+                  size={26}
+                  color={selectedMealType === meal.type ? "#2196F3" : "#b0b0b0"}
+                  style={{
+                    alignSelf: "center",
+                  }}
+                />
+              </View>
             </View>
             {meal.items.length === 0 ? (
               <Text style={styles.emptyText}>
@@ -132,82 +149,94 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   mealSection: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 16,
-    marginBottom: 16,
-    padding: 14,
+    backgroundColor: "#f8fafd",
+    borderRadius: 20,
+    marginBottom: 12,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
     elevation: 1,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
-    position: "relative", // For absolute positioning of children
+    borderWidth: 1.5,
+    borderColor: "#e3eaf6",
+    shadowColor: "#1976d2",
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    position: "relative",
+    minHeight: 80,
+    flex: 1,
   },
   selectedMealSection: {
     backgroundColor: "#e3f2fd",
     borderColor: "#2196F3",
     elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: "#1976d2",
+    shadowOpacity: 0.13,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
   },
   mealHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
-    gap: 8,
-    paddingBottom: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.05)",
+    marginBottom: 8,
+    gap: 10,
+    paddingBottom: 4,
+    borderBottomWidth: 0,
+    borderBottomColor: "transparent",
+    minHeight: 32,
   },
   mealTitle: {
-    fontWeight: "600",
-    fontSize: 16,
-    marginLeft: 4,
-    color: "#333",
-    letterSpacing: 0.3,
+    fontWeight: "700",
+    fontSize: 17,
+    marginLeft: 8,
+    color: "#1976d2",
+    letterSpacing: 0.2,
+    flex: 1,
   },
   selectedMealTitle: {
     color: "#2196F3",
-    fontSize: 17,
-    fontWeight: "700",
+    fontSize: 18,
+    fontWeight: "800",
   },
   emptyText: {
-    color: "#999",
+    color: "#bbb",
     fontStyle: "italic",
-    marginLeft: 24,
-    marginBottom: 6,
+    marginLeft: 8,
+    marginBottom: 4,
     marginTop: 2,
     fontSize: 14,
+    fontWeight: "500",
   },
   foodRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6,
-    marginLeft: 8,
+    marginBottom: 4,
+    marginLeft: 0,
     gap: 8,
     paddingVertical: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.03)",
+    borderBottomWidth: 0,
+    borderBottomColor: "transparent",
+    minHeight: 28,
   },
   foodName: {
     flex: 1,
-    color: "#444",
+    color: "#222",
     fontSize: 15,
-    fontWeight: "500",
+    fontWeight: "600",
+    letterSpacing: 0.1,
+    marginLeft: 2,
   },
   foodQty: {
-    color: "#666",
+    color: "#1976d2",
     fontSize: 14,
     marginLeft: 8,
-    fontWeight: "500",
-    backgroundColor: "#f0f0f0",
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    fontWeight: "700",
+    backgroundColor: "#e3f2fd",
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+    overflow: "hidden",
+    minWidth: 38,
+    textAlign: "center",
   },
 });
 
