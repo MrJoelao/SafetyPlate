@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Text } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import {Text, TouchableOpacity, Alert, Platform} from "react-native";
 import { StyleSheet, View, SafeAreaView, FlatList, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { DayPlannerContent } from "@/components/ui/planner/DayPlannerContent";
@@ -8,6 +8,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { usePlanner } from "@/hooks/usePlanner"; // Import usePlanner
 import { SelectFoodModal } from "@/components/ui/modals/SelectFoodModal"; // Import SelectFoodModal
 import type { DailyPlan, PlannedMealItem } from "@/types/planner"; // Import tipi necessari
+import * as plannerStorage from "@/utils/plannerStorage"; // Import plannerStorage
 const { width } = Dimensions.get("window");
 
 export default function PlannerScreen() {
@@ -15,44 +16,154 @@ export default function PlannerScreen() {
   const { allFoods, addMealItem } = usePlanner(); // Ottieni dati e funzioni dal hook
   // Stato per il modal di aggiunta alimento
   const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMealType, setSelectedMealType] = useState<keyof DailyPlan>("snack");
+  const [days, setDays] = useState<any[]>([]);
+  const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Funzione per gestire la selezione degli alimenti dal modal
-  const handleSelectFood = (items: PlannedMealItem[]) => {
-    // TODO: Determinare il mealType corretto (es. tramite stato aggiuntivo o logica nel modal)
-    const targetMealType: keyof DailyPlan = "snack"; // Placeholder: aggiunge a snack
-    items.forEach(item => {
-      addMealItem(targetMealType, item);
+  // Funzione per generare i giorni dinamicamente
+  const generateDays = useCallback(async () => {
+    const daysToGenerate = 14; // Genera 14 giorni
+    const generatedDays = [];
+
+    for (let i = 0; i < daysToGenerate; i++) {
+      const date = new Date(currentDate);
+      date.setDate(date.getDate() + i);
+
+      const dateKey = plannerStorage.formatDateKey(date);
+      const dailyPlan = await plannerStorage.getDailyPlan(dateKey) || {
+        breakfast: [],
+        lunch: [],
+        dinner: [],
+        snack: []
+      };
+
+      // Formatta la data in modo leggibile
+      const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'short' };
+      const formattedDate = date.toLocaleDateString('it-IT', options);
+      const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
+
+      // Crea l'oggetto giorno
+      const day = {
+        dateObj: date,
+        dateKey: dateKey,
+        date: capitalizedDate,
+        goals: { kcal: 2000, protein: 120, carbs: 250, fat: 60 }, // Valori predefiniti
+        progress: { kcal: 0, protein: 0, carbs: 0, fat: 0 }, // Calcolare in base ai pasti
+        meals: [
+          { type: "colazione" as const, items: dailyPlan.breakfast?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}` })) || [] },
+          { type: "pranzo" as const, items: dailyPlan.lunch?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}` })) || [] },
+          { type: "cena" as const, items: dailyPlan.dinner?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}` })) || [] },
+          { type: "spuntino" as const, items: dailyPlan.snack?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}` })) || [] },
+        ],
+      };
+
+      generatedDays.push(day);
+    }
+
+    setDays(generatedDays);
+  }, [currentDate]);
+
+  // Carica i giorni all'avvio e quando cambia la data corrente
+  useEffect(() => {
+    generateDays();
+  }, [generateDays]);
+
+  // Funzione per gestire la selezione degli alimenti dal modal con ripetizione
+  const handleSelectFood = (items: PlannedMealItem[], repetition?: { type: string, count: number }) => {
+    // Se non c'è ripetizione, aggiungi solo al giorno corrente
+    if (!repetition) {
+      items.forEach(item => {
+        addMealItem(selectedMealType, item);
+      });
+      setModalVisible(false);
+      generateDays();
+      return;
+    }
+
+    // Altrimenti, ripeti il pasto per i giorni specificati
+    const repeatDays = async () => {
+      // Determina quanti giorni ripetere in base all'opzione
+      let daysToRepeat = repetition.count;
+      if (repetition.type === 'week') {
+        daysToRepeat = repetition.count * 7;
+      } else if (repetition.type === 'month') {
+        daysToRepeat = repetition.count * 30;
+      }
+
+      // Ripeti il pasto per i giorni specificati
+      for (let i = 0; i < daysToRepeat; i++) {
+        const targetDate = new Date(currentDate);
+        targetDate.setDate(targetDate.getDate() + i);
+        const dateKey = plannerStorage.formatDateKey(targetDate);
+
+        // Carica il piano giornaliero esistente
+        const dailyPlan = await plannerStorage.getDailyPlan(dateKey) || {
+          breakfast: [],
+          lunch: [],
+          dinner: [],
+          snack: []
+        };
+
+        // Aggiungi gli elementi del pasto
+        items.forEach(item => {
+          const existingItems = dailyPlan[selectedMealType] || [];
+          const newItems = [...existingItems, item];
+          dailyPlan[selectedMealType] = newItems;
+        });
+
+        // Salva il piano aggiornato
+        await plannerStorage.updateDailyPlan(dateKey, dailyPlan);
+      }
+
+      // Aggiorna i giorni dopo aver aggiunto gli alimenti
+      generateDays();
+    };
+
+    // Esegui la funzione asincrona
+    repeatDays().then(() => {
+      setModalVisible(false);
+      // Mostra un messaggio di conferma
+      Alert.alert(
+        "Pasto aggiunto",
+        `Il pasto è stato aggiunto e ripetuto per ${repetition.count} ${
+          repetition.type === 'day' ? 'giorni' : 
+          repetition.type === 'week' ? 'settimane' : 'mesi'
+        }.`,
+        [{ text: "OK" }]
+      );
     });
-    setModalVisible(false); // Chiudi il modal dopo la selezione
   };
 
+  // Funzione per mappare i tipi di pasto dall'italiano all'inglese
+  const mapMealTypeToStorage = (mealType: string): keyof DailyPlan => {
+    switch(mealType) {
+      case "colazione": return "breakfast";
+      case "pranzo": return "lunch";
+      case "cena": return "dinner";
+      case "spuntino": return "snack";
+      default: return "snack";
+    }
+  };
 
-  // Dati fittizi per testare la nuova UI
-  const days = [
-    {
-      date: "Lunedì 6 Mag",
-      goals: { kcal: 2000, protein: 120, carbs: 250, fat: 60 },
-      progress: { kcal: 1200, protein: 60, carbs: 140, fat: 30 },
-      meals: [
-        { type: "colazione" as const, items: [{ name: "Yogurt", quantity: "150g" }] },
-        { type: "pranzo" as const, items: [{ name: "Pasta", quantity: "80g" }, { name: "Pollo", quantity: "120g" }] },
-        { type: "cena" as const, items: [] },
-        { type: "spuntino" as const, items: [{ name: "Banana", quantity: "1" }] },
-      ],
-    },
-    {
-      date: "Martedì 7 Mag",
-      goals: { kcal: 2000, protein: 120, carbs: 250, fat: 60 },
-      progress: { kcal: 1800, protein: 110, carbs: 210, fat: 55 },
-      meals: [
-        { type: "colazione" as const, items: [{ name: "Pane", quantity: "60g" }] },
-        { type: "pranzo" as const, items: [{ name: "Riso", quantity: "90g" }] },
-        { type: "cena" as const, items: [{ name: "Salmone", quantity: "100g" }] },
-        { type: "spuntino" as const, items: [] },
-      ],
-    },
-    // ...altri giorni
-  ];
+  // Funzione per mappare i tipi di pasto dall'inglese all'italiano
+  const mapMealTypeToUI = (mealType: keyof DailyPlan): string => {
+    switch(mealType) {
+      case "breakfast": return "colazione";
+      case "lunch": return "pranzo";
+      case "dinner": return "cena";
+      case "snack": return "spuntino";
+      default: return "spuntino";
+    }
+  };
+
+  // Funzione per aprire il modal di aggiunta alimento
+  const handleAddFood = (mealType: string) => {
+    // Converti il tipo di pasto dall'italiano all'inglese
+    const storageMealType = mapMealTypeToStorage(mealType);
+    setSelectedMealType(storageMealType);
+    setModalVisible(true);
+  };
+
 
   // Swipe tra giorni con FlatList orizzontale
   return (
@@ -64,33 +175,103 @@ export default function PlannerScreen() {
           icon={<MaterialIcons name="event-note" size={24} color="#000" />}
           onOptionsPress={() => router.push("/settings")}
         />
-        <FlatList
-          data={days}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(_, idx) => idx.toString()}
-          renderItem={({ item }) => (
-            <View style={{ width }}>
-              <DayPlannerContent
-                date={item.date}
-                goals={item.goals}
-                progress={item.progress}
-                meals={item.meals}
-                onAddMeal={() => {}}
-                onAddFood={() => setModalVisible(true)}
-              />
-            </View>
-          )}
-        />
-        {/* Modal Material bottom sheet per aggiunta alimento */}
+
+        {/* Titolo con controlli di navigazione integrati */}
+        <View style={styles.dateNavigationHeader}>
+          <TouchableOpacity 
+            style={styles.navArrow}
+            onPress={() => {
+              const newDate = new Date(currentDate);
+              newDate.setDate(newDate.getDate() - 7);
+              setCurrentDate(newDate);
+            }}
+            accessibilityLabel="Settimana precedente"
+            accessibilityRole="button"
+          >
+            <MaterialIcons name="chevron-left" size={28} color="#2196F3" />
+          </TouchableOpacity>
+
+          <View style={styles.dateHeaderContainer}>
+            <Text style={styles.dateHeaderText}>
+              {new Date(currentDate).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}
+            </Text>
+            <Text style={styles.dateSubheaderText}>
+              Settimana {Math.ceil((currentDate.getDate()) / 7)}
+            </Text>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.navArrow}
+            onPress={() => {
+              const newDate = new Date(currentDate);
+              newDate.setDate(newDate.getDate() + 7);
+              setCurrentDate(newDate);
+            }}
+            accessibilityLabel="Settimana successiva"
+            accessibilityRole="button"
+          >
+            <MaterialIcons name="chevron-right" size={28} color="#2196F3" />
+          </TouchableOpacity>
+        </View>
+
+        {days.length > 0 ? (
+          <FlatList
+            data={days}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(item) => item.dateKey}
+            renderItem={({ item }) => (
+              <View style={{ width }}>
+                <DayPlannerContent
+                  date={item.date}
+                  goals={item.goals}
+                  progress={item.progress}
+                  meals={item.meals}
+                  selectedMealType={selectedMealType}
+                  onAddMeal={(mealType) => handleAddFood(mealType as keyof DailyPlan)}
+                />
+
+              </View>
+            )}
+          />
+        ) : (
+          <View style={styles.loadingContainer}>
+            <Text>Caricamento giorni...</Text>
+          </View>
+        )}
+
+        {/* FAB fisso per aggiungere alimenti con tooltip */}
+        <View style={styles.fabContainer}>
+          {/* Tooltip che mostra il tipo di pasto selezionato */}
+          <View style={styles.fabTooltip}>
+            <Text style={styles.fabTooltipText}>
+              Aggiungi alimento a {mapMealTypeToUI(selectedMealType)}
+            </Text>
+          </View>
+
+          <TouchableOpacity 
+            style={styles.globalFab}
+            onPress={() => {
+              // Use the currently selected meal type
+              setModalVisible(true);
+            }}
+            accessibilityLabel="Aggiungi alimento"
+            accessibilityRole="button"
+          >
+            <MaterialIcons name="restaurant-menu" size={30} color="#fff" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Modal per l'aggiunta di alimenti */}
         <SelectFoodModal
           visible={modalVisible}
-          mealType={null} // Passa null o gestisci la selezione del pasto
-          allFoods={allFoods} // Passa la lista reale degli alimenti
+          mealType={selectedMealType}
+          allFoods={allFoods}
           onClose={() => setModalVisible(false)}
-          onSelect={handleSelectFood} // Passa la funzione di gestione
+          onSelect={handleSelectFood}
         />
+
       </View>
     </SafeAreaView>
   );
@@ -117,5 +298,103 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     paddingHorizontal: 20,
+  },
+  // Stili per l'header di navigazione integrato
+  dateNavigationHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#f8f8f8',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    elevation: 4, // Increased elevation for more depth
+    shadowColor: '#000',
+    shadowOpacity: 0.15, // Increased opacity for more visible shadow
+    shadowRadius: 4, // Increased radius for softer shadow
+    shadowOffset: { width: 0, height: 3 }, // Slightly larger offset
+  },
+  navArrow: {
+    width: 42, // Slightly larger
+    height: 42, // Slightly larger
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 21, // Half of width/height
+    backgroundColor: 'rgba(33, 150, 243, 0.15)', // Slightly more visible background
+    borderWidth: 1, // Add border
+    borderColor: 'rgba(33, 150, 243, 0.2)', // Subtle border
+  },
+  dateHeaderContainer: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 10, // Add some horizontal padding
+  },
+  dateHeaderText: {
+    fontSize: 19, // Slightly larger
+    fontWeight: 'bold',
+    color: '#333',
+    textTransform: 'capitalize',
+    letterSpacing: 0.7, // Increased letter spacing
+    marginBottom: 2, // Add some space between header and subheader
+  },
+  dateSubheaderText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 4,
+    letterSpacing: 0.5, // Increased letter spacing
+    fontWeight: '500', // Slightly bolder
+  },
+  // Stili per il container di caricamento
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  // Stili per il FAB e il tooltip
+  fabContainer: {
+    position: 'absolute',
+    right: 24,
+    bottom: Platform.OS === 'ios' ? 110 : 90, // Significantly increased bottom margin to avoid navigation bar
+    alignItems: 'flex-end',
+    zIndex: 100,
+  },
+  fabTooltip: {
+    backgroundColor: 'rgba(33, 150, 243, 0.9)',
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginBottom: 12,
+    maxWidth: 220,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  fabTooltipText: {
+    color: '#fff',
+    fontSize: 15,
+    textAlign: 'center',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+  globalFab: {
+    backgroundColor: '#2196F3',
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
 });

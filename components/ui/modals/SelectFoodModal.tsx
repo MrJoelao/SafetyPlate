@@ -28,8 +28,8 @@ interface SelectFoodModalProps {
   mealType: keyof DailyPlan | null;
   allFoods: Food[];
   onClose: () => void;
-  // onSelect now needs to handle an array of items
-  onSelect: (items: PlannedMealItem[]) => void;
+  // onSelect now needs to handle an array of items and repetition info
+  onSelect: (items: PlannedMealItem[], repetition?: { type: string, count: number }) => void;
 }
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -46,8 +46,10 @@ export function SelectFoodModal({
 }: SelectFoodModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFoodIds, setSelectedFoodIds] = useState<string[]>([]);
-  const [modalStage, setModalStage] = useState<'selecting' | 'enteringQuantities'>('selecting');
+  const [modalStage, setModalStage] = useState<'selecting' | 'enteringQuantities' | 'settingRepetition'>('selecting');
   const [quantitiesData, setQuantitiesData] = useState<Record<string, { quantity: string; unit: string }>>({});
+  const [repetitionSettings, setRepetitionSettings] = useState<{ type: string, count: number } | null>(null);
+  const [itemsToAdd, setItemsToAdd] = useState<PlannedMealItem[]>([]);
 
   // Filter foods based on search term
   const filteredFoods = useMemo(() => {
@@ -65,16 +67,16 @@ export function SelectFoodModal({
       setSelectedFoodIds([]);
       setModalStage('selecting');
       setQuantitiesData({});
+      setRepetitionSettings(null);
+      setItemsToAdd([]);
     } else {
-      // Partial reset when showing (keep search term maybe?)
-      // setModalStage('selecting'); // Ensure starting at selection
-      // setSelectedFoodIds([]); // Clear selections on reopen
-      // setQuantitiesData({});
-      // Decided to do a full reset on show as well for simplicity
+      // Full reset on show for simplicity
       setSearchTerm('');
       setSelectedFoodIds([]);
       setModalStage('selecting');
       setQuantitiesData({});
+      setRepetitionSettings(null);
+      setItemsToAdd([]);
     }
   }, [visible]);
 
@@ -99,8 +101,8 @@ export function SelectFoodModal({
     setModalStage('enteringQuantities');
   };
 
-  // Handle final confirmation
-  const handleConfirmAdd = () => {
+  // Handle confirmation of quantities and proceed to repetition stage
+  const handleConfirmQuantities = () => {
     const itemsToAdd: PlannedMealItem[] = [];
     let allValid = true;
     for (const foodId in quantitiesData) {
@@ -117,10 +119,25 @@ export function SelectFoodModal({
       alert('Inserisci una quantità valida (> 0) per tutti gli alimenti.');
       return;
     }
+
+    // Store the items to add in state for later use
+    setItemsToAdd(itemsToAdd);
+
+    // Proceed to repetition stage
+    setModalStage('settingRepetition');
+  };
+
+  // Handle final confirmation with repetition
+  const handleFinalConfirm = () => {
     if (itemsToAdd.length > 0) {
-      onSelect(itemsToAdd);
+      onSelect(itemsToAdd, repetitionSettings || undefined);
     }
     onClose();
+  };
+
+  // Handle repetition selection
+  const handleRepetitionSelect = (type: string, count: number) => {
+    setRepetitionSettings({ type, count });
   };
 
   // Update quantity/unit state
@@ -155,15 +172,20 @@ export function SelectFoodModal({
   );
 
   // Determine modal title based on stage
-  const modalTitle = modalStage === 'selecting'
-    ? (mealType ? `Aggiungi a ${capitalize(mealType)}` : 'Seleziona Alimenti')
-    : 'Inserisci Quantità';
+  let modalTitle = '';
+  if (modalStage === 'selecting') {
+    modalTitle = mealType ? `Aggiungi a ${capitalize(mealType)}` : 'Seleziona Alimenti';
+  } else if (modalStage === 'enteringQuantities') {
+    modalTitle = 'Inserisci Quantità';
+  } else {
+    modalTitle = 'Imposta Ripetizione';
+  }
 
-  // Determine footer button properties based on stage (Revised Logic)
+  // Determine footer button properties based on stage
   let footerButtonLabel = 'Aggiungi'; // Default label
   let footerButtonOnPress = () => {}; // Default action
   let isFooterButtonDisabled = true; // Default disabled
-  let footerButtonIcon: keyof typeof MaterialIcons.glyphMap = "add-circle"; // Default icon (Declare outside)
+  let footerButtonIcon: keyof typeof MaterialIcons.glyphMap = "add-circle"; // Default icon
 
   if (modalStage === 'selecting') {
     if (selectedFoodIds.length > 0) {
@@ -178,12 +200,18 @@ export function SelectFoodModal({
       isFooterButtonDisabled = true;
       footerButtonIcon = "add-circle";
     }
-  } else {
-    // Stage 2 (enteringQuantities) -> Show "Salva"
-    footerButtonLabel = 'Salva';
-    footerButtonOnPress = handleConfirmAdd;
+  } else if (modalStage === 'enteringQuantities') {
+    // Stage 2 (enteringQuantities) -> Show "Avanti"
+    footerButtonLabel = 'Avanti';
+    footerButtonOnPress = handleConfirmQuantities;
     // Disable if any quantity is invalid
     isFooterButtonDisabled = Object.values(quantitiesData).some(d => !d.quantity || parseFloat(d.quantity) <= 0 || isNaN(parseFloat(d.quantity)));
+    footerButtonIcon = "arrow-forward";
+  } else {
+    // Stage 3 (settingRepetition) -> Show "Salva"
+    footerButtonLabel = repetitionSettings ? 'Salva' : 'Salta';
+    footerButtonOnPress = handleFinalConfirm;
+    isFooterButtonDisabled = false;
     footerButtonIcon = "save";
   }
 
@@ -227,13 +255,9 @@ export function SelectFoodModal({
                     <Text style={styles.noResultsText}>Nessun alimento trovato.</Text>
                   )}
                 </>
-              ) : (
+              ) : modalStage === 'enteringQuantities' ? (
                 // Stage 2: Entering Quantities
                 <ScrollView style={styles.quantityScrollView}>
-                  {/* Remove textual back button */}
-                  {/* <TouchableOpacity onPress={() => setModalStage('selecting')} style={styles.backButton}>
-                      <Text style={styles.backButtonText}>{"<"} Torna alla Selezione</Text>
-                   </TouchableOpacity> */}
                   {selectedFoodIds.map((id) => {
                     const food = allFoods.find(f => f.id === id);
                     if (!food) return null;
@@ -277,6 +301,92 @@ export function SelectFoodModal({
                     );
                   })}
                 </ScrollView>
+              ) : (
+                // Stage 3: Setting Repetition
+                <ScrollView style={styles.repetitionContainer} contentContainerStyle={styles.repetitionContentContainer}>
+                  <Text style={styles.repetitionTitle}>Vuoi ripetere questo pasto nei giorni successivi?</Text>
+                  <Text style={styles.repetitionSubtitle}>Seleziona per quanti giorni, settimane o mesi vuoi ripetere questo pasto</Text>
+
+                  <View style={styles.repetitionOptionsContainer}>
+                    <TouchableOpacity 
+                      style={[
+                        styles.repetitionOption, 
+                        repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 && styles.repetitionOptionSelected
+                      ]}
+                      onPress={() => handleRepetitionSelect('day', 7)}
+                    >
+                      <MaterialIcons 
+                        name="today" 
+                        size={24} 
+                        color={repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 ? "#fff" : "#1976d2"} 
+                      />
+                      <Text style={[
+                        styles.repetitionOptionText,
+                        repetitionSettings?.type === 'day' && repetitionSettings?.count === 7 && styles.repetitionOptionTextSelected
+                      ]}>7 giorni</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[
+                        styles.repetitionOption, 
+                        repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 && styles.repetitionOptionSelected
+                      ]}
+                      onPress={() => handleRepetitionSelect('day', 14)}
+                    >
+                      <MaterialIcons 
+                        name="date-range" 
+                        size={24} 
+                        color={repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 ? "#fff" : "#1976d2"} 
+                      />
+                      <Text style={[
+                        styles.repetitionOptionText,
+                        repetitionSettings?.type === 'day' && repetitionSettings?.count === 14 && styles.repetitionOptionTextSelected
+                      ]}>14 giorni</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[
+                        styles.repetitionOption, 
+                        repetitionSettings?.type === 'week' && repetitionSettings?.count === 4 && styles.repetitionOptionSelected
+                      ]}
+                      onPress={() => handleRepetitionSelect('week', 4)}
+                    >
+                      <MaterialIcons 
+                        name="view-week" 
+                        size={24} 
+                        color={repetitionSettings?.type === 'week' && repetitionSettings?.count === 4 ? "#fff" : "#1976d2"} 
+                      />
+                      <Text style={[
+                        styles.repetitionOptionText,
+                        repetitionSettings?.type === 'week' && repetitionSettings?.count === 4 && styles.repetitionOptionTextSelected
+                      ]}>4 settimane</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                      style={[
+                        styles.repetitionOption, 
+                        repetitionSettings?.type === 'month' && repetitionSettings?.count === 1 && styles.repetitionOptionSelected
+                      ]}
+                      onPress={() => handleRepetitionSelect('month', 1)}
+                    >
+                      <MaterialIcons 
+                        name="event-note" 
+                        size={24} 
+                        color={repetitionSettings?.type === 'month' && repetitionSettings?.count === 1 ? "#fff" : "#1976d2"} 
+                      />
+                      <Text style={[
+                        styles.repetitionOptionText,
+                        repetitionSettings?.type === 'month' && repetitionSettings?.count === 1 && styles.repetitionOptionTextSelected
+                      ]}>1 mese</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <Text style={styles.repetitionNote}>
+                    {repetitionSettings 
+                      ? "Questo pasto verrà aggiunto automaticamente ai giorni selezionati" 
+                      : "Puoi anche saltare questo passaggio per aggiungere il pasto solo al giorno corrente"}
+                  </Text>
+                </ScrollView>
               )}
             </View>
 
@@ -302,18 +412,18 @@ const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-end', // Position at the bottom of the screen
   },
   keyboardView: {
     flex: 1, // Important for KeyboardAvoidingView
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-end', // Position at the bottom of the screen
   },
   modalContainer: {
     backgroundColor: '#f8f8f8', // Slightly lighter background
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '90%',
-    paddingBottom: Platform.OS === 'ios' ? 30 : 25, // More padding for home indicator on iOS
+    borderTopLeftRadius: 24, // Rounded corners only at the top
+    borderTopRightRadius: 24, // Rounded corners only at the top
+    maxHeight: '90%', // Allow more height for content
+    paddingBottom: Platform.OS === 'ios' ? 40 : 30, // More padding for home indicator on iOS
     overflow: 'hidden',
   },
   contentWrapper: {
@@ -440,5 +550,65 @@ const styles = StyleSheet.create({
   addButton: {
     borderRadius: 30,
     paddingVertical: 14,
+  },
+  // Repetition stage styles
+  repetitionContainer: {
+    flex: 1,
+  },
+  repetitionContentContainer: {
+    padding: 16,
+    paddingBottom: 32, // Extra padding at the bottom for better scrolling
+  },
+  repetitionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  repetitionSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  repetitionOptionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingHorizontal: 8, // Add horizontal padding for better spacing
+  },
+  repetitionOption: {
+    backgroundColor: '#e3f2fd',
+    borderRadius: 12,
+    padding: 12, // Reduced padding for better fit
+    marginBottom: 12, // Reduced margin for better fit
+    width: '48%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#bbdefb',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  repetitionOptionSelected: {
+    backgroundColor: '#1976d2',
+    borderColor: '#1565c0',
+  },
+  repetitionOptionText: {
+    color: '#1976d2',
+    fontWeight: '500',
+    fontSize: 15,
+    marginLeft: 8,
+  },
+  repetitionOptionTextSelected: {
+    color: '#fff',
+  },
+  repetitionNote: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });

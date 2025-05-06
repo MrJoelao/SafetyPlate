@@ -1,6 +1,6 @@
 // DayPlannerContent: contenuti giornalieri integrati senza card, stile Material flat
 import React from "react";
-import { View, StyleSheet, Text } from "react-native";
+import {View, StyleSheet, Text, TouchableOpacity} from "react-native";
 import { MaterialIcons } from "@expo/vector-icons";
 
 export interface DayPlannerContentProps {
@@ -11,8 +11,8 @@ export interface DayPlannerContentProps {
     type: "colazione" | "pranzo" | "cena" | "spuntino";
     items: { name: string; quantity: string }[];
   }[];
+  selectedMealType?: string; // Add selected meal type prop
   onAddMeal: (mealType: string) => void;
-  onAddFood: () => void;
 }
 
 export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
@@ -20,8 +20,8 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
   goals,
   progress,
   meals,
+  selectedMealType,
   onAddMeal,
-  onAddFood,
 }) => {
   return (
     <View style={styles.root}>
@@ -38,43 +38,57 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
       {/* Sezioni pasti integrate */}
       <View style={styles.meals}>
         {meals.map((meal) => (
-          <View key={meal.type} style={styles.mealSection}>
+          <TouchableOpacity 
+            key={meal.type} 
+            style={[
+              styles.mealSection,
+              selectedMealType === meal.type && styles.selectedMealSection
+            ]}
+            onPress={() => onAddMeal(meal.type)}
+            activeOpacity={0.7}
+          >
             <View style={styles.mealHeader}>
-              <MaterialIcons name="restaurant" size={20} color="#888" />
-              <Text style={styles.mealTitle}>{meal.type.charAt(0).toUpperCase() + meal.type.slice(1)}</Text>
+              <MaterialIcons 
+                name="restaurant" 
+                size={20} 
+                color={selectedMealType === meal.type ? "#2196F3" : "#888"} 
+              />
+              <Text 
+                style={[
+                  styles.mealTitle,
+                  selectedMealType === meal.type && styles.selectedMealTitle
+                ]}
+              >
+                {meal.type.charAt(0).toUpperCase() + meal.type.slice(1)}
+              </Text>
               <MaterialIcons
                 name="add-circle-outline"
                 size={22}
-                color="#4CAF50"
+                color={selectedMealType === meal.type ? "#2196F3" : "#4CAF50"}
                 style={{ marginLeft: "auto" }}
-                onPress={() => onAddMeal(meal.type)}
               />
             </View>
             {meal.items.length === 0 ? (
-              <Text style={styles.emptyText}>Nessun alimento</Text>
+              <Text style={styles.emptyText}>
+                {selectedMealType === meal.type 
+                  ? "Clicca sul + in basso per aggiungere alimenti" 
+                  : "Nessun alimento"}
+              </Text>
             ) : (
               meal.items.map((item, idx) => (
                 <View key={idx} style={styles.foodRow}>
-                  <MaterialIcons name="lunch-dining" size={18} color="#aaa" />
+                  <MaterialIcons 
+                    name="lunch-dining" 
+                    size={18} 
+                    color={selectedMealType === meal.type ? "#2196F3" : "#aaa"} 
+                  />
                   <Text style={styles.foodName}>{item.name}</Text>
                   <Text style={styles.foodQty}>{item.quantity}</Text>
                 </View>
               ))
             )}
-          </View>
+          </TouchableOpacity>
         ))}
-      </View>
-      {/* FAB integrato: apertura modal */}
-      <View style={styles.fabContainer}>
-        <MaterialIcons
-          name="add"
-          size={28}
-          color="#fff"
-          style={styles.fab}
-          onPress={onAddFood}
-          accessibilityLabel="Aggiungi alimento"
-          accessibilityRole="button"
-        />
       </View>
     </View>
   );
@@ -128,65 +142,82 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   mealSection: {
-    backgroundColor: "#f3f3f3",
-    borderRadius: 14,
-    marginBottom: 14,
-    padding: 10,
-    elevation: 0,
+    backgroundColor: "#f5f5f5",
+    borderRadius: 16,
+    marginBottom: 16,
+    padding: 14,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
+    position: "relative", // For absolute positioning of children
+  },
+  selectedMealSection: {
+    backgroundColor: "#e3f2fd",
+    borderColor: "#2196F3",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   mealHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 6,
-    gap: 6,
+    marginBottom: 10,
+    gap: 8,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.05)",
   },
   mealTitle: {
-    fontWeight: "bold",
+    fontWeight: "600",
     fontSize: 16,
     marginLeft: 4,
     color: "#333",
+    letterSpacing: 0.3,
+  },
+  selectedMealTitle: {
+    color: "#2196F3",
+    fontSize: 17,
+    fontWeight: "700",
   },
   emptyText: {
-    color: "#aaa",
+    color: "#999",
     fontStyle: "italic",
     marginLeft: 24,
-    marginBottom: 4,
+    marginBottom: 6,
+    marginTop: 2,
+    fontSize: 14,
   },
   foodRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 2,
+    marginBottom: 6,
     marginLeft: 8,
-    gap: 6,
+    gap: 8,
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.03)",
   },
   foodName: {
     flex: 1,
     color: "#444",
     fontSize: 15,
+    fontWeight: "500",
   },
   foodQty: {
-    color: "#888",
+    color: "#666",
     fontSize: 14,
     marginLeft: 8,
-  },
-  fabContainer: {
-    position: "absolute",
-    right: 24,
-    bottom: 24,
-    backgroundColor: "#2196F3",
-    borderRadius: 28,
-    width: 56,
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-    elevation: 6,
-    shadowColor: "#000",
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  fab: {
-    alignSelf: "center",
+    fontWeight: "500",
+    backgroundColor: "#f0f0f0",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
 });
 
