@@ -103,48 +103,27 @@ export const DayPlannerContent: React.FC<DayPlannerContentProps> = ({
                 <Text style={styles.emptyText}>
                   Nessun alimento aggiunto
                 </Text>
+              ) : meal.items.length > 4 ? (
+                // Se troppi alimenti, mostra solo il conteggio
+                <View style={styles.foodListIntegrated}>
+                  <Text style={styles.foodCountText}>
+                    {meal.items.length} alimenti aggiunti
+                  </Text>
+                </View>
               ) : (
-                <View style={styles.foodList}>
+                <View style={styles.foodListIntegrated}>
                   {meal.items.map((item, idx) => (
-                    <View key={idx} style={styles.foodItem}>
-                      <View style={styles.foodItemMain}>
-                        <MaterialIcons 
-                          name="lunch-dining" 
-                          size={20} 
-                          color={"#1976d2"} 
-                        />
-                        <Text style={styles.foodName}>{item.name}</Text>
-                        <Text style={styles.foodQty}>{item.quantity}</Text>
-                      </View>
-                      
-                      {/* Pulsanti per modificare ed eliminare */}
-                      <View style={styles.foodItemActions}>
-                        {onEditItem && (
-                          <TouchableOpacity 
-                            style={styles.actionButton}
-                            onPress={(e) => {
-                              e.stopPropagation(); // Prevent triggering the parent TouchableOpacity
-                              onEditItem(meal.type, item.id || '');
-                            }}
-                            accessibilityLabel={`Modifica ${item.name}`}
-                          >
-                            <MaterialIcons name="edit" size={22} color="#4CAF50" />
-                          </TouchableOpacity>
-                        )}
-                        
-                        {onDeleteItem && (
-                          <TouchableOpacity 
-                            style={styles.actionButton}
-                            onPress={(e) => {
-                              e.stopPropagation(); // Prevent triggering the parent TouchableOpacity
-                              handleDeleteItem(meal.type, item.id || '');
-                            }}
-                            accessibilityLabel={`Elimina ${item.name}`}
-                          >
-                            <MaterialIcons name="delete" size={22} color="#F44336" />
-                          </TouchableOpacity>
-                        )}
-                      </View>
+                    <View key={idx} style={styles.foodRowIntegrated}>
+                      <MaterialIcons
+                        name="lunch-dining"
+                        size={16}
+                        color="#90caf9"
+                        style={{ marginRight: 4 }}
+                      />
+                      <Text style={styles.foodNameIntegrated} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Text style={styles.foodQtyIntegrated}>{item.quantity}</Text>
                     </View>
                   ))}
                 </View>
@@ -251,60 +230,48 @@ const styles = StyleSheet.create({
     textAlign: "center",
     paddingVertical: 12,
   },
-  foodList: {
-    gap: 8,
-  },
-  foodItem: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 12,
+  foodListIntegrated: {
     flexDirection: "column",
-    borderWidth: 1,
-    borderColor: "rgba(25, 118, 210, 0.1)",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    gap: 2,
+    marginTop: 2,
   },
-  foodItemMain: {
+  foodRowIntegrated: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginBottom: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 0,
+    borderRadius: 6,
+    marginBottom: 0,
+    backgroundColor: "transparent",
+    // Nessun bordo, nessuna ombra: integrato nella card
   },
-  foodName: {
+  foodNameIntegrated: {
     flex: 1,
     color: "#222",
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "500",
     letterSpacing: 0.1,
+    marginLeft: 2,
   },
-  foodQty: {
+  foodQtyIntegrated: {
     color: "#1976d2",
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "700",
     backgroundColor: "#e3f2fd",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
     overflow: "hidden",
-    minWidth: 38,
+    minWidth: 28,
     textAlign: "center",
+    marginLeft: 6,
   },
-  foodItemActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 12,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.05)",
-    paddingTop: 8,
-    marginTop: 4,
-  },
-  actionButton: {
-    padding: 8,
-    borderRadius: 12,
-    backgroundColor: "rgba(0,0,0,0.03)",
+  foodCountText: {
+    color: "#1976d2",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    paddingVertical: 6,
   },
   addButton: {
     flexDirection: "row",
