@@ -225,6 +225,11 @@ const styles = StyleSheet.create({
   },
   selectedCircle: {
     backgroundColor: "#4CAF50",
+    borderRadius: 999, // Forza il cerchio anche se la View cresce
+    width: Math.min(32, DATE_ITEM_WIDTH - 8),
+    height: Math.min(32, DATE_ITEM_WIDTH - 8),
+    justifyContent: "center",
+    alignItems: "center",
   },
   selectedText: {
     color: "#fff",
