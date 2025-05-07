@@ -55,10 +55,38 @@ export default function PlannerScreen() {
         goals: { kcal: 2000, protein: 120, carbs: 250, fat: 60 }, // Valori predefiniti
         progress: { kcal: 0, protein: 0, carbs: 0, fat: 0 }, // Calcolare in base ai pasti
         meals: [
-          { type: "colazione" as const, items: dailyPlan.breakfast?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}`, id: item.foodId })) || [] },
-          { type: "pranzo" as const, items: dailyPlan.lunch?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}`, id: item.foodId })) || [] },
-          { type: "cena" as const, items: dailyPlan.dinner?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}`, id: item.foodId })) || [] },
-          { type: "spuntino" as const, items: dailyPlan.snack?.map(item => ({ name: item.foodId, quantity: `${item.quantity}${item.unit}`, id: item.foodId })) || [] },
+          { type: "colazione" as const, items: dailyPlan.breakfast?.map(item => {
+            const food = allFoods.find(f => f.id === item.foodId);
+            return {
+              name: food ? food.name : item.foodId,
+              quantity: `${item.quantity}${item.unit}`,
+              id: item.foodId
+            };
+          }) || [] },
+          { type: "pranzo" as const, items: dailyPlan.lunch?.map(item => {
+            const food = allFoods.find(f => f.id === item.foodId);
+            return {
+              name: food ? food.name : item.foodId,
+              quantity: `${item.quantity}${item.unit}`,
+              id: item.foodId
+            };
+          }) || [] },
+          { type: "cena" as const, items: dailyPlan.dinner?.map(item => {
+            const food = allFoods.find(f => f.id === item.foodId);
+            return {
+              name: food ? food.name : item.foodId,
+              quantity: `${item.quantity}${item.unit}`,
+              id: item.foodId
+            };
+          }) || [] },
+          { type: "spuntino" as const, items: dailyPlan.snack?.map(item => {
+            const food = allFoods.find(f => f.id === item.foodId);
+            return {
+              name: food ? food.name : item.foodId,
+              quantity: `${item.quantity}${item.unit}`,
+              id: item.foodId
+            };
+          }) || [] },
         ],
       };
 
@@ -66,7 +94,7 @@ export default function PlannerScreen() {
     }
 
     setDays(generatedDays);
-  }, [currentDate]);
+  }, [currentDate, allFoods]);
 
   // Carica i giorni all'avvio e quando cambia la data corrente
   useEffect(() => {
@@ -169,7 +197,7 @@ export default function PlannerScreen() {
     setSelectedMealTypeUI(mealType);
     setModalVisible(true);
   };
-  
+
   // Funzione per gestire il click su una sezione pasto
   const handleMealPress = (mealType: string) => {
     // Trova gli elementi del pasto selezionato nel giorno attivo
@@ -306,7 +334,7 @@ export default function PlannerScreen() {
           onClose={() => setModalVisible(false)}
           onSelect={handleSelectFood}
         />
-        
+
         {/* Modal per i dettagli del pasto */}
         <MealDetailModal
           visible={mealDetailModalVisible}
