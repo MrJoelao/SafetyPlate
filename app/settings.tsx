@@ -139,7 +139,7 @@ export default function SettingsScreen() {
               title="Informazioni Utente"
               description="Modifica i tuoi dati"
               left={(props) => <List.Icon {...props} icon="account-circle-outline" />}
-              onPress={() => console.log("Naviga a Profilo")} // Azione segnaposto
+              onPress={() => router.push("/(settings)/user-info")}
             />
           </List.Section>
           <Divider />
@@ -158,11 +158,6 @@ export default function SettingsScreen() {
               left={(props) => <List.Icon {...props} icon="food-apple-outline" />}
               onPress={() => router.push("/(settings)/manage-food")}
             />
-          </List.Section>
-          <Divider />
-
-          {/* Sezione Modalità Presentazione */}
-          <List.Section title="Modalità Presentazione">
             <List.Item
               title="Modalità Presentazione"
               description="Popola l'app con dati di esempio"
@@ -191,7 +186,7 @@ export default function SettingsScreen() {
               title="Tema"
               description="Scegli tema chiaro o scuro"
               left={(props) => <List.Icon {...props} icon="theme-light-dark" />}
-              onPress={() => console.log("Apri selezione Tema")} // Azione segnaposto
+              onPress={() => router.push("/(settings)/theme")}
             />
           </List.Section>
           <Divider />
