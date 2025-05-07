@@ -1,56 +1,33 @@
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * Hook to get colors based on the current theme
+ * Uses the AppContext for theme management
  */
 
-import { useColorScheme } from 'react-native';
-import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
+import { useColorScheme as useDeviceColorScheme } from 'react-native';
 import { Colors } from '@/constants/Colors';
-
-// Theme storage key (must match the one in theme.tsx)
-const THEME_STORAGE_KEY = "app_theme";
+import { useAppContext } from '@/store/context';
 
 export function useThemeColor(
   props: { light?: string; dark?: string },
   colorName: keyof typeof Colors.light & keyof typeof Colors.dark
 ) {
-  const systemTheme = useColorScheme() ?? 'light';
-  const [appTheme, setAppTheme] = useState<'light' | 'dark' | 'system'>('light');
-  const [isLoading, setIsLoading] = useState(true);
+  const { state: appState } = useAppContext();
+  const deviceTheme = useDeviceColorScheme() ?? 'light';
 
-  // Load saved theme on hook mount
-  useEffect(() => {
-    const loadTheme = async () => {
-      try {
-        const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
-        if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system')) {
-          setAppTheme(savedTheme as 'light' | 'dark' | 'system');
-        }
-      } catch (error) {
-        console.error("Error loading theme:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadTheme();
-  }, []);
-
-  // Determine the actual theme to use
+  // Determine the actual theme to use based on app settings
   let theme: 'light' | 'dark';
-  if (appTheme === 'system') {
-    theme = systemTheme as 'light' | 'dark';
+  if (appState.theme === 'system') {
+    theme = deviceTheme as 'light' | 'dark';
   } else {
-    theme = appTheme as 'light' | 'dark';
+    theme = appState.theme as 'light' | 'dark';
   }
 
+  // First check if the color is provided in props
   const colorFromProps = props[theme];
-
   if (colorFromProps) {
     return colorFromProps;
-  } else {
-    return Colors[theme][colorName];
-  }
+  } 
+
+  // Otherwise use the color from the theme
+  return Colors[theme][colorName];
 }

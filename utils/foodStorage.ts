@@ -1,194 +1,108 @@
-import AsyncStorage from "@react-native-async-storage/async-storage"
+/**
+ * @deprecated This module is maintained for backward compatibility.
+ * New code should use the FoodStorage class from @/store/data/FoodStorage.ts directly.
+ */
 import type { Food } from "@/types/food"
 import type { ParseResult, StorageResult } from "@/types/storage"
+import { toLegacyResult } from "@/types/storage"
+import { foodStorage } from "@/store/data/FoodStorage"
 
+// Keep the constant for reference, but we're using the FoodStorage class internally
 const FOODS_STORAGE_KEY = "@safetyplate_foods"
 
+/**
+ * Parse food data from text
+ * @deprecated Use foodStorage.parseFoodFromText instead
+ */
 export const parseFoodFromText = (content: string): ParseResult => {
-  try {
-    console.log("Parsing content:", content)
+  console.log("Using deprecated parseFoodFromText, consider migrating to foodStorage.parseFoodFromText")
 
-    if (!content || typeof content !== "string") {
-      return {
-        success: false,
-        error: "Il contenuto del file non è valido",
-      }
-    }
-
-    const foods = content
-      .split("\n")
-      .map((line) => {
-        const trimmedLine = line.trim()
-        if (trimmedLine.length === 0) {
-          console.log("Saltando linea vuota")
-          return null
-        }
-
-        const parts = trimmedLine.split(" ")
-        if (parts.length !== 2) {
-          console.log("Invalid line format (wrong number of parts):", trimmedLine)
-          return null
-        }
-
-        const [name, scoreStr] = parts
-        const score = Number.parseInt(scoreStr, 10)
-
-        if (!name || isNaN(score)) {
-          console.log("Invalid line format:", trimmedLine)
-          return null
-        }
-
-        const food = {
-          id: Date.now() + Math.random().toString(36).substr(2, 9),
-          name: name.replace(/_/g, " "),
-          score,
-          defaultUnit: "g",
-        }
-        console.log("Parsed food:", food)
-        return food
-      })
-      .filter((food): food is Food => food !== null)
-
-    if (foods.length === 0) {
-      return {
-        success: false,
-        error: "Nessun alimento valido trovato nel file",
-      }
-    }
-
-    console.log("Total foods parsed:", foods.length)
-    return { success: true, foods }
-  } catch (error) {
-    console.error("Error parsing food text:", error)
-    return {
-      success: false,
-      error: "Errore durante la lettura del file",
-    }
-  }
+  // Delegate to the new implementation and convert the result to the old format
+  return toLegacyResult(foodStorage.parseFoodFromText(content)) as ParseResult;
 }
 
+/**
+ * Save foods to storage
+ * @deprecated Use foodStorage.saveFoods instead
+ */
 export const saveFoods = async (foods: Food[]): Promise<StorageResult> => {
-  try {
-    if (!Array.isArray(foods)) {
-      return {
-        success: false,
-        error: "Formato dati non valido",
-      }
-    }
+  console.log("Using deprecated saveFoods, consider migrating to foodStorage.saveFoods")
 
-    const jsonData = JSON.stringify(foods, null, 2)
-    console.log("Saving foods to AsyncStorage:", jsonData)
-    await AsyncStorage.setItem(FOODS_STORAGE_KEY, jsonData)
-    console.log("Foods saved successfully")
-
-    return {
-      success: true,
-      foods,
-    }
-  } catch (error) {
-    console.error("Error saving foods:", error)
+  if (!Array.isArray(foods)) {
     return {
       success: false,
-      error: "Errore durante il salvataggio degli alimenti",
+      error: "Formato dati non valido",
     }
   }
+
+  // Delegate to the new implementation and convert the result to the old format
+  return toLegacyResult(await foodStorage.saveFoods(foods));
 }
 
+/**
+ * Add a food item to storage
+ * @deprecated Use foodStorage.addFood instead
+ */
 export const addFood = async (food: Food): Promise<StorageResult> => {
-  try {
-    const result = await loadFoods()
-    if (!result.success) {
-      return result
-    }
+  console.log("Using deprecated addFood, consider migrating to foodStorage.addFood")
 
-    const foods = result.foods || []
-    const updatedFoods = [...foods, food]
-    return saveFoods(updatedFoods)
-  } catch (error) {
-    console.error("Error adding food:", error)
-    return {
-      success: false,
-      error: "Errore durante l'aggiunta dell'alimento",
-    }
-  }
+  // Delegate to the new implementation
+  const result = await foodStorage.addFood(food)
+
+  // If successful, load all foods to return in the response
+  if (result.success) {
+    return toLegacyResult(await foodStorage.loadFoods());
+  } 
+
+  // If failed, return the error
+  return toLegacyResult(result);
 }
 
+/**
+ * Update a food item in storage
+ * @deprecated Use foodStorage.updateFood instead
+ */
 export const updateFood = async (updatedFood: Food): Promise<StorageResult> => {
-  try {
-    const result = await loadFoods()
-    if (!result.success) {
-      return result
-    }
+  console.log("Using deprecated updateFood, consider migrating to foodStorage.updateFood")
 
-    const foods = result.foods || []
-    const foodIndex = foods.findIndex((f) => f.id === updatedFood.id)
+  // Delegate to the new implementation
+  const result = await foodStorage.updateFood(updatedFood)
 
-    if (foodIndex === -1) {
-      return {
-        success: false,
-        error: "Alimento non trovato",
-      }
-    }
+  // If successful, load all foods to return in the response
+  if (result.success) {
+    return toLegacyResult(await foodStorage.loadFoods());
+  } 
 
-    const updatedFoods = [...foods]
-    updatedFoods[foodIndex] = updatedFood
-    return saveFoods(updatedFoods)
-  } catch (error) {
-    console.error("Error updating food:", error)
-    return {
-      success: false,
-      error: "Errore durante l'aggiornamento dell'alimento",
-    }
-  }
+  // If failed, return the error
+  return toLegacyResult(result);
 }
 
+/**
+ * Delete a food item from storage
+ * @deprecated Use foodStorage.deleteFood instead
+ */
 export const deleteFood = async (foodId: string): Promise<StorageResult> => {
-  try {
-    const result = await loadFoods()
-    if (!result.success) {
-      return result
-    }
+  console.log("Using deprecated deleteFood, consider migrating to foodStorage.deleteFood")
 
-    const foods = result.foods || []
-    const updatedFoods = foods.filter((f) => f.id !== foodId)
-    return saveFoods(updatedFoods)
-  } catch (error) {
-    console.error("Error deleting food:", error)
-    return {
-      success: false,
-      error: "Errore durante l'eliminazione dell'alimento",
-    }
-  }
+  // Delegate to the new implementation
+  const result = await foodStorage.deleteFood(foodId)
+
+  // If successful, load all foods to return in the response
+  if (result.success) {
+    return toLegacyResult(await foodStorage.loadFoods());
+  } 
+
+  // If failed, return the error
+  return toLegacyResult(result);
 }
 
+/**
+ * Load all foods from storage
+ * @deprecated Use foodStorage.loadFoods instead
+ */
 export const loadFoods = async (): Promise<StorageResult> => {
-  try {
-    console.log("Loading foods from AsyncStorage")
-    const storedFoods = await AsyncStorage.getItem(FOODS_STORAGE_KEY)
-    if (storedFoods) {
-      try {
-        const foods = JSON.parse(storedFoods)
-        if (!Array.isArray(foods)) {
-          throw new Error("Stored data is not an array")
-        }
-        console.log("Loaded foods:", JSON.stringify(foods, null, 2))
-        return { success: true, foods }
-      } catch (parseError) {
-        console.error("Error parsing stored foods:", parseError)
-        return {
-          success: false,
-          error: "Errore nel formato dei dati salvati",
-        }
-      }
-    }
-    console.log("No foods found in storage")
-    return { success: true, foods: [] }
-  } catch (error) {
-    console.error("Error loading foods:", error)
-    return {
-      success: false,
-      error: "Errore durante il caricamento degli alimenti",
-    }
-  }
-}
+  console.log("Using deprecated loadFoods, consider migrating to foodStorage.loadFoods")
 
+  // Delegate to the new implementation and convert the result to the old format
+  return toLegacyResult(await foodStorage.loadFoods());
+}
