@@ -25,9 +25,10 @@ const timeSlots: TimeSlot[] = Array.from({ length: 24 }, (_, i) => ({
 interface TimeSlotsProps {
   textColor?: string
   onSlotPress?: (time: string) => void
+  activities?: TimeSlot[]
 }
 
-export const TimeSlots: React.FC<TimeSlotsProps> = ({ textColor = "#000", onSlotPress }) => {
+export const TimeSlots: React.FC<TimeSlotsProps> = ({ textColor = "#000", onSlotPress, activities }) => {
   const mockActivities: TimeSlot[] = [
     {
       time: "08:00",
@@ -92,7 +93,7 @@ export const TimeSlots: React.FC<TimeSlotsProps> = ({ textColor = "#000", onSlot
           </View>
 
           <View style={styles.contentContainer}>
-            {mockActivities.find((a) => a.time === slot.time)?.activities?.map(renderActivity)}
+            {(activities || mockActivities).find((a) => a.time === slot.time)?.activities?.map(renderActivity)}
           </View>
         </Pressable>
       ))}
