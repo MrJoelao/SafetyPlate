@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { DailyPlan, PlannedMealItem, PlannerData } from '@/types/planner';
 import { Food } from '@/types/food'; // Assuming food types are needed later
 import * as plannerStorage from '@/utils/plannerStorage';
-import * as foodStorage from '@/utils/foodStorage'; // To potentially fetch food details
+import { foodStorage } from '@/store/data/FoodStorage'; // To potentially fetch food details
 
 /**
  * Custom hook to manage the state and logic for the meal planner.
@@ -35,8 +35,8 @@ export const usePlanner = (initialDate: Date = new Date()) => {
 
       setCurrentPlan(plan); // Set plan regardless of food loading outcome initially
 
-      if (foodsResult.success && foodsResult.foods) {
-        setAllFoods(foodsResult.foods);
+      if (foodsResult.success && foodsResult.data) {
+        setAllFoods(foodsResult.data);
       } else {
         console.error("Failed to load foods:", foodsResult.error);
         setError(foodsResult.error || "Impossibile caricare l'elenco degli alimenti.");

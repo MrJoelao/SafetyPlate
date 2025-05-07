@@ -7,10 +7,8 @@ import { OnboardingGuard } from '@/components/ui/navigation/NavigationGuard'
 export default function TabLayout() {
   const { state: appState } = useAppContext()
 
-  // Determine color scheme from app state
-  const colorScheme = appState.theme === 'system' 
-    ? (Appearance.getColorScheme() || 'light') 
-    : appState.theme
+  // Always use the theme from app state, regardless of device theme
+  const colorScheme = appState.theme
 
   return (
     <OnboardingGuard>

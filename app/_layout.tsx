@@ -22,10 +22,8 @@ function AppLayout() {
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   })
 
-  // Determine color scheme from app state
-  const colorScheme = appState.theme === 'system' 
-    ? (Appearance.getColorScheme() || 'light') 
-    : appState.theme;
+  // Always use the theme from app state, regardless of device theme
+  const colorScheme = appState.theme;
 
   useEffect(() => {
     if (loaded) {

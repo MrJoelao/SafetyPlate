@@ -14,7 +14,7 @@ import { ThemedText } from "@/components/common/ThemedText"
 import { MaterialIcons, Feather } from "@expo/vector-icons"
 import * as DocumentPicker from "expo-document-picker"
 import * as FileSystem from "expo-file-system"
-import { parseFoodFromText, saveFoods } from "@/utils/foodStorage"
+import { foodStorage } from "@/store/data/FoodStorage"
 import type { Food } from "@/types/food"
 
 interface FoodImportViewProps {
@@ -105,7 +105,7 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
   }
 
   const processContent = (content: string) => {
-    const parseResult = parseFoodFromText(content)
+    const parseResult = foodStorage.parseFoodFromText(content)
 
     if (!parseResult.success) {
       Alert.alert("Errore", parseResult.error || "Errore nell'analisi del contenuto")
@@ -114,14 +114,14 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
       return
     }
 
-    if (parseResult.foods && parseResult.foods.length === 0) {
+    if (parseResult.data && parseResult.data.length === 0) {
       Alert.alert("Attenzione", "Nessun alimento trovato nel contenuto")
       setFileName(null)
       shakeElement()
       return
     }
 
-    setPreviewFoods(parseResult.foods || [])
+    setPreviewFoods(parseResult.data || [])
   }
 
   const handleSave = async () => {
@@ -132,7 +132,7 @@ export function FoodImportView({ onSuccess }: FoodImportViewProps) {
 
     try {
       setIsLoading(true)
-      const result = await saveFoods(previewFoods)
+      const result = await foodStorage.saveFoods(previewFoods)
       if (result.success) {
         setImportedFoods(previewFoods)
         setImportComplete(true)
@@ -518,4 +518,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 })
-

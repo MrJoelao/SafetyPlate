@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Food } from '@/types/food';
 import { DailyPlan, PlannedMealItem } from '@/types/planner';
 import * as plannerStorage from '@/utils/plannerStorage';
-import * as foodStorage from '@/utils/foodStorage';
+import { foodStorage } from '@/store/data/FoodStorage';
 
 // Define types for dashboard data
 export interface DashboardData {
@@ -70,9 +70,9 @@ export const useDashboard = () => {
   const loadAllFoods = useCallback(async () => {
     try {
       const result = await foodStorage.loadFoods();
-      if (result.success && result.foods) {
-        setAllFoods(result.foods);
-        return result.foods;
+      if (result.success && result.data) {
+        setAllFoods(result.data);
+        return result.data;
       }
       return [];
     } catch (err) {
@@ -88,7 +88,7 @@ export const useDashboard = () => {
 
     // Calculate based on quantity and unit
     const multiplier = item.unit === 'g' ? item.quantity / 100 : item.quantity;
-    
+
     return {
       calories: (food.nutritionPer100g.calories || 0) * multiplier,
       proteins: (food.nutritionPer100g.proteins || 0) * multiplier,
@@ -107,17 +107,17 @@ export const useDashboard = () => {
   // Calculate daily score based on nutritional balance
   const calculateDailyScore = useCallback((calories: number, proteins: number, carbs: number, fats: number) => {
     if (calories === 0) return 0;
-    
+
     // Calculate how close we are to targets (as percentages)
     const calorieScore = Math.min(100, (calories / DEFAULT_TARGETS.calories) * 100);
     const proteinScore = Math.min(100, (proteins / DEFAULT_TARGETS.proteins) * 100);
     const carbScore = Math.min(100, (carbs / DEFAULT_TARGETS.carbs) * 100);
     const fatScore = Math.min(100, (fats / DEFAULT_TARGETS.fats) * 100);
-    
+
     // Penalize for being too far over target
     const calorieOverage = calories > DEFAULT_TARGETS.calories * 1.2 ? 
       (calories - DEFAULT_TARGETS.calories * 1.2) / (DEFAULT_TARGETS.calories * 0.2) * 20 : 0;
-    
+
     // Calculate final score (weighted average with penalties)
     const rawScore = (calorieScore * 0.4 + proteinScore * 0.3 + carbScore * 0.15 + fatScore * 0.15) - calorieOverage;
     return Math.max(0, Math.min(100, Math.round(rawScore)));
@@ -127,15 +127,15 @@ export const useDashboard = () => {
   const loadDashboardData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // Load all foods first
       const foods = await loadAllFoods();
-      
+
       // Get today's date key
       const today = new Date();
       const todayKey = plannerStorage.formatDateKey(today);
-      
+
       // Load today's plan
       const todayPlan = await plannerStorage.getDailyPlan(todayKey) || {
         breakfast: [],
@@ -143,21 +143,21 @@ export const useDashboard = () => {
         dinner: [],
         snack: []
       };
-      
+
       // Calculate nutritional totals for today
       let totalCalories = 0;
       let totalProteins = 0;
       let totalCarbs = 0;
       let totalFats = 0;
-      
+
       // Calculate meal-specific totals and statuses
       const dailyMeals = [];
-      
+
       for (const [mealType, items] of Object.entries(todayPlan)) {
         if (!items) continue;
-        
+
         let mealCalories = 0;
-        
+
         for (const item of items) {
           const nutrition = calculateNutrition(item, foods);
           totalCalories += nutrition.calories;
@@ -166,7 +166,7 @@ export const useDashboard = () => {
           totalFats += nutrition.fats;
           mealCalories += nutrition.calories;
         }
-        
+
         dailyMeals.push({
           id: mealType,
           name: mealTypeToName[mealType] || 'Altro',
@@ -175,14 +175,14 @@ export const useDashboard = () => {
           iconName: mealTypeToIcon[mealType] || 'food',
         });
       }
-      
+
       // Calculate daily score
       const dailyScore = calculateDailyScore(totalCalories, totalProteins, totalCarbs, totalFats);
-      
+
       // Load past week's data for weekly trend
       const weeklyScores = [];
       const dayNames = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
-      
+
       for (let i = 6; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
@@ -193,16 +193,16 @@ export const useDashboard = () => {
           dinner: [],
           snack: []
         };
-        
+
         // Calculate nutritional totals for this day
         let dayCalories = 0;
         let dayProteins = 0;
         let dayCarbs = 0;
         let dayFats = 0;
-        
+
         for (const items of Object.values(dayPlan)) {
           if (!items) continue;
-          
+
           for (const item of items) {
             const nutrition = calculateNutrition(item, foods);
             dayCalories += nutrition.calories;
@@ -211,16 +211,16 @@ export const useDashboard = () => {
             dayFats += nutrition.fats;
           }
         }
-        
+
         // Calculate score for this day
         const dayScore = calculateDailyScore(dayCalories, dayProteins, dayCarbs, dayFats);
-        
+
         weeklyScores.push({
           day: dayNames[date.getDay()],
           score: dayScore
         });
       }
-      
+
       // Update dashboard data
       setDashboardData({
         dailyScore,
@@ -245,7 +245,7 @@ export const useDashboard = () => {
         weeklyScores,
         dailyMeals
       });
-      
+
     } catch (err) {
       console.error('Error loading dashboard data:', err);
       setError('Impossibile caricare i dati della dashboard');
@@ -253,17 +253,17 @@ export const useDashboard = () => {
       setIsLoading(false);
     }
   }, [loadAllFoods, calculateNutrition, calculateDailyScore]);
-  
+
   // Load data on mount
   useEffect(() => {
     loadDashboardData();
-    
+
     // Set up a refresh interval (optional)
     const intervalId = setInterval(loadDashboardData, 60000); // Refresh every minute
-    
+
     return () => clearInterval(intervalId);
   }, [loadDashboardData]);
-  
+
   return {
     dashboardData,
     isLoading,

@@ -15,7 +15,6 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { ModalHeader } from '@/components/ui/common/ModalHeader';
 import { Food } from '@/types/food';
 import { DailyPlan, PlannedMealItem } from '@/types/planner';
-import * as foodStorage from '@/utils/foodStorage';
 
 interface MealDetailModalProps {
   visible: boolean;
@@ -64,14 +63,14 @@ export function MealDetailModal({
         if (item.id) {
           // Cerca prima nell'array allFoods
           const foodFromArray = allFoods.find(f => f.id === item.id);
-          
+
           if (foodFromArray) {
             details[item.id] = foodFromArray;
-            
+
             // Estrai la quantità numerica dalla stringa (es. "100g" -> 100)
             const quantityMatch = item.quantity.match(/^([\d.]+)/);
             const quantity = quantityMatch ? parseFloat(quantityMatch[1]) : 0;
-            
+
             // Calcola i valori nutrizionali in base alla quantità
             totalCals += (foodFromArray.calories || 0) * quantity / 100;
             totalProtein += (foodFromArray.protein || 0) * quantity / 100;
@@ -130,7 +129,7 @@ export function MealDetailModal({
   // Renderizza un elemento della lista
   const renderFoodItem = ({ item }: { item: { name: string; quantity: string; id?: string } }) => {
     const foodDetail = item.id ? foodDetails[item.id] : null;
-    
+
     return (
       <View style={styles.foodItem}>
         <View style={styles.foodItemHeader}>
@@ -141,7 +140,7 @@ export function MealDetailModal({
               {item.quantity}
             </Text>
           </View>
-          
+
           <View style={styles.foodItemActions}>
             <TouchableOpacity 
               style={styles.actionButton}
@@ -149,7 +148,7 @@ export function MealDetailModal({
             >
               <MaterialIcons name="edit" size={22} color="#4CAF50" />
             </TouchableOpacity>
-            
+
             <TouchableOpacity 
               style={styles.actionButton}
               onPress={() => handleDeleteItem(item.id || '')}
@@ -158,7 +157,7 @@ export function MealDetailModal({
             </TouchableOpacity>
           </View>
         </View>
-        
+
         {foodDetail && (
           <View style={styles.nutritionInfo}>
             <View style={styles.nutritionItem}>
@@ -167,21 +166,21 @@ export function MealDetailModal({
                 {Math.round((foodDetail.calories || 0) * parseFloat(item.quantity) / 100)} kcal
               </Text>
             </View>
-            
+
             <View style={styles.nutritionItem}>
               <Text style={styles.nutritionLabel}>Proteine</Text>
               <Text style={styles.nutritionValue}>
                 {Math.round((foodDetail.protein || 0) * parseFloat(item.quantity) / 100)}g
               </Text>
             </View>
-            
+
             <View style={styles.nutritionItem}>
               <Text style={styles.nutritionLabel}>Carboidrati</Text>
               <Text style={styles.nutritionValue}>
                 {Math.round((foodDetail.carbs || 0) * parseFloat(item.quantity) / 100)}g
               </Text>
             </View>
-            
+
             <View style={styles.nutritionItem}>
               <Text style={styles.nutritionLabel}>Grassi</Text>
               <Text style={styles.nutritionValue}>
@@ -205,7 +204,7 @@ export function MealDetailModal({
       <BlurView intensity={20} style={styles.backdrop}>
         <View style={styles.modalContainer}>
           <View style={styles.modalHandle} />
-          
+
           <ModalHeader
             title={`${mealType.charAt(0).toUpperCase() + mealType.slice(1)} - ${date}`}
             onClose={onClose}
@@ -214,30 +213,30 @@ export function MealDetailModal({
               color: getMealColor(),
             }}
           />
-          
+
           {/* Riepilogo nutrizionale */}
           <View style={[styles.summaryCard, { borderColor: `${getMealColor()}40` }]}>
             <Text style={styles.summaryTitle}>Riepilogo Nutrizionale</Text>
-            
+
             <View style={styles.summaryContent}>
               <View style={styles.summaryItem}>
                 <MaterialIcons name="local-fire-department" size={22} color="#FF5722" />
                 <Text style={styles.summaryLabel}>Calorie</Text>
                 <Text style={styles.summaryValue}>{totalNutrition.calories} kcal</Text>
               </View>
-              
+
               <View style={styles.summaryItem}>
                 <MaterialIcons name="fitness-center" size={22} color="#8BC34A" />
                 <Text style={styles.summaryLabel}>Proteine</Text>
                 <Text style={styles.summaryValue}>{totalNutrition.protein}g</Text>
               </View>
-              
+
               <View style={styles.summaryItem}>
                 <MaterialIcons name="grain" size={22} color="#FF9800" />
                 <Text style={styles.summaryLabel}>Carboidrati</Text>
                 <Text style={styles.summaryValue}>{totalNutrition.carbs}g</Text>
               </View>
-              
+
               <View style={styles.summaryItem}>
                 <MaterialIcons name="opacity" size={22} color="#FFC107" />
                 <Text style={styles.summaryLabel}>Grassi</Text>
@@ -245,12 +244,12 @@ export function MealDetailModal({
               </View>
             </View>
           </View>
-          
+
           {/* Lista degli alimenti */}
           <View style={styles.listContainer}>
             <View style={styles.listHeader}>
               <Text style={styles.listTitle}>Alimenti ({items.length})</Text>
-              
+
               <TouchableOpacity
                 style={[styles.addButton, { backgroundColor: getMealColor() }]}
                 onPress={() => onAddFood(mealType)}
@@ -259,7 +258,7 @@ export function MealDetailModal({
                 <Text style={styles.addButtonText}>Aggiungi</Text>
               </TouchableOpacity>
             </View>
-            
+
             {items.length > 0 ? (
               <FlatList
                 data={items}

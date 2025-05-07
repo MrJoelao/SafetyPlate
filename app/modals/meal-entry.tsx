@@ -10,7 +10,7 @@ import { QuantityInput } from "@/components/ui/forms/QuantityInput"
 import { NutritionInput } from "@/components/ui/forms/NutritionInput"
 import { ActionButton } from "@/components/ui/buttons/ActionButton"
 import type { Food } from "@/types/food"
-import { loadFoods } from "@/utils/foodStorage"
+import { foodStorage } from "@/store/data/FoodStorage"
 import { useLocalSearchParams, useRouter } from "expo-router"
 
 // Interfacce definite come prima
@@ -68,9 +68,9 @@ export default function MealEntryModalScreen() {
 
   useEffect(() => {
     const fetchFoods = async () => {
-      const result = await loadFoods()
+      const result = await foodStorage.loadFoods()
       if (result.success) {
-        setAvailableFoods(result.foods || [])
+        setAvailableFoods(result.data || [])
       } else {
         console.error("Error loading foods:", result.error)
       }

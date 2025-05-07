@@ -3,46 +3,31 @@ import { StyleSheet, View, ScrollView, Alert } from "react-native"
 import { useRouter } from "expo-router"
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader"
 import { List, RadioButton, Text, Divider } from "react-native-paper"
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useAppContext } from "@/store/context"
 
 // Theme options
 const THEME_OPTIONS = [
   { label: "Chiaro", value: "light", icon: "white-balance-sunny" },
   { label: "Scuro", value: "dark", icon: "moon-waning-crescent" },
-  { label: "Sistema", value: "system", icon: "theme-light-dark" },
 ]
-
-// Theme storage key
-const THEME_STORAGE_KEY = "app_theme"
 
 export default function ThemeScreen() {
   const router = useRouter()
-  const [selectedTheme, setSelectedTheme] = useState<string>("light")
-  const [isLoading, setIsLoading] = useState(true)
+  const { state: appState, setTheme } = useAppContext()
+  const [selectedTheme, setSelectedTheme] = useState<string>(appState.theme)
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Load saved theme on component mount
+  // Update local state when app state changes
   useEffect(() => {
-    const loadTheme = async () => {
-      try {
-        const savedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY)
-        if (savedTheme) {
-          setSelectedTheme(savedTheme)
-        }
-      } catch (error) {
-        console.error("Error loading theme:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadTheme()
-  }, [])
+    setSelectedTheme(appState.theme)
+  }, [appState.theme])
 
   // Handle theme selection
   const handleThemeChange = async (value: string) => {
     setSelectedTheme(value)
     try {
-      await AsyncStorage.setItem(THEME_STORAGE_KEY, value)
+      // Use the AppContext's setTheme function to update the theme
+      await setTheme(value as 'light' | 'dark' | 'system')
       // Show a message that the theme has been changed
       Alert.alert(
         "Tema Cambiato",
@@ -90,9 +75,6 @@ export default function ThemeScreen() {
           <Text style={styles.infoTitle}>Informazioni sul tema</Text>
           <Text style={styles.infoText}>
             Il tema chiaro è ottimizzato per l'uso durante il giorno, mentre il tema scuro è ideale per l'uso in ambienti con poca luce.
-          </Text>
-          <Text style={styles.infoText}>
-            L'opzione "Sistema" seguirà automaticamente le impostazioni del tuo dispositivo.
           </Text>
         </View>
       </ScrollView>

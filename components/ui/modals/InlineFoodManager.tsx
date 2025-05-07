@@ -4,7 +4,7 @@ import { useRef, useEffect, useState } from "react"
 import { View, StyleSheet, TouchableOpacity, FlatList, Alert, KeyboardAvoidingView, Platform } from "react-native"
 import { MaterialIcons } from "@expo/vector-icons"
 import type { Food } from "@/types/food"
-import { loadFoods, deleteFood, addFood, updateFood } from "@/utils/foodStorage"
+import { foodStorage } from "@/store/data/FoodStorage"
 import { SearchBar } from "@/components/ui/forms/SearchBar"
 import { ThemedText } from "@/components/common/ThemedText"
 import { FoodListItem } from "@/components/ui/food/FoodListItem"
@@ -54,9 +54,9 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
 
   const loadFoodData = async () => {
     setIsLoading(true)
-    const result = await loadFoods()
+    const result = await foodStorage.loadFoods()
     if (result.success) {
-      setFoods(result.foods || [])
+      setFoods(result.data || [])
     } else {
       Alert.alert("Error", result.error || "Error loading foods")
     }
@@ -96,7 +96,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
     try {
       setIsSubmitting(true)
       const foodData = getFormData(editingFood?.id)
-      const result = await (editingFood ? updateFood(foodData) : addFood(foodData))
+      const result = await (editingFood ? foodStorage.updateFood(foodData) : foodStorage.addFood(foodData))
 
       if (result.success) {
         await loadFoodData()
@@ -121,7 +121,7 @@ export function InlineFoodManager({ onEditStart, onEditEnd }: InlineFoodManagerP
         text: "Delete",
         style: "destructive",
         onPress: async () => {
-          const result = await deleteFood(foodId)
+          const result = await foodStorage.deleteFood(foodId)
           if (result.success) {
             loadFoodData()
           } else {

@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as plannerStorage from '@/utils/plannerStorage';
-import * as foodStorage from '@/utils/foodStorage';
+import { foodStorage } from '@/store/data/FoodStorage';
 import { Food } from '@/types/food';
 import { PlannedMealItem, DailyPlan } from '@/types/planner';
 
@@ -207,13 +207,13 @@ export const clearAllData = async (): Promise<boolean> => {
   try {
     // Clear foods
     await foodStorage.saveFoods([]);
-    
+
     // Clear planner data
     await plannerStorage.savePlannerData({});
-    
+
     // Disable presentation mode
     await disablePresentationMode();
-    
+
     return true;
   } catch (error) {
     console.error('Error clearing all data:', error);

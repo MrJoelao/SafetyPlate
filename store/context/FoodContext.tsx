@@ -2,7 +2,7 @@ import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { Food } from '@/types/food';
 import type { FoodState, FoodAction } from './types';
-import { loadFoods, addFood, updateFood, deleteFood } from '@/utils/foodStorage';
+import { foodStorage } from '@/store/data/FoodStorage';
 
 // Initial state
 const initialState: FoodState = {
@@ -120,9 +120,9 @@ export function FoodProvider({ children }: { children: ReactNode }) {
   const loadAllFoods = async () => {
     dispatch({ type: 'LOAD_FOODS_REQUEST' });
     try {
-      const result = await loadFoods();
-      if (result.success && result.foods) {
-        dispatch({ type: 'LOAD_FOODS_SUCCESS', payload: result.foods });
+      const result = await foodStorage.loadFoods();
+      if (result.success && result.data) {
+        dispatch({ type: 'LOAD_FOODS_SUCCESS', payload: result.data });
       } else {
         dispatch({ 
           type: 'LOAD_FOODS_FAILURE', 
@@ -140,7 +140,7 @@ export function FoodProvider({ children }: { children: ReactNode }) {
   const addNewFood = async (food: Food) => {
     dispatch({ type: 'ADD_FOOD_REQUEST', payload: food });
     try {
-      const result = await addFood(food);
+      const result = await foodStorage.addFood(food);
       if (result.success) {
         dispatch({ type: 'ADD_FOOD_SUCCESS', payload: food });
       } else {
@@ -160,7 +160,7 @@ export function FoodProvider({ children }: { children: ReactNode }) {
   const updateExistingFood = async (food: Food) => {
     dispatch({ type: 'UPDATE_FOOD_REQUEST', payload: food });
     try {
-      const result = await updateFood(food);
+      const result = await foodStorage.updateFood(food);
       if (result.success) {
         dispatch({ type: 'UPDATE_FOOD_SUCCESS', payload: food });
       } else {
@@ -180,7 +180,7 @@ export function FoodProvider({ children }: { children: ReactNode }) {
   const removeFood = async (id: string) => {
     dispatch({ type: 'DELETE_FOOD_REQUEST', payload: id });
     try {
-      const result = await deleteFood(id);
+      const result = await foodStorage.deleteFood(id);
       if (result.success) {
         dispatch({ type: 'DELETE_FOOD_SUCCESS', payload: id });
       } else {

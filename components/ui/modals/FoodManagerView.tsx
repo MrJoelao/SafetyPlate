@@ -4,7 +4,7 @@ import { MaterialIcons } from "@expo/vector-icons"
 import { ThemedText } from "@/components/common/ThemedText"
 import { BlurView } from "expo-blur"
 import type { Food } from "@/types/food"
-import { loadFoods, deleteFood, addFood, updateFood } from "@/utils/foodStorage"
+import { foodStorage } from "@/store/data/FoodStorage"
 import { AddEditFoodModal } from "@/components/ui/modals/AddEditFoodModal"
 import { ModalHeader } from "@/components/ui/common/ModalHeader"
 import { SearchBar } from "@/components/ui/forms/SearchBar"
@@ -31,9 +31,9 @@ export function FoodManagerView({ visible, onClose }: FoodManagerViewProps) {
 
   const loadFoodData = async () => {
     setIsLoading(true)
-    const result = await loadFoods()
+    const result = await foodStorage.loadFoods()
     if (result.success) {
-      setFoods(result.foods || [])
+      setFoods(result.data || [])
     } else {
       Alert.alert("Errore", result.error || "Errore nel caricamento degli alimenti")
     }
@@ -51,7 +51,7 @@ export function FoodManagerView({ visible, onClose }: FoodManagerViewProps) {
         text: "Elimina",
         style: "destructive",
         onPress: async () => {
-          const result = await deleteFood(foodId)
+          const result = await foodStorage.deleteFood(foodId)
           if (result.success) {
             loadFoodData()
           } else {
@@ -63,7 +63,7 @@ export function FoodManagerView({ visible, onClose }: FoodManagerViewProps) {
   }
 
   const handleAddEdit = async (food: Food) => {
-    const result = await (food.id === selectedFood?.id ? updateFood(food) : addFood(food))
+    const result = await (food.id === selectedFood?.id ? foodStorage.updateFood(food) : foodStorage.addFood(food))
     if (result.success) {
       loadFoodData()
     } else {
