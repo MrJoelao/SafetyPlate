@@ -102,6 +102,12 @@ export class FoodStorage extends BaseStorage<Food[]> {
 
   /**
    * Add a new food item
+   * 
+   * This method adds a new food item to the existing collection.
+   * It first loads the current foods, adds the new item, and saves the updated collection.
+   * 
+   * @param food The food item to add
+   * @returns A promise that resolves to a StorageResult containing all foods or an error
    */
   public async addFood(food: Food): Promise<StorageResult<Food[]>> {
     const result = await this.loadFoods();
@@ -118,6 +124,13 @@ export class FoodStorage extends BaseStorage<Food[]> {
 
   /**
    * Update an existing food item
+   * 
+   * This method updates an existing food item in the collection.
+   * It first loads the current foods, finds the item by ID, updates it,
+   * and saves the updated collection. If the item is not found, it returns an error.
+   * 
+   * @param updatedFood The updated food item (must have the same ID as the original)
+   * @returns A promise that resolves to a StorageResult containing all foods or an error
    */
   public async updateFood(updatedFood: Food): Promise<StorageResult<Food[]>> {
     const result = await this.loadFoods();
@@ -144,6 +157,14 @@ export class FoodStorage extends BaseStorage<Food[]> {
 
   /**
    * Delete a food item
+   * 
+   * This method removes a food item from the collection by its ID.
+   * It first loads the current foods, filters out the item with the specified ID,
+   * and saves the updated collection. If no item is removed (ID not found),
+   * it returns an error.
+   * 
+   * @param foodId The ID of the food item to delete
+   * @returns A promise that resolves to a StorageResult containing all remaining foods or an error
    */
   public async deleteFood(foodId: string): Promise<StorageResult<Food[]>> {
     const result = await this.loadFoods();
@@ -167,6 +188,15 @@ export class FoodStorage extends BaseStorage<Food[]> {
 
   /**
    * Parse food data from text
+   * 
+   * This method parses a text string containing food data and converts it to Food objects.
+   * The expected format is one food item per line, with name and score separated by a space.
+   * For example: "Apple 90"
+   * 
+   * It handles validation and error cases such as empty content, invalid format, etc.
+   * 
+   * @param content The text content to parse
+   * @returns A StorageResult containing the parsed food items or an error
    */
   public parseFoodFromText(content: string): StorageResult<Food[]> {
     try {
@@ -228,6 +258,13 @@ export class FoodStorage extends BaseStorage<Food[]> {
 
   /**
    * Import foods from text and save them
+   * 
+   * This method combines parsing food data from text and saving it to storage.
+   * It first parses the text content, then loads existing foods, combines them
+   * with the newly parsed foods, and saves the combined collection.
+   * 
+   * @param content The text content containing food data to import
+   * @returns A promise that resolves to a StorageResult containing all foods or an error
    */
   public async importFoodsFromText(content: string): Promise<StorageResult<Food[]>> {
     const parseResult = this.parseFoodFromText(content);
@@ -250,6 +287,17 @@ export class FoodStorage extends BaseStorage<Food[]> {
 
   /**
    * Override the migration method to handle future schema changes
+   * 
+   * This method is responsible for migrating data from older versions to the current version.
+   * It's called automatically when data with an older version is loaded.
+   * 
+   * Currently, there are no migrations implemented as this is the first version,
+   * but this method provides a framework for future schema changes.
+   * 
+   * @param data The data to migrate
+   * @param fromVersion The version of the data being migrated
+   * @returns A promise that resolves to the migrated data
+   * @override
    */
   protected async migrateData(data: any, fromVersion: number): Promise<Food[]> {
     // Handle migrations from older versions when needed

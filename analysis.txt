@@ -36,22 +36,40 @@ The project is organized into the following main folders:
         * **icons:** Custom icon components.
         *   **layout:** Components to manage the layout of the screens (`ParallaxScrollView`, `ScreenHeader`).
         *   **modals:** Specific modal components for the application. (`AddEditFoodModal`, `FoodImportView`, `FoodManagerView`, `InlineFoodManager`, `MealTypeMenu`).
-        *   **navigation:** Components related to navigation (`CustomTabBar`).
+        *   **navigation:** Components related to navigation (`CustomTabBar`, `NavigationGuard`).
     * **\_\_tests\_\_:** Contains test files.
         *   `ThemedText-test.tsx`: The file contains test for `ThemedText`.
 *   **constants:** Contains constant values used throughout the application.
     *   `Colors.ts`: Defines color schemes for the app.
 *   **hooks:** Contains custom React hooks.
-    *   `useColorScheme.ts`, `useColorScheme.web.ts`: Hooks related to managing the color scheme.
-    *   `useFoodForm.ts`: A hook likely used to manage the state of food forms.
+    *   `useFoodForm.ts`: A hook for managing the state of food forms and interacting with the food context.
     *   `useSlideAnimation.ts`: A hook for slide animations.
-    * `useThemeColor.ts`: A hook for accessing theme colors.
-*   **types:** Defines TypeScript interfaces and types used in the project.
+    * `useThemeColor.ts`: A hook for accessing theme colors based on the current app theme.
+*   **store:** Contains state management and data persistence code.
+    *   **context:** Implements the Context API for global state management.
+        *   `AppContext.tsx`: Manages application-wide settings like theme and language.
+        *   `FoodContext.tsx`: Manages the food data state and operations.
+        *   `UserPreferencesContext.tsx`: Manages user preferences like allergies and dietary restrictions.
+        *   `types.ts`: Contains type definitions for the context state and actions.
+        *   `index.tsx`: Exports the root provider and context hooks.
+    *   **data:** Contains classes for data persistence.
+        *   `BaseStorage.ts`: A base class for storage operations with versioning and validation.
+        *   `FoodStorage.ts`: Extends BaseStorage for food-specific storage operations.
+*   **services:** Contains service layer code for external API interactions.
+    *   **api:** Implements API service interfaces and concrete implementations.
+        *   `BaseApiService.ts`: Base class for API services with common HTTP operations.
+        *   `CachedApiService.ts`: Adds caching and offline support to API services.
+        *   `interfaces.ts`: Defines interfaces for API services.
+        *   `ServiceFactory.ts`: Factory for creating API service instances.
+        *   `types.ts`: Type definitions for API requests and responses.
+        *   **mock:** Contains mock implementations of API services for development.
+            *   `MockFoodApiService.ts`: Mock implementation of the food API service.
+*   **types:** Defines TypeScript interfaces and types used throughout the project.
     *   `food.ts`: Contains types related to food items (`Food`, `FoodFormData`, `NutritionInfo`).
-    *   `storage.ts`: Contains types for storage operations (`ParseResult`, `StorageResult`).
+    *   `storage.ts`: Contains types for storage operations and compatibility helpers.
 *   **utils:** Contains utility functions.
     *   `colorUtils.ts`: Functions for working with colors.
-    *   `foodStorage.ts`: Functions for managing the storage of food data.
+    *   `foodStorage.ts`: Legacy module that now delegates to the new FoodStorage class.
 
 ## 2. Key Components
 
@@ -75,61 +93,210 @@ The main components and their responsibilities are:
 
 ## 3. Data Flow and State Management
 
-*   **Data Flow:** Data primarily flows from the `utils/foodStorage.ts` module, which handles data persistence. Components like `FoodForm` and `FoodManagerView` likely interact with this module to load, save, update, and delete food data.
+*   **Data Flow:** The application follows a unidirectional data flow pattern:
+    * Data is stored in the global context state
+    * Components access data through context hooks
+    * Actions are dispatched to update the state
+    * Context providers handle state updates and persistence
+    * The persistence layer (FoodStorage) handles data storage and retrieval
+
 *   **State Management:**
-    *   The project doesn't appear to use Redux or a similar state management library.
-    *   Custom hooks (`useFoodForm`, `useColorScheme`) are used to manage local component state and potentially share some state across components.
-    *   The `FoodImportView` receives a callback function `onSuccess` that is triggered after a successful import, indicating a pattern of passing data up through component hierarchies.
-    * The state of the application is managed by each single component.
-* **Hooks**:
-    * `useFoodForm`: This hook is used for managing the state of the food form.
-    * `useColorScheme`: This hook is used for managing the color scheme.
-    * `useSlideAnimation`: This hook is used for managing the slide animations.
-    * `useThemeColor`: This hook is used for managing the theme colors.
+    *   The project uses React's Context API for global state management, organized into three main contexts:
+        * `AppContext`: Manages application settings like theme and language
+        * `FoodContext`: Manages food data and operations
+        * `UserPreferencesContext`: Manages user preferences like allergies and dietary restrictions
+    *   Each context implements a reducer pattern similar to Redux, with actions and state updates
+    *   The `RootProvider` in `store/context/index.tsx` combines all contexts to provide global state to the entire application
+    *   Components access state through custom hooks like `useAppContext`, `useFoodContext`, and `useUserPreferencesContext`
+
+*   **Context Structure:**
+    *   Each context follows a similar pattern:
+        * State interface defining the shape of the state
+        * Action types defining possible state updates
+        * Reducer function handling state transitions
+        * Provider component managing state and exposing actions
+        * Custom hook for accessing the context
+
+*   **Custom Hooks:**
+    *   `useFoodForm`: Manages food form state and interacts with the food context for saving data
+    *   `useThemeColor`: Accesses theme colors based on the current app theme from AppContext
+    *   `useSlideAnimation`: Manages animation state for UI elements
 
 ## 4. Data Persistence
 
-*   **AsyncStorage:** The application uses `@react-native-async-storage/async-storage` to store food data locally on the user's device.
-*   **`foodStorage.ts`:** This utility module handles all data persistence operations related to food.
-    *   `saveFoods`: Saves an array of `Food` objects to AsyncStorage.
-    *   `addFood`: Adds a new `Food` object to storage.
-    *   `updateFood`: Updates an existing `Food` object.
-    *   `deleteFood`: Deletes a `Food` object.
-    *   `loadFoods`: Loads all `Food` objects from storage.
-    * `parseFoodFromText`: Parse the food from the imported text file.
-*   **Data Format:** Food data is stored as an array of `Food` objects in JSON format.
+*   **Storage Architecture:** The application uses a layered approach to data persistence:
+    * **BaseStorage:** A generic base class that provides common storage functionality:
+        * Versioning support for data schema evolution
+        * Data validation through validator functions
+        * Error handling and standardized result objects
+        * Migration capabilities for handling schema changes
+    * **FoodStorage:** Extends BaseStorage with food-specific functionality:
+        * Food data validation
+        * CRUD operations for food items
+        * Text parsing for food import
+        * Singleton pattern for consistent access
+
+*   **AsyncStorage:** The application uses `@react-native-async-storage/async-storage` as the underlying storage mechanism.
+    * Data is stored with versioning information to support future migrations
+    * Keys are namespaced to avoid conflicts (e.g., '@safetyplate_foods')
+    * JSON serialization is used for storing complex objects
+
+*   **Legacy Compatibility:** The original `utils/foodStorage.ts` module is maintained for backward compatibility:
+    * All functions now delegate to the new FoodStorage class
+    * Helper functions in `types/storage.ts` convert between old and new result formats
+    * Deprecation notices guide developers to use the new API directly
+
+*   **Data Operations:** The FoodStorage class provides the following operations:
+    * `loadFoods`: Retrieves all food items with versioning support
+    * `saveFoods`: Saves all food items with validation
+    * `addFood`: Adds a new food item to the collection
+    * `updateFood`: Updates an existing food item by ID
+    * `deleteFood`: Removes a food item by ID
+    * `parseFoodFromText`: Parses food data from text format
+    * `importFoodsFromText`: Combines parsing and saving operations
+
+*   **Data Format:** Food data is stored as an array of `Food` objects in JSON format, with additional version metadata.
 
 ## 5. Navigation
 
 *   **Expo Router:** The project utilizes Expo Router for navigation, enabling file-based routing.
-*   **File-Based Routing:** The `app` folder structure directly defines the navigation hierarchy. For example, the `(tabs)` and `(settings)` folders define tab and settings routes.
-*   **`useRouter`:** The `useRouter` hook from Expo Router is used within components to navigate programmatically.
-*   **Layouts:** The `_layout.tsx` files are used to define layouts for specific sections of the app.
+    * File-based routing simplifies navigation structure
+    * The `app` folder structure directly defines the navigation hierarchy
+    * Group folders like `(tabs)` and `(settings)` organize related screens
+    * `_layout.tsx` files define layouts for specific sections of the app
 
-## 6. Styling
+*   **Navigation Guards:** The application implements navigation guards to protect routes:
+    * `NavigationGuard` component in `components/ui/navigation/NavigationGuard.tsx`
+    * Guards check conditions (like onboarding completion) before allowing access to protected routes
+    * Redirects to fallback routes when conditions aren't met
+    * Provides loading states during condition checking
+
+*   **Onboarding Flow:** A specific guard for onboarding ensures users complete the setup process:
+    * `OnboardingGuard` wraps the main app tabs
+    * Checks AsyncStorage for onboarding completion status
+    * Redirects new users to the welcome/onboarding flow
+
+*   **Transition Animations:** The app uses custom transition animations between screens:
+    * Different animation types for different navigation actions:
+      * `slide_from_right` for settings and detail screens
+      * `slide_from_bottom` for modal screens
+      * `fade_from_bottom` for tab navigation
+    * Animation durations and easing are customized for a smooth experience
+
+*   **Programmatic Navigation:** Components use Expo Router hooks for navigation:
+    * `useRouter` for navigating between screens
+    * `useSegments` for accessing the current route path
+    * `Link` component for declarative navigation
+
+## 6. API Service Layer
+
+*   **Service Architecture:** The application implements a comprehensive API service layer:
+    * **Interfaces:** Clear interfaces define the contract for API services
+      * `ApiService`: Base interface for common HTTP operations
+      * `FoodApiService`: Food-specific API operations
+      * `UserPreferencesApiService`: User preferences API operations
+    * **Base Implementation:** `BaseApiService` provides common functionality:
+      * HTTP methods (GET, POST, PUT, DELETE)
+      * Error handling
+      * Request configuration
+      * Response parsing
+    * **Caching Layer:** `CachedApiService` adds caching and offline support:
+      * Transparent caching of GET requests
+      * Offline mode with fallback to cached data
+      * Cache expiration and invalidation
+      * Network state detection
+
+*   **Mock Services:** The application includes mock implementations for development:
+    * `MockFoodApiService`: Simulates a food API with in-memory data
+    * Realistic response delays and error conditions
+    * Consistent with real API behavior
+
+*   **Service Factory:** A factory pattern is used to create service instances:
+    * `ServiceFactory` provides the appropriate implementation based on environment
+    * Supports switching between mock and real implementations
+    * Handles service caching for performance
+
+*   **API Types:** Comprehensive type definitions ensure type safety:
+    * Request and response types
+    * Error handling types
+    * Common API patterns
+
+## 7. Styling
 
 *   **`StyleSheet`:** The project primarily uses React Native's `StyleSheet` for styling.
 *   **`Colors.ts`:** This file defines a set of colors that are used throughout the application.
-*   **Theming:** The `useColorScheme` and `useThemeColor` hooks indicate support for theming, potentially allowing users to switch between light and dark modes.
-* **External library**:  `react-native-paper` is used for some styling.
+*   **Theming:** The application supports dynamic theming through the AppContext:
+    * Theme can be set to 'light', 'dark', or 'system' (follows device setting)
+    * The `useThemeColor` hook provides access to theme-appropriate colors
+    * Theme settings are persisted in AsyncStorage
+*   **External library**:  `react-native-paper` is used for some UI components.
 
-## 7. Food Management
+## 8. Food Management
 
-*   **Parsing:** The `parseFoodFromText` function in `foodStorage.ts` is responsible for parsing food data from a text file. It splits the content into lines, parses each line for a name and score, and creates a `Food` object. It handles error conditions like empty files or invalid data format.
-*   **Storing:** Food data is stored using `AsyncStorage` as JSON. Each food item has an `id`, `name`, `score`, `defaultUnit`, and optionally, `imageUri` and `nutritionPer100g`.
-*   **Adding:** The `addFood` function adds a new food item to the existing list in storage.
-*   **Updating:** The `updateFood` function finds an existing food item by its ID and replaces it with the updated data.
-*   **Deleting:** The `deleteFood` function removes a food item by its ID.
-* **Food Types**: The food types are located in `types/food.ts`
+*   **Food Data Model:** The application uses a well-defined food data model:
+    * Core food properties: id, name, score, defaultUnit
+    * Optional properties: imageUri, nutritionPer100g
+    * Nutrition information includes calories, proteins, carbs, and fats
+    * Type definitions in `types/food.ts` ensure type safety
 
-## 8. Potential Extension Points
+*   **Food Operations:** The application provides comprehensive food management:
+    * **Adding:** New food items can be added through forms or import
+    * **Updating:** Existing food items can be modified
+    * **Deleting:** Food items can be removed from the collection
+    * **Importing:** Bulk import from text files with specific format
+    * **Validation:** Data validation ensures integrity
 
-*   **Improved State Management:** Implementing a global state management system like Redux or Zustand would allow for better organization and sharing of application state, especially as the app grows in complexity.
-*   **Advanced Food Data:** Adding support for more comprehensive food data (e.g., allergens, detailed nutritional information) would enhance the app's utility.
-*   **User Profiles:** Implementing user profiles would enable personalized settings, dietary restrictions, and other user-specific data.
-*   **Backend Integration:** Integrating with a backend API would enable data synchronization across multiple devices and social features.
-*   **Enhanced Statistics:** Adding more detailed statistics and data visualization would provide users with better insights into their eating habits.
-*   **Meal Recommendations:** Implementing a meal recommendation engine based on user preferences and dietary restrictions would be a valuable addition.
-*   **Notification System**: Implement a notification system for alarms and errors.
-* **Import/Export**: Allows the user to import or export the data on the device.
-* **Localization**:  Add localization to allow users to set the correct language.
+*   **Food Forms:** The `useFoodForm` hook provides form management:
+    * Form state management with validation
+    * Integration with the FoodContext for persistence
+    * Support for both creating and editing food items
+    * Handling of form submission and errors
+
+*   **Food Storage:** The FoodStorage class handles persistence:
+    * Versioned storage with migration support
+    * Data validation before storage
+    * Efficient CRUD operations
+    * Text parsing for imports
+
+## 9. Potential Extension Points
+
+*   **Real Backend Integration:** While the API service layer is in place, connecting to a real backend would enable:
+    * Cloud synchronization of user data across devices
+    * Shared food databases and community features
+    * Advanced analytics and insights
+
+*   **Advanced Food Data:** Enhancing the food data model with:
+    * Allergen information and warnings
+    * More detailed nutritional profiles
+    * Food categories and tags
+    * Barcode scanning for quick food entry
+
+*   **Machine Learning Features:** Implementing AI-powered features:
+    * Food recognition from photos
+    * Personalized meal recommendations based on preferences and history
+    * Nutritional goal optimization
+    * Predictive health insights
+
+*   **Enhanced Visualization:** Adding more detailed data visualization:
+    * Nutritional intake charts and graphs
+    * Progress tracking over time
+    * Comparison with recommended daily values
+    * Meal planning calendars with nutritional summaries
+
+*   **Social Features:** Adding social and sharing capabilities:
+    * Sharing meal plans and recipes
+    * Collaborative meal planning for families
+    * Challenges and achievements
+    * Integration with fitness and health apps
+
+*   **Advanced Localization:** Expanding language support:
+    * Multiple language support through i18n
+    * Region-specific food databases
+    * Cultural dietary preferences
+    * Support for right-to-left languages
+
+*   **Accessibility Enhancements:** Improving accessibility:
+    * Screen reader optimization
+    * Voice commands for hands-free operation
+    * High contrast themes
+    * Customizable font sizes and UI scaling

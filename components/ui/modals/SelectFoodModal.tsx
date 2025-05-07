@@ -817,7 +817,6 @@ const styles = StyleSheet.create({
   },
   customRepetitionTypeContainer: {
     flex: 1,
-    marginLeft: 0,
     borderWidth: 1.5,
     borderColor: '#2196F3',
     borderRadius: 22,
