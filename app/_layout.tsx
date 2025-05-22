@@ -15,6 +15,82 @@ import { RootProvider, useAppContext } from "@/store/context"
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync()
 
+// Function to render Stack Screens
+const renderStackScreens = () => (
+  <>
+    {/* Onboarding Screens - Always accessible */}
+    <Stack.Screen
+      name="(onboarding)/Welcome"
+      options={{
+        headerShown: false,
+        contentStyle: {
+          flex: 1,
+        },
+        // No animation for the welcome screen
+        animation: "none",
+      }}
+    />
+    <Stack.Screen 
+      name="(onboarding)/Tutorial1" 
+      options={{
+        animation: "slide_from_right",
+      }}
+    />
+    <Stack.Screen 
+      name="(onboarding)/Tutorial2" 
+      options={{
+        animation: "slide_from_right",
+      }}
+    />
+    <Stack.Screen 
+      name="(onboarding)/PlannerSetup" 
+      options={{
+        animation: "slide_from_right",
+      }}
+    />
+
+    {/* Main App Screens - Protected by onboarding guard */}
+    <Stack.Screen
+      name="(tabs)"
+      options={{
+        headerShown: false,
+        contentStyle: {
+          flex: 1,
+        },
+      }}
+    />
+    <Stack.Screen name="+not-found" />
+
+    {/* Settings Group */}
+    <Stack.Screen 
+      name="(settings)" 
+      options={{
+        animation: "slide_from_right",
+      }}
+    />
+
+    {/* Modal Screens */}
+    <Stack.Screen
+      name="modals/meal-entry"
+      options={{
+        presentation: "modal",
+        headerShown: false,
+        animation: "slide_from_bottom",
+        contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" },
+      }}
+    />
+
+    {/* Settings Screen */}
+    <Stack.Screen
+      name="settings"
+      options={{
+        headerShown: false,
+        animation: "slide_from_right",
+      }}
+    />
+  </>
+);
+
 // App layout component that uses the context
 function AppLayout() {
   const { state: appState } = useAppContext();
@@ -53,76 +129,7 @@ function AppLayout() {
           presentation: "card",
         }}
       >
-        {/* Onboarding Screens - Always accessible */}
-        <Stack.Screen
-          name="(onboarding)/Welcome"
-          options={{
-            headerShown: false,
-            contentStyle: {
-              flex: 1,
-            },
-            // No animation for the welcome screen
-            animation: "none",
-          }}
-        />
-        <Stack.Screen 
-          name="(onboarding)/Tutorial1" 
-          options={{
-            animation: "slide_from_right",
-          }}
-        />
-        <Stack.Screen 
-          name="(onboarding)/Tutorial2" 
-          options={{
-            animation: "slide_from_right",
-          }}
-        />
-        <Stack.Screen 
-          name="(onboarding)/PlannerSetup" 
-          options={{
-            animation: "slide_from_right",
-          }}
-        />
-
-        {/* Main App Screens - Protected by onboarding guard */}
-        <Stack.Screen
-          name="(tabs)"
-          options={{
-            headerShown: false,
-            contentStyle: {
-              flex: 1,
-            },
-          }}
-        />
-        <Stack.Screen name="+not-found" />
-
-        {/* Settings Group */}
-        <Stack.Screen 
-          name="(settings)" 
-          options={{
-            animation: "slide_from_right",
-          }}
-        />
-
-        {/* Modal Screens */}
-        <Stack.Screen
-          name="modals/meal-entry"
-          options={{
-            presentation: "modal",
-            headerShown: false,
-            animation: "slide_from_bottom",
-            contentStyle: { backgroundColor: "rgba(0,0,0,0.5)" },
-          }}
-        />
-
-        {/* Settings Screen */}
-        <Stack.Screen
-          name="settings"
-          options={{
-            headerShown: false,
-            animation: "slide_from_right",
-          }}
-        />
+        {renderStackScreens()}
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

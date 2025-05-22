@@ -13,6 +13,7 @@ import { useDashboard } from "@/hooks/useDashboard";
 import { useThemeColor } from "@/hooks/useThemeColor";
 import { PlannedMealItem } from "@/types/planner";
 import * as plannerStorage from "@/utils/plannerStorage";
+import { handleAddWater, handleSelectSnack } from "@/utils/handlers";
 
 // Favorite snacks data (could be moved to storage in the future)
 const FAVORITE_SNACKS: QuickSnack[] = [
@@ -33,94 +34,12 @@ export default function HomeScreen() {
     refreshDashboard();
   }, [refreshDashboard]);
 
-  const handleAddWater = async () => {
-    try {
-      // Get today's date key
-      const today = new Date();
-      const todayKey = plannerStorage.formatDateKey(today);
-
-      // Create a water item (using a predefined water food ID)
-      // In a real app, you would have a specific food item for water in your database
-      const waterItem: PlannedMealItem = {
-        foodId: 'water', // This should be a real food ID in your database
-        quantity: 250, // 250ml of water
-        unit: 'ml'
-      };
-
-      // Add water to the plan (could be added to a special category or to snacks)
-      await plannerStorage.addMealItem(todayKey, 'snack', waterItem);
-
-      // Refresh the dashboard data
-      refreshDashboard();
-
-      // Show a success message
-      Alert.alert(
-        "Acqua aggiunta",
-        "250ml di acqua sono stati aggiunti al tuo piano giornaliero.",
-        [{ text: "OK" }]
-      );
-    } catch (error) {
-      console.error("Error adding water:", error);
-      Alert.alert(
-        "Errore",
-        "Non è stato possibile aggiungere l'acqua. Riprova più tardi.",
-        [{ text: "OK" }]
-      );
-    }
-  };
-
   const handleOpenSnackModal = () => {
     setIsSnackModalVisible(true);
   };
 
   const handleCloseSnackModal = () => {
     setIsSnackModalVisible(false);
-  };
-
-  const handleSelectSnack = async (snack: QuickSnack) => {
-    console.log("Spuntino selezionato:", snack.name);
-
-    try {
-      // Get today's date key
-      const today = new Date();
-      const todayKey = plannerStorage.formatDateKey(today);
-
-      // Load today's plan
-      const todayPlan = await plannerStorage.getDailyPlan(todayKey) || {
-        breakfast: [],
-        lunch: [],
-        dinner: [],
-        snack: []
-      };
-
-      // Create a new snack item
-      const newSnackItem: PlannedMealItem = {
-        foodId: snack.id,
-        quantity: 1,
-        unit: 'porzione'
-      };
-
-      // Add the snack to the plan
-      await plannerStorage.addMealItem(todayKey, 'snack', newSnackItem);
-
-      // Refresh the dashboard data
-      refreshDashboard();
-      setIsSnackModalVisible(false);
-
-      // Show a success message (optional)
-      Alert.alert(
-        "Spuntino aggiunto",
-        `${snack.name} è stato aggiunto ai tuoi pasti di oggi.`,
-        [{ text: "OK" }]
-      );
-    } catch (error) {
-      console.error("Error adding snack:", error);
-      Alert.alert(
-        "Errore",
-        "Non è stato possibile aggiungere lo spuntino. Riprova più tardi.",
-        [{ text: "OK" }]
-      );
-    }
   };
 
   const handlePressMeal = (mealId: string) => {
@@ -187,7 +106,7 @@ export default function HomeScreen() {
             {/* 4. Sezione Quick Add */}
             <View style={styles.sectionDivider} />
             <QuickAddSection
-              onAddWater={handleAddWater}
+              onAddWater={() => handleAddWater(refreshDashboard)}
               onOpenSnackModal={handleOpenSnackModal}
             />
 
@@ -208,7 +127,7 @@ export default function HomeScreen() {
         <QuickSnackModal
           visible={isSnackModalVisible}
           onClose={handleCloseSnackModal}
-          onSelectSnack={handleSelectSnack}
+          onSelectSnack={(snack) => handleSelectSnack(snack, refreshDashboard, setIsSnackModalVisible)}
           favoriteSnacks={FAVORITE_SNACKS}
         />
       </View>

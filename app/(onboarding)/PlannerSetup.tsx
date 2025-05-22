@@ -1,5 +1,3 @@
-// Schermata di configurazione planner per onboarding
-
 import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,12 +6,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Button, Text, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../../constants/Colors';
+
 const { width } = Dimensions.get('window');
 
-export default function PlannerSetup() {
+const PlannerSetup = () => {
   const router = useRouter();
   const theme = useTheme();
-  // Animazioni per le icone decorative (variegate)
+
   const float1 = useRef(new Animated.Value(0)).current;
   const float2 = useRef(new Animated.Value(0)).current;
   const float3 = useRef(new Animated.Value(0)).current;
@@ -22,50 +21,56 @@ export default function PlannerSetup() {
   const fade = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(float1, { toValue: -16, duration: 1600, useNativeDriver: true }),
-        Animated.timing(float1, { toValue: 0, duration: 1600, useNativeDriver: true }),
-      ])
-    ).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(float2, { toValue: 18, duration: 2100, useNativeDriver: true }),
-        Animated.timing(float2, { toValue: 0, duration: 2100, useNativeDriver: true }),
-      ])
-    ).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(float3, { toValue: -12, duration: 1200, useNativeDriver: true }),
-        Animated.timing(float3, { toValue: 0, duration: 1200, useNativeDriver: true }),
-      ])
-    ).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(rotate, { toValue: 1, duration: 3200, useNativeDriver: true }),
-        Animated.timing(rotate, { toValue: 0, duration: 3200, useNativeDriver: true }),
-      ])
-    ).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(scale, { toValue: 1.25, duration: 1400, useNativeDriver: true }),
-        Animated.timing(scale, { toValue: 1, duration: 1400, useNativeDriver: true }),
-      ])
-    ).start();
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(fade, { toValue: 0.4, duration: 1200, useNativeDriver: true }),
-        Animated.timing(fade, { toValue: 1, duration: 1200, useNativeDriver: true }),
-      ])
-    ).start();
+    const animations = [
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(float1, { toValue: -16, duration: 1600, useNativeDriver: true }),
+          Animated.timing(float1, { toValue: 0, duration: 1600, useNativeDriver: true }),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(float2, { toValue: 18, duration: 2100, useNativeDriver: true }),
+          Animated.timing(float2, { toValue: 0, duration: 2100, useNativeDriver: true }),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(float3, { toValue: -12, duration: 1200, useNativeDriver: true }),
+          Animated.timing(float3, { toValue: 0, duration: 1200, useNativeDriver: true }),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(rotate, { toValue: 1, duration: 3200, useNativeDriver: true }),
+          Animated.timing(rotate, { toValue: 0, duration: 3200, useNativeDriver: true }),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(scale, { toValue: 1.25, duration: 1400, useNativeDriver: true }),
+          Animated.timing(scale, { toValue: 1, duration: 1400, useNativeDriver: true }),
+        ])
+      ),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(fade, { toValue: 0.4, duration: 1200, useNativeDriver: true }),
+          Animated.timing(fade, { toValue: 1, duration: 1200, useNativeDriver: true }),
+        ])
+      ),
+    ];
+
+    animations.forEach(animation => animation.start());
+
+    return () => {
+      animations.forEach(animation => animation.stop());
+    };
   }, []);
 
-  // Colori decorativi
   const iconColor = Colors.light.tint;
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Pulsante indietro in alto a sinistra (dentro SafeArea) */}
       <View style={styles.header}>
         <Button
           mode="text"
@@ -80,9 +85,7 @@ export default function PlannerSetup() {
         </Button>
       </View>
 
-      {/* Contenuto principale centrato */}
       <View style={styles.content}>
-        {/* Decorazioni piatti principali, posizioni e animazioni diverse */}
         <Animated.View style={[styles.foodIcon, { top: 30, left: 30, transform: [{ scale }], opacity: fade }]}>
           <MaterialCommunityIcons name="pizza" size={38} color="#FFA726" />
         </Animated.View>
@@ -165,14 +168,14 @@ export default function PlannerSetup() {
       </View>
     </SafeAreaView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   header: {
-    height: 50, // Altezza per contenere il pulsante
+    height: 50,
     width: '100%',
     paddingHorizontal: 12,
     justifyContent: 'center',
@@ -197,7 +200,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
-    paddingTop: 0, // Rimuove padding superiore per compensare header
+    paddingTop: 0,
   },
   icon: {
     marginBottom: 18,
@@ -238,22 +241,6 @@ const styles = StyleSheet.create({
   buttonContent: {
     height: 48,
   },
-  circle: {
-    position: 'absolute',
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    opacity: 0.16,
-    zIndex: 0,
-  },
-  badge: {
-    position: 'absolute',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    opacity: 0.22,
-    zIndex: 0,
-  },
   foodIcon: {
     position: 'absolute',
     zIndex: 0,
@@ -264,3 +251,5 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 });
+
+export default PlannerSetup;

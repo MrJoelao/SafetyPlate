@@ -1,21 +1,20 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {Text, TouchableOpacity, Alert, Platform} from "react-native";
+import { Text, TouchableOpacity, Alert, Platform } from "react-native";
 import { StyleSheet, View, SafeAreaView, FlatList, Dimensions } from "react-native";
 import { useRouter } from "expo-router";
 import { DayPlannerContent } from "@/components/ui/planner/DayPlannerContent";
 import { ScreenHeader } from "@/components/ui/layout/ScreenHeader";
 import { MaterialIcons } from "@expo/vector-icons";
-import { usePlanner } from "@/hooks/usePlanner"; // Import usePlanner
-import { SelectFoodModal } from "@/components/ui/modals/SelectFoodModal"; // Import SelectFoodModal
-import { MealDetailModal } from "@/components/ui/modals/MealDetailModal"; // Import MealDetailModal
-import type { DailyPlan, PlannedMealItem } from "@/types/planner"; // Import tipi necessari
-import * as plannerStorage from "@/utils/plannerStorage"; // Import plannerStorage
+import { usePlanner } from "@/hooks/usePlanner";
+import { SelectFoodModal } from "@/components/ui/modals/SelectFoodModal";
+import { MealDetailModal } from "@/components/ui/modals/MealDetailModal";
+import type { DailyPlan, PlannedMealItem } from "@/types/planner";
+import * as plannerStorage from "@/utils/plannerStorage";
 const { width } = Dimensions.get("window");
 
 export default function PlannerScreen() {
   const router = useRouter();
-  const { allFoods, addMealItem, removeMealItem } = usePlanner(); // Ottieni dati e funzioni dal hook
-  // Stato per il modal di aggiunta alimento
+  const { allFoods, addMealItem, removeMealItem } = usePlanner();
   const [modalVisible, setModalVisible] = useState(false);
   const [mealDetailModalVisible, setMealDetailModalVisible] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState<keyof DailyPlan>("snack");
@@ -25,9 +24,8 @@ export default function PlannerScreen() {
   const [activeDayIndex, setActiveDayIndex] = useState(0);
   const [selectedMealItems, setSelectedMealItems] = useState<{ name: string; quantity: string; id?: string }[]>([]);
 
-  // Funzione per generare i giorni dinamicamente
   const generateDays = useCallback(async () => {
-    const daysToGenerate = 14; // Genera 14 giorni
+    const daysToGenerate = 14;
     const generatedDays = [];
 
     for (let i = 0; i < daysToGenerate; i++) {
@@ -42,18 +40,16 @@ export default function PlannerScreen() {
         snack: []
       };
 
-      // Formatta la data in modo leggibile
       const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'short' };
       const formattedDate = date.toLocaleDateString('it-IT', options);
       const capitalizedDate = formattedDate.charAt(0).toUpperCase() + formattedDate.slice(1);
 
-      // Crea l'oggetto giorno
       const day = {
         dateObj: date,
         dateKey: dateKey,
         date: capitalizedDate,
-        goals: { kcal: 2000, protein: 120, carbs: 250, fat: 60 }, // Valori predefiniti
-        progress: { kcal: 0, protein: 0, carbs: 0, fat: 0 }, // Calcolare in base ai pasti
+        goals: { kcal: 2000, protein: 120, carbs: 250, fat: 60 },
+        progress: { kcal: 0, protein: 0, carbs: 0, fat: 0 },
         meals: [
           { type: "colazione" as const, items: dailyPlan.breakfast?.map(item => {
             const food = allFoods.find(f => f.id === item.foodId);
@@ -96,14 +92,11 @@ export default function PlannerScreen() {
     setDays(generatedDays);
   }, [currentDate, allFoods]);
 
-  // Carica i giorni all'avvio e quando cambia la data corrente
   useEffect(() => {
     generateDays();
   }, [generateDays]);
 
-  // Funzione per gestire la selezione degli alimenti dal modal con ripetizione
   const handleSelectFood = (items: PlannedMealItem[], repetition?: { type: string, count: number }) => {
-    // Se non c'è ripetizione, aggiungi solo al giorno corrente
     if (!repetition) {
       items.forEach(item => {
         addMealItem(selectedMealType, item);
@@ -113,9 +106,7 @@ export default function PlannerScreen() {
       return;
     }
 
-    // Altrimenti, ripeti il pasto per i giorni specificati
     const repeatDays = async () => {
-      // Determina quanti giorni ripetere in base all'opzione
       let daysToRepeat = repetition.count;
       if (repetition.type === 'week') {
         daysToRepeat = repetition.count * 7;
@@ -123,13 +114,11 @@ export default function PlannerScreen() {
         daysToRepeat = repetition.count * 30;
       }
 
-      // Ripeti il pasto per i giorni specificati
       for (let i = 0; i < daysToRepeat; i++) {
         const targetDate = new Date(currentDate);
         targetDate.setDate(targetDate.getDate() + i);
         const dateKey = plannerStorage.formatDateKey(targetDate);
 
-        // Carica il piano giornaliero esistente
         const dailyPlan = await plannerStorage.getDailyPlan(dateKey) || {
           breakfast: [],
           lunch: [],
@@ -137,25 +126,20 @@ export default function PlannerScreen() {
           snack: []
         };
 
-        // Aggiungi gli elementi del pasto
         items.forEach(item => {
           const existingItems = dailyPlan[selectedMealType] || [];
           const newItems = [...existingItems, item];
           dailyPlan[selectedMealType] = newItems;
         });
 
-        // Salva il piano aggiornato
         await plannerStorage.updateDailyPlan(dateKey, dailyPlan);
       }
 
-      // Aggiorna i giorni dopo aver aggiunto gli alimenti
       generateDays();
     };
 
-    // Esegui la funzione asincrona
     repeatDays().then(() => {
       setModalVisible(false);
-      // Mostra un messaggio di conferma
       Alert.alert(
         "Pasto aggiunto",
         `Il pasto è stato aggiunto e ripetuto per ${repetition.count} ${
@@ -167,7 +151,6 @@ export default function PlannerScreen() {
     });
   };
 
-  // Funzione per mappare i tipi di pasto dall'italiano all'inglese
   const mapMealTypeToStorage = (mealType: string): keyof DailyPlan => {
     switch(mealType) {
       case "colazione": return "breakfast";
@@ -178,7 +161,6 @@ export default function PlannerScreen() {
     }
   };
 
-  // Funzione per mappare i tipi di pasto dall'inglese all'italiano
   const mapMealTypeToUI = (mealType: keyof DailyPlan): string => {
     switch(mealType) {
       case "breakfast": return "colazione";
@@ -189,18 +171,14 @@ export default function PlannerScreen() {
     }
   };
 
-  // Funzione per aprire il modal di aggiunta alimento
   const handleAddFood = (mealType: string) => {
-    // Converti il tipo di pasto dall'italiano all'inglese
     const storageMealType = mapMealTypeToStorage(mealType);
     setSelectedMealType(storageMealType);
     setSelectedMealTypeUI(mealType);
     setModalVisible(true);
   };
 
-  // Funzione per gestire il click su una sezione pasto
   const handleMealPress = (mealType: string) => {
-    // Trova gli elementi del pasto selezionato nel giorno attivo
     const activeDay = days[activeDayIndex];
     if (activeDay) {
       const meal = activeDay.meals.find((m: any) => m.type === mealType);
@@ -213,34 +191,27 @@ export default function PlannerScreen() {
     }
   };
 
-  // Funzione per eliminare un alimento
   const handleDeleteFood = async (mealType: string, foodId: string) => {
     const storageMealType = mapMealTypeToStorage(mealType);
     await removeMealItem(storageMealType, foodId);
     generateDays();
   };
 
-  // Funzione per modificare un alimento (per ora apre solo il modal di aggiunta)
   const handleEditFood = (mealType: string, foodId: string) => {
     const storageMealType = mapMealTypeToStorage(mealType);
     setSelectedMealType(storageMealType);
     setModalVisible(true);
-    // In futuro, potremmo implementare una vera funzionalità di modifica
-    // che precompila il modal con i dati dell'alimento selezionato
   };
 
-  // Swipe tra giorni con FlatList orizzontale
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Header uniforme con icona */}
         <ScreenHeader
           title="Planner"
           icon={<MaterialIcons name="event-note" size={24} color="#000" />}
           onOptionsPress={() => router.push("/settings")}
         />
 
-        {/* Titolo con controlli di navigazione integrati */}
         <View style={styles.dateNavigationHeader}>
           <TouchableOpacity 
             style={styles.navArrow}
@@ -317,7 +288,7 @@ export default function PlannerScreen() {
             }}
             initialScrollIndex={0}
             getItemLayout={(data, index) => (
-              {length: width, offset: width * index, index}
+              { length: width, offset: width * index, index }
             )}
           />
         ) : (
@@ -326,7 +297,6 @@ export default function PlannerScreen() {
           </View>
         )}
 
-        {/* Modal per l'aggiunta di alimenti */}
         <SelectFoodModal
           visible={modalVisible}
           mealType={selectedMealType}
@@ -335,7 +305,6 @@ export default function PlannerScreen() {
           onSelect={handleSelectFood}
         />
 
-        {/* Modal per i dettagli del pasto */}
         <MealDetailModal
           visible={mealDetailModalVisible}
           mealType={selectedMealTypeUI}
@@ -349,7 +318,6 @@ export default function PlannerScreen() {
           }}
           onDeleteItem={(mealType, itemId) => {
             handleDeleteFood(mealType, itemId);
-            // Aggiorna gli elementi selezionati dopo l'eliminazione
             const activeDay = days[activeDayIndex];
             if (activeDay) {
               const meal = activeDay.meals.find((m: any) => m.type === mealType);
@@ -376,15 +344,15 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: "#fff", // Ensure background color consistency
+    backgroundColor: "#fff",
   },
-  contentArea: { // Added style for the area below the calendar
+  contentArea: {
     flex: 1,
-    paddingHorizontal: 10, // Add some horizontal padding
-    paddingTop: 10, // Add some top padding
+    paddingHorizontal: 10,
+    paddingTop: 10,
   },
   loader: {
-    marginTop: 50, // Center loader vertically a bit
+    marginTop: 50,
   },
   errorText: {
     color: 'red',
@@ -392,7 +360,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
     paddingHorizontal: 20,
   },
-  // Stili per l'header di navigazione integrato
   dateNavigationHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -402,21 +369,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f8f8',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
-    elevation: 4, // Increased elevation for more depth
+    elevation: 4,
     shadowColor: '#000',
-    shadowOpacity: 0.15, // Increased opacity for more visible shadow
-    shadowRadius: 4, // Increased radius for softer shadow
-    shadowOffset: { width: 0, height: 3 }, // Slightly larger offset
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
   },
   navArrow: {
-    width: 42, // Slightly larger
-    height: 42, // Slightly larger
+    width: 42,
+    height: 42,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 21, // Half of width/height
-    backgroundColor: 'rgba(33, 150, 243, 0.15)', // Slightly more visible background
-    borderWidth: 1, // Add border
-    borderColor: 'rgba(33, 150, 243, 0.2)', // Subtle border
+    borderRadius: 21,
+    backgroundColor: 'rgba(33, 150, 243, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(33, 150, 243, 0.2)',
   },
   dateHeaderContainer: {
     alignItems: 'center',
@@ -471,7 +438,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     fontWeight: '500',
   },
-  // Stili per il container di caricamento
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
